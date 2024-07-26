@@ -244,7 +244,7 @@ export const MultiSelect = React.forwardRef<
                       key={option.s3_key}
                       onSelect={() => toggleOption(option)}
                       style={{ pointerEvents: "auto", opacity: 1 }}
-                      className='cursor-pointer'>
+                      className='cursor-pointer text-muted-foreground'>
                       <div
                         className={cn(
                           "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
@@ -265,7 +265,7 @@ export const MultiSelect = React.forwardRef<
                   <CommandItem
                     onSelect={handleAddDocument}
                     style={{ pointerEvents: "auto", opacity: 1 }}
-                    className='flex-1 justify-center cursor-pointer'>
+                    className='flex-1 justify-center cursor-pointer text-muted-foreground'>
                     <PlusCircle className='h-4 w-4 mr-2' />
                     Agregar Documento
                   </CommandItem>

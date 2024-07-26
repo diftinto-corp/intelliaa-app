@@ -28,7 +28,7 @@ async function uploadPdf(prevState: any, formData: FormData) {
     const filenameLarge = `${Math.random()
       .toString(36)
       .substring(2, 15)}_${filename}`;
-    const key = `pdf/${filenameLarge}`;
+    const key = `pdfs-intelliaa/${filenameLarge}`;
     const urlFile = `${process.env.NEXT_AWS_S3_BUCKET_URL_FILE}${key}`;
 
     const putObjectCommand = new PutObjectCommand({
