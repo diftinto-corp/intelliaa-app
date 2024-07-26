@@ -52,9 +52,11 @@ export default function FormAddDocComponent({
       className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground'
       onSubmit={handleSubmit}>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='question'>Subir un documento</Label>
+        <Label htmlFor='question' className='text-muted-foreground'>
+          Subir un documento
+        </Label>
         <Input
-          className='cursor-pointer'
+          className='cursor-pointer text-muted-foreground'
           type='file'
           id='file'
           name='file'

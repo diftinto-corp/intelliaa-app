@@ -7,8 +7,15 @@ export default function NewTeamForm() {
   return (
     <form className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground'>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='email'>Tenant Name</Label>
-        <Input name='name' placeholder='My Tenant' required />
+        <Label className='text-muted-foreground' htmlFor='email'>
+          Tenant Name
+        </Label>
+        <Input
+          className='text-muted-foreground'
+          name='name'
+          placeholder='My Tenant'
+          required
+        />
       </div>
       {/* <div className='flex flex-col gap-y-2'>
         <Label htmlFor='password'>Identifier</Label>

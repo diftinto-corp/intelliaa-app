@@ -54,8 +54,6 @@ export default function FormAddComponent({
         name,
         type,
         template.id,
-        template.name,
-        template.s3_key,
         template.prompt,
         template.temperature,
         template.tokens
@@ -73,17 +71,22 @@ export default function FormAddComponent({
       className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground'
       onSubmit={handleSubmit}>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='email'>Assistant Name</Label>
+        <Label htmlFor='email' className='text-muted-foreground'>
+          Assistant Name
+        </Label>
         <Input
           name='name'
           placeholder='My Assistant'
           onChange={handleChange}
           required
+          className='text-muted-foreground'
         />
       </div>
 
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='email'>Assistant templates</Label>
+        <Label htmlFor='email' className='text-muted-foreground'>
+          Assistant templates
+        </Label>
 
         <div className='flex gap-2 flex-wrap justify-between '>
           {templates?.map((assistant) => {
@@ -95,7 +98,7 @@ export default function FormAddComponent({
                   className={`w-[80px] h-[80px]  rounded
                   ${
                     templateSelected?.id === assistant.id
-                      ? "border-[#5ECFFF] border-4 "
+                      ? "border-primary border-4 "
                       : "border-transparent border-4 "
                   }  
                     `}
@@ -108,37 +111,43 @@ export default function FormAddComponent({
                     height={80}
                   />
                 </div>
-                <span className='text-xs text-center'>{assistant.name}</span>
+                <span className='text-xs text-center text-muted-foreground'>
+                  {assistant.name}
+                </span>
               </div>
             );
           })}
         </div>
       </div>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='email'>Assistant types</Label>
+        <Label htmlFor='email' className='text-muted-foreground'>
+          Assistant types
+        </Label>
 
         <div className='flex gap-4 flex-wrap '>
           <div className='flex flex-col'>
             <div
-              className={`flex justify-center items-center w-[80px] h-[80px] bg-slate-100 rounded cursor-pointer
+              className={`flex justify-center items-center w-[80px] h-[80px] bg-background rounded cursor-pointer
             ${
               typeSelected === "whatsapp"
-                ? "border-[#5ECFFF] border-4 "
+                ? "border-primary border-4 "
                 : "border-transparent border-4 "
             }`}
               onClick={() => setTypeSelected("whatsapp")}>
               <FaWhatsapp className='w-[60px] h-[60px] text-primary' />
             </div>
-            <span className='text-xs text-center'>Whatsapp</span>
+            <span className='text-xs text-center text-muted-foreground'>
+              Whatsapp
+            </span>
           </div>
 
           <div className='flex flex-col'>
             <div
-              className={` flex justify-center items-center w-[80px] h-[80px]  bg-slate-100 rounded
+              className={` flex justify-center items-center w-[80px] h-[80px]  bg-background rounded
             
             ${
               typeSelected === "voice"
-                ? "border-[#5ECFFF] border-4 "
+                ? "border-primary border-4 "
                 : "border-transparent border-4 "
             }	
 
@@ -147,15 +156,17 @@ export default function FormAddComponent({
             >
               <PhoneCall width={60} height={60} className='text-slate-400' />
             </div>
-            <span className='text-xs text-center'>Voice Pronto...</span>
+            <span className='text-xs text-center text-muted-foreground'>
+              Voice Pronto...
+            </span>
           </div>
           <div className='flex flex-col'>
             <div
-              className={`flex justify-center items-center w-[80px] h-[80px] bg-slate-100 rounded
+              className={`flex justify-center items-center w-[80px] h-[80px] bg-background rounded
             
             ${
               typeSelected === "web"
-                ? "border-[#5ECFFF] border-4 "
+                ? "border-primary border-4 "
                 : "border-transparent border-4 "
             }
             `}
@@ -167,7 +178,9 @@ export default function FormAddComponent({
                 className='text-slate-400'
               />
             </div>
-            <span className='text-xs text-center'>Web Pronto...</span>
+            <span className='text-xs text-center text-muted-foreground'>
+              Web Pronto...
+            </span>
           </div>
         </div>
       </div>

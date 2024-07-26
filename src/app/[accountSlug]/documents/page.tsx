@@ -82,15 +82,15 @@ export default function DocumentPage() {
       <div className='flex flex-col h-[92vh] items-center p-6'>
         <div className='flex w-full h-full gap-4'>
           <Skeleton className='flex flex-col w-[15%]  rounded p-2'>
-            <Skeleton className='flex bg-teal-900 w-full h-[50px] my-2 flex-col'></Skeleton>
-            <Skeleton className='flex bg-teal-900 w-full h-[20px] my-2 flex-col'></Skeleton>
-            <Skeleton className='flex bg-teal-900 w-full h-[50px] my-2  flex-col'></Skeleton>
+            <Skeleton className='flex bg-zinc-900 w-full h-[50px] my-2 flex-col'></Skeleton>
+            <Skeleton className='flex bg-zinc-900 w-full h-[20px] my-2 flex-col'></Skeleton>
+            <Skeleton className='flex bg-zinc-900 w-full h-[50px] my-2  flex-col'></Skeleton>
           </Skeleton>
           <Skeleton className='flex flex-col w-[85%]  rounded p-2'>
-            <Skeleton className='flex bg-teal-900 w-full h-[30px] my-2 flex-col'></Skeleton>
+            <Skeleton className='flex bg-zinc-900 w-full h-[30px] my-2 flex-col'></Skeleton>
             <div className='flex gap-4'>
-              <Skeleton className='flex bg-teal-900 w-[50%] h-[80vh] my-2 flex-col'></Skeleton>
-              <Skeleton className='flex bg-teal-900 w-[50%] h-[80vh] my-2 flex-col'></Skeleton>
+              <Skeleton className='flex bg-zinc-900 w-[50%] h-[80vh] my-2 flex-col'></Skeleton>
+              <Skeleton className='flex bg-zinc-900 w-[50%] h-[80vh] my-2 flex-col'></Skeleton>
             </div>
           </Skeleton>
         </div>
@@ -108,7 +108,7 @@ export default function DocumentPage() {
         />
       ) : (
         <div className='flex flex-col justify-center min-h-[90vh] items-center p-6'>
-          <div className='flex w-[40%] flex-col justify-center items-center'>
+          <div className='flex w-[40%] flex-col justify-center items-center text-muted-foreground'>
             <p>Aún no has creado un asistente.</p>
             <p>
               Haga clic en el botón a continuación para agregar un nuevo
