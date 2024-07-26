@@ -84,7 +84,7 @@ export function PieChartAssistants({ assistants }: { assistants: any[] }) {
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className='fill-muted-foreground'>
-                          Assistants
+                          Assistantes
                         </tspan>
                       </text>
                     );
