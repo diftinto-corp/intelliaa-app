@@ -52,7 +52,9 @@ export default function ModalQr({
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle>Scan the QR code</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Scan the QR code
+          </DialogTitle>
           <DialogDescription>
             Please scan the QR code to connect to WhatsApp
           </DialogDescription>

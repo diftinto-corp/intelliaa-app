@@ -100,8 +100,6 @@ const NewAssistant = async (
   name: string,
   type: string,
   template_id: string,
-  templateName: string,
-  s3_key: string,
   prompt: string,
   temperature: number,
   tokens: number
@@ -111,11 +109,6 @@ const NewAssistant = async (
   const namespace = `${Math.random()
     .toString(36)
     .substring(2, 15)}_${name.replace(/\s/g, "_")}`;
-  const id_document = `${Math.random().toString(36).substring(2, 15)}`;
-
-  if (templateName != "Personalizado") {
-    await upsertPDF(s3_key, id_document, namespace);
-  }
 
   const { data, error } = await supabase
     .from("assistants")
@@ -132,10 +125,6 @@ const NewAssistant = async (
       },
     ])
     .select();
-
-  if (templateName != "Personalizado") {
-    await newEmbedPDF(data?.[0].account_id, data?.[0]?.id, s3_key, id_document);
-  }
 
   if (error) {
     return {

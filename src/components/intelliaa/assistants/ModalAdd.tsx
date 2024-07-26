@@ -33,9 +33,11 @@ export default function ModalAdd(templates: any) {
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle>Add new assistant</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Agregar nuevo Asistente
+          </DialogTitle>
           <DialogDescription>
-            Please fill in the form below to add a new assistant
+            Agrega un nuevo asistente para tu cuenta
           </DialogDescription>
         </DialogHeader>
         <FormAddComponent dataTemplates={templates} setOpenModal={setOpen} />

@@ -53,7 +53,9 @@ export function ModalDeleteAssistant({
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle>Borrar Asistente</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Borrar Asistente
+          </DialogTitle>
           <DialogDescription>
             ¿Estás seguro de que deseas borrar este asistente?
           </DialogDescription>

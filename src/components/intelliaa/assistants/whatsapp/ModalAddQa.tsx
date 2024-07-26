@@ -35,7 +35,9 @@ export default function ModalAddQa({ assistant }: { assistant: Assistant }) {
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle>Agregar nueva pregunta y respuesta.</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Agregar nueva pregunta y respuesta.
+          </DialogTitle>
           <DialogDescription>
             Por favor, complete el formulario a continuación para agregar una
             nueva Pregunta y Respuesta.

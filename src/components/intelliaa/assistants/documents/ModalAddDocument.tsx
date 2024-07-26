@@ -33,7 +33,9 @@ export default function ModalAddDocument() {
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle>Agregar nuevo documento</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Agregar nuevo documento
+          </DialogTitle>
           <DialogDescription>
             Por favor complete el siguiente formulario para agregar un nuevo
             documento

@@ -61,8 +61,11 @@ export default function FormEditQaComponent({
       className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground'
       onSubmit={handleSubmit}>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='question'>Pregunta</Label>
+        <Label htmlFor='question' className='text-muted-foreground'>
+          Pregunta
+        </Label>
         <Input
+          className='text-muted-foreground'
           name='question'
           placeholder='Aqui va tu pregunta'
           value={question}
@@ -71,8 +74,11 @@ export default function FormEditQaComponent({
         />
       </div>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='answare'>Respuesta</Label>
+        <Label htmlFor='answare' className='text-muted-foreground'>
+          Respuesta
+        </Label>
         <Textarea
+          className='text-muted-foreground'
           name='answer'
           placeholder='Aqui va tu respuesta'
           value={answer}

@@ -44,7 +44,9 @@ export default function ModalEditQa({
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle>Editar Pregunta & Respuesta</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Editar Pregunta & Respuesta
+          </DialogTitle>
           <DialogDescription>
             Por favor, complete el formulario a continuación para editar la
             Pregunta y Respuesta.

@@ -58,15 +58,29 @@ export default function FormAddQaComponent({
 
   return (
     <form
-      className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground'
+      className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-mute-foreground'
       onSubmit={handleSubmit}>
-      <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='question'>Pregunta</Label>
-        <Input name='question' placeholder='Aqui va tu pregunta' required />
+      <div className='flex flex-col gap-y-2 text-mute-foreground'>
+        <Label htmlFor='question' className='text-muted-foreground'>
+          Pregunta
+        </Label>
+        <Input
+          className='text-muted-foreground'
+          name='question'
+          placeholder='Aqui va tu pregunta'
+          required
+        />
       </div>
-      <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='answare'>Respuesta</Label>
-        <Textarea name='answare' placeholder='Aqui va tu respuesta' required />
+      <div className='flex flex-col gap-y-2 text-mute-foreground'>
+        <Label htmlFor='answare' className='text-muted-foreground'>
+          Respuesta
+        </Label>
+        <Textarea
+          className='text-muted-foreground'
+          name='answare'
+          placeholder='Aqui va tu respuesta'
+          required
+        />
       </div>
       <Button type='submit'>
         {loading ? (

@@ -425,7 +425,7 @@ export default function TabAssistant({
                             side='bottom'
                             align='center'
                             className='p-4 w-[300px]'>
-                            <p className='font-normal text-foreground'>
+                            <p className='font-normal text-mute-foreground'>
                               Ingrese aquí el mensaje o pregunta que desea
                               enviar al asistente. Este será el punto de partida
                               para generar una respuesta basada en inteligencia
@@ -460,7 +460,7 @@ export default function TabAssistant({
                             side='bottom'
                             align='center'
                             className='p-4 w-[300px]'>
-                            <p className='font-normal text-foreground'>
+                            <p className='font-normal text-mute-foreground'>
                               Ajuste el valor de la temperatura para controlar
                               la creatividad de las respuestas del asistente.
                               Valores más bajos producen respuestas más
@@ -498,7 +498,7 @@ export default function TabAssistant({
                             side='bottom'
                             align='center'
                             className='p-4 w-[300px]'>
-                            <p className='font-normal text-foreground'>
+                            <p className='font-normal text-mute-foreground'>
                               Defina el número máximo de tokens (palabras y
                               fragmentos de palabras) que el asistente puede
                               usar en su respuesta. Un número mayor permite
@@ -537,7 +537,7 @@ export default function TabAssistant({
                             side='bottom'
                             align='center'
                             className='p-4 w-[300px]'>
-                            <p className='font-normal text-foreground'>
+                            <p className='font-normal text-mute-foreground'>
                               Seleccione uno o varios documentos PDF previamente
                               subidos para entrenar al asistente. Esto permitirá
                               que el asistente aprenda y genere respuestas
@@ -583,7 +583,7 @@ export default function TabAssistant({
                             side='bottom'
                             align='center'
                             className='p-4 w-[300px]'>
-                            <p className='font-normal text-foreground'>
+                            <p className='font-normal text-mute-foreground'>
                               Ingrese una palabra clave que el usuario del chat
                               puede usar para transferir la conversación a un
                               asistente humano. Esta palabra clave activará la
@@ -621,7 +621,7 @@ export default function TabAssistant({
                             side='bottom'
                             align='center'
                             className='p-4 w-[300px]'>
-                            <p className='font-normal text-foreground'>
+                            <p className='font-normal text-mute-foreground'>
                               Ingrese un número telefónico de WhatsApp al cual
                               se pueda transferir la conversación con el
                               cliente. Asegúrese de que el número cumpla con el
@@ -654,7 +654,7 @@ export default function TabAssistant({
       <TabsContent value='questions_&_answares'>
         {qaList.length === 0 ? (
           <div className='flex flex-col justify-center w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh]'>
-            <div className='flex w-[40%] flex-col self-center justify-center items-center'>
+            <div className='flex w-[40%] flex-col self-center justify-center items-center text-muted-foreground'>
               <p>Todavía no has creado una Pregunta y Respuesta.</p>
               <p>Haz clic en el botón de abajo para agregar un nuevo QA.</p>
               <ModalAddQa assistant={assistant} />
