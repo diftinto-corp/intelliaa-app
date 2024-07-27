@@ -29,7 +29,10 @@ import {
   activateWs,
   updateAssistant,
 } from "@/lib/actions/intelliaa/assistants";
-import { activeWsService } from "@/lib/actions/intelliaa/railway";
+import {
+  activeWsService,
+  createWsChatbotService,
+} from "@/lib/actions/intelliaa/railway";
 import ModalQr from "./ModalQr";
 import { ModalDeleteAssistant } from "./ModalDeleteAssistant";
 import {
@@ -273,12 +276,16 @@ export default function TabAssistant({
 
     const data = await activeWsService(
       assistant.id,
-      assistant.name,
-      account_id,
       assistant.namespace,
-      account.name,
       KeywordTransfer
     );
+
+    // const data = await createWsChatbotService(
+    //   assistant.id,
+    //   assistant.namespace,
+    //   KeywordTransfer
+    // );
+
     const url = `${data?.url}/qr.png`;
 
     const newassistant = await activateWs(
