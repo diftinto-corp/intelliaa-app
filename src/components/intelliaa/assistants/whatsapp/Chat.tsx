@@ -15,6 +15,7 @@ import {
 import { motion } from "framer-motion";
 import { delData } from "@/lib/upstash/upstash";
 import Markdown from "react-markdown";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AssistantSession {
   sessionId: string;
@@ -198,7 +199,7 @@ export default function ChatWsComponent({
           </Button>
         </div>
         <div className='flex flex-col'>
-          <div className='flex flex-col w-full min-h-[55vh] max-h-[55vh] bg-foreground rounded-lg p-4 overflow-y-auto'>
+          <ScrollArea className='flex flex-col w-full min-h-[55vh] max-h-[55vh] bg-foreground rounded-lg p-4'>
             {messages?.messages?.map((message, index) => (
               <div
                 key={index}
@@ -225,7 +226,7 @@ export default function ChatWsComponent({
               </div>
             ))}
             <div ref={messagesEndRef} />
-          </div>
+          </ScrollArea>
           <form
             className='flex w-full items-center space-x-2 my-5'
             onSubmit={handleSubmitClick}>
