@@ -106,9 +106,7 @@ const NewAssistant = async (
 ) => {
   const supabase = createClient();
 
-  const namespace = `${Math.random()
-    .toString(36)
-    .substring(2, 15)}_${name.replace(/\s/g, "_")}`;
+  const namespace = `${Math.random().toString(36).substring(2, 15)}`;
 
   const { data, error } = await supabase
     .from("assistants")
