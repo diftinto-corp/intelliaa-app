@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import useScreenSize from "@/lib/hooks/render-screen";
 import { cn } from "@/lib/utils";
 import GridPattern from "@/components/magicui/grid-pattern";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function AuthLayout({
   children,
@@ -34,6 +35,7 @@ export default function AuthLayout({
             "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
           )}
         />
+        <Toaster />
       </div>
     </div>
   );

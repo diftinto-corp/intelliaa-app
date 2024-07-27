@@ -399,14 +399,19 @@ export default function TabAssistant({
                     disabled={!isChangeOptions || loadingAssistant}
                     onClick={(e) => handleSaveAssistant(e)}>
                     {loadingAssistant ? (
-                      <Loader2
-                        size={17}
-                        className='animate-spin text-white mr-2'
-                      />
+                      <>
+                        <Loader2
+                          size={17}
+                          className='animate-spin text-white mr-2'
+                        />
+                        Guardando...
+                      </>
                     ) : (
-                      <Save size={17} className='mr-2' />
+                      <>
+                        <Save size={17} className='mr-2' />
+                        Guardar
+                      </>
                     )}
-                    Guardar
                   </Button>
                 </motion.div>
                 <ModalDeleteAssistant

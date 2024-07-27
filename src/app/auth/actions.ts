@@ -23,9 +23,8 @@ export async function login(Data: data) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    return {
-      messages: error.message,
-    };
+    console.log(error.message);
+    return error.message;
   }
 
   const { data: teamAccount } = await supabase.rpc("get_accounts");
@@ -52,8 +51,10 @@ export async function signup(Data: data) {
   const { error } = await supabase.auth.signUp(data);
 
   if (error) {
+    console.log(error);
     return {
       messages: error.message,
+      error: true,
     };
   }
 

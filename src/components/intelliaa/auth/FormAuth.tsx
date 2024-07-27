@@ -2,13 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { login, signup } from "@/app/auth/actions";
 import React, { useState } from "react";
 import { BsGoogle } from "react-icons/bs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useToast } from "@/components/ui/use-toast";
 
 import {
   Form,
@@ -27,7 +28,11 @@ const formSchema = z.object({
 });
 
 export const FormAuth = () => {
+  const { toast } = useToast();
+
   const [isRegister, setIsRegister] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,11 +45,33 @@ export const FormAuth = () => {
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!isRegister) {
+      setLoading(true);
       const response = await signup(values);
+
+      if (response.messages) {
+        console.log(response);
+        toast({
+          variant: "destructive",
+          title: "No se pudo registrar",
+          description: "Por favor, intente de nuevo",
+        });
+      }
+
+      setLoading(false);
     }
 
     if (isRegister) {
+      setLoading(true);
       const response = await login(values);
+      if (response) {
+        console.log(response);
+        toast({
+          variant: "destructive",
+          title: "No se pudo iniciar sesión",
+          description: "Por favor, intente de nuevo",
+        });
+      }
+      setLoading(false);
     }
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
@@ -92,8 +119,12 @@ export const FormAuth = () => {
                 )}
               />
               <Button className=' mt-4 w-[100%]'>
-                {/*TODO: Agregar loading state*/}
-                <Mail className='mr-2 h-4 w-4' /> Inicia Sesión
+                {loading ? (
+                  <Loader2 size={17} className='animate-spin mr-2' />
+                ) : (
+                  <Mail className='mr-2 h-4 w-4' />
+                )}{" "}
+                Inicia Sesión
               </Button>
             </form>
           </Form>
@@ -158,7 +189,12 @@ export const FormAuth = () => {
                 )}
               />
               <Button className=' mt-4 w-[100%]'>
-                <Mail className='mr-2 h-4 w-4' /> Registrate
+                {loading ? (
+                  <Loader2 size={17} className='animate-spin mr-2' />
+                ) : (
+                  <Mail className='mr-2 h-4 w-4' />
+                )}
+                Registrate
               </Button>
             </form>
           </Form>
