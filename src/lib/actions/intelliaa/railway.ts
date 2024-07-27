@@ -24,9 +24,11 @@ const activeWsService = async (
         }),
       }
     );
+    console.log(response);
     const result = await response.json();
 
     if (!response.ok) {
+      console.log(result);
       throw new Error("Error al activar el servicio de WhatsApp");
     }
 
