@@ -178,7 +178,9 @@ export function ReportWsComponent() {
                   <TableCell className=' max-w-[300px] text-muted-foreground '>
                     {lastChat?.answer}
                   </TableCell>
-                  <TableCell>{register.answers}</TableCell>
+                  <TableCell className='text-muted-foreground'>
+                    {register.answers}
+                  </TableCell>
                   <TableCell className='text-red-500'>
                     {register.wrong_answers}
                   </TableCell>
