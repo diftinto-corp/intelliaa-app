@@ -169,9 +169,13 @@ export function ReportWsComponent() {
                   <TableCell className='font-medium text-primary'>
                     {register.user_number}
                   </TableCell>
-                  <TableCell>{register.assistant_name}</TableCell>
-                  <TableCell>{lastChat?.question}</TableCell>
-                  <TableCell className=' max-w-[300px] '>
+                  <TableCell className='text-muted-foreground'>
+                    {register.assistant_name}
+                  </TableCell>
+                  <TableCell className='text-muted-foreground'>
+                    {lastChat?.question}
+                  </TableCell>
+                  <TableCell className=' max-w-[300px] text-muted-foreground '>
                     {lastChat?.answer}
                   </TableCell>
                   <TableCell>{register.answers}</TableCell>

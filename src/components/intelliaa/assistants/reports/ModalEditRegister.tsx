@@ -55,7 +55,9 @@ const ModalEditRegister: React.FC<ModalEditRegisterProps> = ({
       </DialogTrigger>
       <DialogContent className='sm:max-w-[600px]'>
         <DialogHeader>
-          <DialogTitle>Editar Pregunta y Respuesta</DialogTitle>
+          <DialogTitle className='text-muted-foreground'>
+            Editar Pregunta y Respuesta
+          </DialogTitle>
           <DialogDescription>
             Por favor, complete el formulario a continuación para editar la
             Pregunta y Respuesta.
@@ -64,11 +66,13 @@ const ModalEditRegister: React.FC<ModalEditRegisterProps> = ({
         <div className='flex flex-row'>
           <div className='w-1/2'>
             <div className='text-sm font-semibold text-gray-500'>Pregunta</div>
-            <div className='text-lg font-semibold'>{register.answers}</div>
+            <div className='text-lg text-muted-foreground font-semibold'>
+              {register.answers}
+            </div>
           </div>
           <div className='w-1/2'>
             <div className='text-sm font-semibold text-gray-500'>Respuesta</div>
-            <div className='text-lg font-semibold text-red-500'>
+            <div className='text-lg text-muted-foreground font-semibold text-red-500'>
               {register.wrong_answers}
             </div>
           </div>
