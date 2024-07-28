@@ -70,3 +70,11 @@ export interface AssistantTemplate {
   tokens: number;
   docs_key: [];
 }
+
+export interface QAItem {
+  id: string;
+  question: string;
+  answer: string;
+  id_document: string;
+  namespace: string;
+}

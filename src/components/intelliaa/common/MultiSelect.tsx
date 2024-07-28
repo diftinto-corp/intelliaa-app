@@ -47,8 +47,8 @@ const multiSelectVariants = cva(
 interface Option {
   name: string;
   s3_key: string;
-  namespace: string;
   id_document: string;
+  namespace: string;
 }
 
 interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
@@ -97,7 +97,7 @@ export const MultiSelect = React.forwardRef<
       if (JSON.stringify(selectedValues) !== JSON.stringify(defaultValue)) {
         setSelectedValues(defaultValue);
       }
-    }, [defaultValue, selectedValues]);
+    }, [defaultValue]);
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>
