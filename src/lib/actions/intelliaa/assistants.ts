@@ -571,6 +571,21 @@ const deleteAssistant = async (
   }
 };
 
+const getAssistantsVoice = async () => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase.from("voice_assistant").select();
+
+  if (error) {
+    console.log(`Error fetching assistants in Supabase: ${error.message}`);
+    throw new Error(`Error fetching assistants in Supabase: ${error.message}`);
+  }
+
+  console.log("Data:", data);
+
+  return data;
+};
+
 export {
   AssistantsTemplateList,
   NewAssistant,
@@ -585,4 +600,5 @@ export {
   activateWs,
   wsStatusActiveUtil,
   deleteAssistant,
+  getAssistantsVoice,
 };

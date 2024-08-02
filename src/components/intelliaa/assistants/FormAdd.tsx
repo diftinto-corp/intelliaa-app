@@ -12,6 +12,7 @@ import { NewAssistant } from "@/lib/actions/intelliaa/assistants";
 
 import { useAccounts } from "@usebasejump/next";
 import { AssistantTemplate } from "@/interfaces/intelliaa";
+import { createAssistantVoiceVapi } from "@/lib/actions/intelliaa/assistantVoice";
 
 export default function FormAddComponent({
   dataTemplates,
@@ -49,15 +50,47 @@ export default function FormAddComponent({
     formData.append("name", name);
     setLoading(true);
     try {
-      await NewAssistant(
-        account_id,
-        name,
-        type,
-        template.id,
-        template.prompt,
-        template.temperature,
-        template.tokens
-      );
+      if (type === "whatsapp") {
+        await NewAssistant(
+          account_id,
+          name,
+          type,
+          template.id,
+          template.prompt,
+          template.temperature,
+          template.tokens
+        );
+      }
+      if (type === "voice") {
+        try {
+          const res = await fetch("/api/create-assistant-voice", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              account_id,
+              name,
+              type,
+              template_id: template.id,
+              prompt: template.prompt,
+              temperature: template.temperature,
+              tokens: template.tokens,
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+
+          const data = await res.json();
+          console.log("Assistant created in VAPI:", data);
+        } catch (error) {
+          console.error("Error creating assistant voice:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
 
       setLoading(false);
       setOpenModal(false);
@@ -143,7 +176,7 @@ export default function FormAddComponent({
 
           <div className='flex flex-col'>
             <div
-              className={` flex justify-center items-center w-[80px] h-[80px]  bg-background rounded
+              className={` flex justify-center items-center w-[80px] h-[80px]  bg-background rounded cursor-pointer
             
             ${
               typeSelected === "voice"
@@ -152,12 +185,11 @@ export default function FormAddComponent({
             }	
 
             `}
-              // onClick={() => setTypeSelected("voice")}
-            >
-              <PhoneCall width={60} height={60} className='text-slate-400' />
+              onClick={() => setTypeSelected("voice")}>
+              <PhoneCall width={60} height={60} className='text-primary' />
             </div>
             <span className='text-xs text-center text-muted-foreground'>
-              Voice Pronto...
+              Voice
             </span>
           </div>
           <div className='flex flex-col'>

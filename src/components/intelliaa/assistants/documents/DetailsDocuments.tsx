@@ -38,7 +38,7 @@ export default function DetailsDocuments({
   const handleDelete = async () => {
     setLoading(true);
     await deletePdfS3(DocumentPdf.s3_key);
-    await deletePdf_Doc(accountId, DocumentPdf.id);
+    await deletePdf_Doc(accountId, DocumentPdf.id, DocumentPdf.id_vapi_doc);
     setLoading(false);
   };
 

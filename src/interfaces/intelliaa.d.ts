@@ -1,3 +1,5 @@
+import { bo } from "@upstash/redis/zmscore-80635339";
+
 export interface Assistant {
   id: string;
   name: string;
@@ -17,6 +19,13 @@ export interface Assistant {
   qr_url: string;
   is_deploying_ws: boolean;
   service_id_rw: string;
+  welcome_assistant: string;
+  voice_assistant: string;
+  detect_emotion: boolean;
+  background_office: boolean;
+  record_call: boolean;
+  voice_assistant_id: string;
+  documents_vapi: string[];
 }
 
 export interface Pdf_Doc {
@@ -26,6 +35,7 @@ export interface Pdf_Doc {
   s3_key: string;
   url: string;
   account_id: string;
+  id_vapi_doc: string;
 }
 
 export interface Message {

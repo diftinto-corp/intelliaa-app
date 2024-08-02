@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import TabAssistant from "./TabAssistant";
 import { getTemplate } from "@/lib/actions/intelliaa/assistants";
+import TabAssistantVoice from "../voice/TabAssistantVoice";
 
 export default function ConfigAssistant({
   templates,
@@ -25,6 +26,8 @@ export default function ConfigAssistant({
   qaList: [];
   setQaList: any;
 }) {
+  console.log(assistantSelected.type_assistant);
+
   const [assistant, setAssistant] = useState<any>(
     assistantsListPage[0] ? assistantsListPage[0] : {}
   );
@@ -93,27 +96,68 @@ export default function ConfigAssistant({
             ))}
           </div>
         </div>
+        {/* Renderizado condicional según el tipo de asistente */}
         <div className='flex flex-col bg-background w-[85%] border rounded p-2'>
-          <div className='flex flex-col'>
-            <div className='flex w-full justify-between px-4'>
-              <div>
-                <p className='text-left text-primary text-xl font-semibold  my-4'>
-                  {assistant?.name}
-                </p>
-              </div>
-              <div>
-                <p className='text-left text-xl font-semibold text-primary my-4 '>
-                  {templateName}
-                </p>
-              </div>
-            </div>
-            <TabAssistant
-              assistant={assistantSelected}
-              setAssistant={setAssistantSelected}
-              qaList={qaList}
-              setQaList={setQaList}
-            />
-          </div>
+          {(() => {
+            switch (assistantSelected.type_assistant) {
+              case "whatsapp":
+                return (
+                  <div className='flex flex-col'>
+                    <div className='flex w-full justify-between px-4'>
+                      <div>
+                        <p className='text-left text-primary text-xl font-semibold my-4'>
+                          {assistant?.name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-left text-xl font-semibold text-primary my-4 '>
+                          {templateName}
+                        </p>
+                      </div>
+                    </div>
+                    <TabAssistant
+                      assistant={assistantSelected}
+                      setAssistant={setAssistantSelected}
+                      qaList={qaList}
+                      setQaList={setQaList}
+                    />
+                  </div>
+                );
+              case "voice":
+                return (
+                  <div className='flex flex-col'>
+                    <div className='flex w-full justify-between px-4'>
+                      <div>
+                        <p className='text-left text-primary text-xl font-semibold my-4'>
+                          {assistant?.name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-left text-xl font-semibold text-primary my-4 '>
+                          {templateName}
+                        </p>
+                      </div>
+                    </div>
+                    <TabAssistantVoice
+                      assistant={assistantSelected}
+                      setAssistant={setAssistantSelected}
+                      qaList={qaList}
+                      setQaList={setQaList}
+                    />
+                  </div>
+                );
+              case "web":
+                return (
+                  <div className='flex flex-col justify-center items-center'>
+                    <p className='text-center text-primary text-xl font-semibold my-4'>
+                      Mensaje del asistente: {assistantSelected.name}
+                    </p>
+                  </div>
+                );
+              default:
+                return null;
+            }
+          })()}
         </div>
       </div>
     </div>

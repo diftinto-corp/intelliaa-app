@@ -22,6 +22,7 @@ async function uploadPdf(prevState: any, formData: FormData) {
     if (file.size === 0) {
       return { status: "error", message: "Empty file" };
     }
+
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const filename = file.name;
@@ -38,22 +39,52 @@ async function uploadPdf(prevState: any, formData: FormData) {
       ContentType: "application/pdf",
     });
 
-    const data = {
-      filename,
-      key,
-      urlFile,
+    const s3UploadResponse = await s3Client.send(putObjectCommand);
+
+    if (s3UploadResponse.$metadata.httpStatusCode !== 200) {
+      throw new Error("Error uploading to S3");
+    }
+
+    // S3 upload successful, proceed to upload to VAPI
+    const vapiForm = new FormData();
+    vapiForm.append("file", file);
+
+    const vapiOptions = {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
+        // 'Content-Type': 'multipart/form-data' // Note: Do not set this header manually, let fetch set it for you.
+      },
+      body: vapiForm,
     };
 
-    await s3Client.send(putObjectCommand);
+    const vapiResponse = await fetch("https://api.vapi.ai/file", vapiOptions);
+    const vapiResult = await vapiResponse.json();
+
+    if (!vapiResponse.ok) {
+      throw new Error(
+        `Error uploading to VAPI: ${vapiResult.message || "Unknown error"}`
+      );
+    }
 
     return {
       status: "success",
-      message: "Document uploaded successfully",
-      data,
+      message: "Document uploaded successfully to S3 and VAPI",
+      data: {
+        s3: {
+          filename,
+          key,
+          urlFile,
+        },
+        vapi: vapiResult,
+      },
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return { status: "error", message: "Error uploading document" };
+    return {
+      status: "error",
+      message: `Error uploading document: ${error.message}`,
+    };
   }
 }
 
@@ -136,12 +167,14 @@ async function newPdf_Doc({
   description,
   key,
   urlFile,
+  id_vapi_doc,
 }: {
   account_id: string;
   filename?: string;
   description?: string;
   key?: string;
   urlFile?: string;
+  id_vapi_doc?: string;
 }) {
   const supabase = createClient();
 
@@ -152,6 +185,7 @@ async function newPdf_Doc({
       description,
       s3_key: key,
       url: urlFile,
+      id_vapi_doc,
     },
   ]);
 
@@ -162,19 +196,57 @@ async function newPdf_Doc({
   return data;
 }
 
-async function deletePdf_Doc(account_id: string, id: string) {
+async function deletePdf_Doc(
+  account_id: string,
+  id: string,
+  id_vapi_doc: string
+) {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("pdf_docs")
-    .delete()
-    .eq("account_id", account_id)
-    .eq("id", id);
 
-  if (error) {
-    return { message: error.message };
+  try {
+    // Primero eliminamos el documento de Supabase
+    const { data, error } = await supabase
+      .from("pdf_docs")
+      .delete()
+      .eq("account_id", account_id)
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`Error deleting from Supabase: ${error.message}`);
+    }
+
+    // Si la eliminación en Supabase es exitosa, procedemos a eliminar el documento de VAPI
+    const vapiOptions = {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
+      },
+    };
+
+    const vapiResponse = await fetch(
+      `https://api.vapi.ai/file/${id_vapi_doc}`,
+      vapiOptions
+    );
+    const vapiResult = await vapiResponse.json();
+
+    if (!vapiResponse.ok) {
+      throw new Error(
+        `Error deleting from VAPI: ${vapiResult.message || "Unknown error"}`
+      );
+    }
+
+    return {
+      status: "success",
+      message: "Document deleted successfully from Supabase and VAPI",
+      data,
+    };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      status: "error",
+      message: `Error deleting document: ${error.message}`,
+    };
   }
-
-  return data;
 }
 
 const upsertPDF = async (

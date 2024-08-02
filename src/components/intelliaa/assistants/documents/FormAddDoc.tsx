@@ -31,13 +31,15 @@ export default function FormAddDocComponent({
     const formData = new FormData(e.target as HTMLFormElement);
     const dataUploadFile = await uploadPdf(initialState, formData);
     const { data } = dataUploadFile;
-    const description = await resumenPdf(data?.key || "");
+
+    const description = await resumenPdf(data?.s3?.key || "");
     await newPdf_Doc({
       account_id,
-      filename: data?.filename,
+      filename: data?.s3?.filename,
       description,
-      key: data?.key,
-      urlFile: data?.urlFile,
+      key: data?.s3?.key,
+      urlFile: data?.s3?.urlFile,
+      id_vapi_doc: data?.vapi?.id,
     });
     setLoading(false);
     setOpenModal(false);
