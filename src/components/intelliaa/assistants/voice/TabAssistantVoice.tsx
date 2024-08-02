@@ -53,7 +53,7 @@ export default function TabAssistant({
     assistant?.temperature || 0
   );
   const [welcomeMessage, setWelcomeMessage] = useState(
-    assistant?.welcome_assistant || ""
+    assistant?.welcome_assistant || "Hola, ¿En que te puedo ayudar?"
   );
   const [detectEmotion, setDetectEmotion] = useState<boolean>(
     assistant?.detect_emotion || false
@@ -95,10 +95,6 @@ export default function TabAssistant({
     assistant.voice_assistant || ""
   );
 
-  console.log(assistant?.voice_assistant);
-
-  console.log(voiceAssistantSelected);
-
   const supabase = createClient();
 
   useEffect(() => {
@@ -139,7 +135,9 @@ export default function TabAssistant({
       setTemperatureState(assistant.temperature || 0);
       setMaxTokens(assistant.token || 0);
       setPromptState(assistant.prompt || "");
-      setWelcomeMessage(assistant.welcome_assistant || "");
+      setWelcomeMessage(
+        assistant.welcome_assistant || "Hola, ¿En que te puedo ayudar?"
+      );
       setDetectEmotion(assistant.detect_emotion || false);
       setBackgroundOffice(assistant.background_office || false);
       setRecordCall(assistant.record_call || false);

@@ -6,16 +6,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Lee y parsea el cuerpo de la solicitud
     const body = await req.json();
 
-    const { account_id, name, type, template_id, prompt, temperature, tokens } =
-      body as {
-        account_id: string;
-        name: string;
-        type: string;
-        template_id: string;
-        prompt: string;
-        temperature: number;
-        tokens: number;
-      };
+    const {
+      account_id,
+      name,
+      type,
+      template_id,
+      prompt,
+      temperature,
+      tokens,
+      firstMessage,
+      emotionRecognitionEnabled,
+    } = body as {
+      account_id: string;
+      name: string;
+      type: string;
+      template_id: string;
+      prompt: string;
+      temperature: number;
+      tokens: number;
+      firstMessage: string;
+      emotionRecognitionEnabled: boolean;
+    };
 
     const response = await createAssistantVoiceVapi(
       account_id,
@@ -24,7 +35,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       template_id,
       prompt,
       temperature,
-      tokens
+      tokens,
+      firstMessage
     );
 
     // Asegurarse de que response es serializable

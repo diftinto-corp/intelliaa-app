@@ -7,7 +7,8 @@ const createAssistantVoiceVapi = async (
   template_id: string,
   prompt: string,
   temperature: number,
-  tokens: number
+  tokens: number,
+  firstMessage: string
 ) => {
   const supabase = createClient();
   const namespace = `${Math.random().toString(36).substring(2, 15)}`;
@@ -22,14 +23,24 @@ const createAssistantVoiceVapi = async (
         language: "es",
       },
       model: {
+        messages: [
+          {
+            content: prompt,
+            role: "system",
+          },
+        ],
         provider: "openai",
         model: "gpt-4o-mini",
+        temperature: temperature,
+        maxTokens: tokens,
+        emotionRecognitionEnabled: true,
       },
       voice: {
         provider: "11labs",
         voiceId: "2d7rEMnN7U2yC7k3Ie3g",
         model: "eleven_multilingual_v2",
       },
+      firstMessage: firstMessage,
       voicemailDetection: {
         provider: "twilio",
       },
@@ -65,6 +76,7 @@ const createAssistantVoiceVapi = async (
             token: tokens,
             namespace: namespace,
             voice_assistant_id: vapiData.id,
+            detect_emotion: true,
           },
         ])
         .select();

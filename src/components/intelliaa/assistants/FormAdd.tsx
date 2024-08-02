@@ -12,7 +12,6 @@ import { NewAssistant } from "@/lib/actions/intelliaa/assistants";
 
 import { useAccounts } from "@usebasejump/next";
 import { AssistantTemplate } from "@/interfaces/intelliaa";
-import { createAssistantVoiceVapi } from "@/lib/actions/intelliaa/assistantVoice";
 
 export default function FormAddComponent({
   dataTemplates,
@@ -76,6 +75,7 @@ export default function FormAddComponent({
               prompt: template.prompt,
               temperature: template.temperature,
               tokens: template.tokens,
+              firstMessage: "Hola, ¿En que te puedo ayudar?",
             }),
           });
 
