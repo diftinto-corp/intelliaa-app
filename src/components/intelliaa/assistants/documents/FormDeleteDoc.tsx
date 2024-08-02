@@ -10,18 +10,20 @@ export default function FormDeleteDocComponent({
   id,
   key,
   setOpenModal,
+  id_vapi_doc,
 }: {
   account_id: string;
   id: string;
   key: string;
   setOpenModal: any;
+  id_vapi_doc: string;
 }) {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
     setLoading(true);
     await deletePdfS3(key);
-    await deletePdf_Doc(account_id, id);
+    await deletePdf_Doc(account_id, id, id_vapi_doc);
     setLoading(false);
     setOpenModal(false);
   };
