@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import ModalAddQa from "./ModalAddQa";
-import ModalEditQa from "./ModalEditQa";
 import { Loader2, Trash2 } from "lucide-react";
 import { Assistant } from "@/interfaces/intelliaa";
 import { TabsContent } from "@/components/ui/tabs";
