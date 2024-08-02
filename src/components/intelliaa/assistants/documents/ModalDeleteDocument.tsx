@@ -17,10 +17,12 @@ export default function ModalDeleteDocument({
   account_id,
   key,
   id,
+  id_vapi_doc,
 }: {
   account_id: string;
   key: string;
   id: string;
+  id_vapi_doc: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -46,6 +48,7 @@ export default function ModalDeleteDocument({
           account_id={account_id}
           key={key}
           id={id}
+          id_vapi_doc={id_vapi_doc}
         />
       </DialogContent>
     </Dialog>
