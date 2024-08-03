@@ -48,7 +48,7 @@ export const FormAuth = () => {
       setLoading(true);
       const response = await signup(values);
 
-      if (response.messages) {
+      if (response) {
         console.log(response);
         toast({
           variant: "destructive",

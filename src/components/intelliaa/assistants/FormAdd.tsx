@@ -105,11 +105,11 @@ export default function FormAddComponent({
       onSubmit={handleSubmit}>
       <div className='flex flex-col gap-y-2'>
         <Label htmlFor='email' className='text-muted-foreground'>
-          Assistant Name
+          Nombre de asistente
         </Label>
         <Input
           name='name'
-          placeholder='My Assistant'
+          placeholder='Mi asistente'
           onChange={handleChange}
           required
           className='text-muted-foreground'
@@ -118,7 +118,7 @@ export default function FormAddComponent({
 
       <div className='flex flex-col gap-y-2'>
         <Label htmlFor='email' className='text-muted-foreground'>
-          Assistant templates
+          Plantillas de asistentes
         </Label>
 
         <div className='flex gap-2 flex-wrap justify-between '>
@@ -154,7 +154,7 @@ export default function FormAddComponent({
       </div>
       <div className='flex flex-col gap-y-2'>
         <Label htmlFor='email' className='text-muted-foreground'>
-          Assistant types
+          Tipos de asistentes
         </Label>
 
         <div className='flex gap-4 flex-wrap '>
@@ -189,7 +189,7 @@ export default function FormAddComponent({
               <PhoneCall width={60} height={60} className='text-primary' />
             </div>
             <span className='text-xs text-center text-muted-foreground'>
-              Voice
+              Voz
             </span>
           </div>
           <div className='flex flex-col'>
@@ -219,7 +219,7 @@ export default function FormAddComponent({
       <Button
         type='submit'
         disabled={nameAssistant === "" || loading ? true : false}>
-        {loading ? <Loader2 className=' animate-spin' /> : "Create Assistant"}
+        {loading ? <Loader2 className=' animate-spin' /> : "Crear asistente"}
       </Button>
     </form>
   );
