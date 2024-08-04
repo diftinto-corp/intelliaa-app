@@ -22,16 +22,26 @@ export default function FormAddDocComponent({
 }) {
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data } = useAccounts();
   const account_id = data?.[1]?.account_id ?? "";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+
+    if (file && file.name.length > 25) {
+      setErrorMessage(
+        "El nombre del archivo no debe superar los 25 caracteres. Por favor, edite el nombre antes de subir."
+      );
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.target as HTMLFormElement);
+
     const dataUploadFile = await uploadPdf(initialState, formData);
     const { data } = dataUploadFile;
-
     const description = await resumenPdf(data?.s3?.key || "");
     await newPdf_Doc({
       account_id,
@@ -46,7 +56,18 @@ export default function FormAddDocComponent({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0]);
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile.name.length > 25) {
+        setErrorMessage(
+          "El nombre del archivo no debe superar los 25 caracteres. Por favor, edite el nombre antes de subir."
+        );
+        setFile(undefined);
+      } else {
+        setErrorMessage(null);
+        setFile(selectedFile);
+      }
+    }
   };
 
   return (
@@ -54,7 +75,7 @@ export default function FormAddDocComponent({
       className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground'
       onSubmit={handleSubmit}>
       <div className='flex flex-col gap-y-2'>
-        <Label htmlFor='question' className='text-muted-foreground'>
+        <Label htmlFor='file' className='text-muted-foreground'>
           Subir un documento
         </Label>
         <Input
@@ -66,6 +87,9 @@ export default function FormAddDocComponent({
           accept='application/pdf'
           onChange={handleChange}
         />
+        {errorMessage && (
+          <span className='text-red-500 text-sm'>{errorMessage}</span>
+        )}
       </div>
 
       <Button

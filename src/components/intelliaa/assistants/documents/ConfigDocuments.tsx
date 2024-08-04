@@ -9,6 +9,7 @@ import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants";
 import ModalAddDocument from "./ModalAddDocument";
 import DetailsDocuments from "./DetailsDocuments";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ConfigDocuments({
   documentsListPage,
@@ -36,7 +37,7 @@ export default function ConfigDocuments({
           <p className='text-left text-xl font-semibold  text-muted-foreground  my-4'>
             Documentos:{" "}
           </p>
-          <div className='flex flex-col gap-2'>
+          <ScrollArea className='flex flex-col gap-2'>
             {documentsListPage.map((document) => (
               <div
                 key={document.id}
@@ -52,7 +53,7 @@ export default function ConfigDocuments({
                 <FileText />
               </div>
             ))}
-          </div>
+          </ScrollArea>
         </div>
         <div className='flex flex-col bg-background w-[85%] border rounded p-2'>
           <div className='flex flex-col'>

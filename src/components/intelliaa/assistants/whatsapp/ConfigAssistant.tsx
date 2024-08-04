@@ -10,6 +10,7 @@ import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import TabAssistant from "./TabAssistant";
 import { getTemplate } from "@/lib/actions/intelliaa/assistants";
 import TabAssistantVoice from "../voice/TabAssistantVoice";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ConfigAssistant({
   templates,
@@ -74,7 +75,7 @@ export default function ConfigAssistant({
           <p className='text-left text-xl font-semibold  text-muted-foreground  my-4'>
             Asistentes:{" "}
           </p>
-          <div className='flex flex-col gap-2'>
+          <ScrollArea className='flex flex-col gap-2'>
             {assistantsListPage.map((assistant) => (
               <div
                 key={assistant.id}
@@ -94,7 +95,7 @@ export default function ConfigAssistant({
                 )}
               </div>
             ))}
-          </div>
+          </ScrollArea>
         </div>
         {/* Renderizado condicional según el tipo de asistente */}
         <div className='flex flex-col bg-background w-[85%] border rounded p-2'>

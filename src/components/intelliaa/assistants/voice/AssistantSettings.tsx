@@ -28,6 +28,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import Vapi from "@vapi-ai/web";
 import { MultiSelectVoice } from "../../common/MultiSelectVoice";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AssistantSettingsProps {
   assistant: Assistant;
@@ -204,9 +205,11 @@ export default function AssistantSettings({
                         align='center'
                         className='p-4 w-[300px]'>
                         <p className='font-normal text-mute-foreground'>
-                          Ingrese aquí el mensaje o pregunta que desea enviar al
-                          asistente. Este será el punto de partida para generar
-                          una respuesta basada en inteligencia artificial.
+                          Ingrese un mensaje de bienvenida para el asistente de
+                          voz. Este mensaje debe proporcionar el contexto
+                          adecuado, ya sea para una llamada saliente iniciada
+                          por el asistente o para cuando el asistente reciba una
+                          llamada.
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -264,7 +267,7 @@ export default function AssistantSettings({
           </div>
         </CardContent>
         <CardContent className='w-[30%] px-2'>
-          <div className='flex flex-col py-4 overflow-y-auto'>
+          <ScrollArea className='flex flex-col py-4'>
             <div className='flex flex-col mb-4 p-1'>
               <Label htmlFor='temperature' className='mb-2'>
                 <span className='flex items-center gap-1'>
@@ -402,7 +405,10 @@ export default function AssistantSettings({
                         align='center'
                         className='p-4 w-[300px]'>
                         <p className='font-normal text-mute-foreground'>
-                          Seleccione una voz para el asistente.
+                          Seleccione la voz que desea usar para el asistente.
+                          Puede elegir entre diferentes opciones de voces
+                          disponibles para personalizar la experiencia del
+                          usuario.
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -532,7 +538,7 @@ export default function AssistantSettings({
                 </span>
               </Label>
             </div>
-          </div>
+          </ScrollArea>
         </CardContent>
       </div>
     </Card>

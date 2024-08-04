@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import { Assistant } from "@/interfaces/intelliaa";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AssistantSettingsProps {
   assistant: Assistant;
@@ -137,7 +138,7 @@ export default function AssistantSettings({
             service_id_rw={assistant.service_id_rw}
           />
         </div>
-        <div className='flex flex-col py-4 overflow-y-auto'>
+        <ScrollArea className='flex flex-col py-4'>
           <div className='flex flex-col mb-4'>
             <Label htmlFor='prompt' className='mb-2'>
               <span className='flex items-center gap-1'>
@@ -398,7 +399,7 @@ export default function AssistantSettings({
               </p>
             )}
           </div>
-        </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
