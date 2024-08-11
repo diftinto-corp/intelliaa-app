@@ -48,8 +48,8 @@ export default function ModalAssignAssistantToNumber({
         if (Array.isArray(result)) {
           // Filtrar asistentes donde active_number es null
           const filteredAssistants = result.filter(
-            (assistant: { active_number: false }) =>
-              assistant.active_number === false
+            (assistant: { type_assistant: string }) =>
+              assistant.type_assistant === "voice"
           );
 
           setAssistants(filteredAssistants);
