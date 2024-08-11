@@ -13,9 +13,9 @@ interface NumberDetails {
 }
 
 interface PricingInfo {
-  number_type: string;
-  base_price: string;
-  current_price: string;
+  numberType: string;
+  basePrice: string;
+  currentPrice: string;
 }
 
 interface CountryInfo {
@@ -49,9 +49,9 @@ async function fetchPhoneNumberCountry(
 
     const pricingInfo: PricingInfo[] = countryPricing.phoneNumberPrices.map(
       (price) => ({
-        number_type: price.number_type ?? "",
-        base_price: String(price.base_price ?? ""),
-        current_price: String(price.current_price ?? ""),
+        numberType: price.numberType ?? "",
+        basePrice: String(price.basePrice ?? ""),
+        currentPrice: String(price.currentPrice ?? ""),
       })
     );
 
@@ -114,11 +114,11 @@ async function listAvailableNumbers(
     const endIndex = startIndex + pageSize;
     const pageResultsSlice = pageResults.slice(startIndex, endIndex);
 
-    const priceInfo = pricing.find((p) => p.number_type === type);
+    const priceInfo = pricing.find((p) => p.numberType === type);
 
     const numberDetails = pageResultsSlice.map((number) => ({
       number: number.phoneNumber,
-      price: priceInfo ? `$ ${priceInfo.current_price} c/mes` : "N/A",
+      price: priceInfo ? `$ ${priceInfo.currentPrice} c/mes` : "N/A",
     }));
 
     return {
