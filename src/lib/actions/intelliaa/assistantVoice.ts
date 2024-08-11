@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ba } from "@upstash/redis/zmscore-80635339";
 
 const createAssistantVoiceVapi = async (
   account_id: string,
@@ -44,6 +45,7 @@ const createAssistantVoiceVapi = async (
       voicemailDetection: {
         provider: "twilio",
       },
+      backgroundSound: "office",
     };
     const headers = {
       "Content-Type": "application/json",
@@ -77,6 +79,7 @@ const createAssistantVoiceVapi = async (
             namespace: namespace,
             voice_assistant_id: vapiData.id,
             detect_emotion: true,
+            background_office: true,
           },
         ])
         .select();

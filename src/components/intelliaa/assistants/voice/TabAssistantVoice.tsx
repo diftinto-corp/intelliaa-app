@@ -139,7 +139,7 @@ export default function TabAssistant({
         assistant.welcome_assistant || "Hola, ¿En que te puedo ayudar?"
       );
       setDetectEmotion(assistant.detect_emotion || false);
-      setBackgroundOffice(assistant.background_office || false);
+      setBackgroundOffice(assistant.background_office || true);
       setRecordCall(assistant.record_call || false);
       setSelectedDocuments(assistant.documents_vapi || []);
       setBdDocs(assistant.docs_keys || []);
