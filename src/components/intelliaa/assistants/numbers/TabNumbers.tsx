@@ -376,6 +376,7 @@ export function TabsNumber() {
             <CardTitle>Números Activos</CardTitle>
             <CardDescription>
               Aquí puedes ver los números telefónicos que tienes activos en tu
+              cuenta.
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-2'>

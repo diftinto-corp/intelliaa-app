@@ -43,8 +43,6 @@ export default function ModalAssignAssistantToNumber({
 
         const result = await GetAllAssistants(account_id);
 
-        console.log("Assistants:", result);
-
         if (Array.isArray(result)) {
           // Filtrar asistentes donde active_number es null
           const filteredAssistants = result.filter(
