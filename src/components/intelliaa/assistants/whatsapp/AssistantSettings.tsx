@@ -89,7 +89,7 @@ export default function AssistantSettings({
   handleSaveAssistant,
 }: AssistantSettingsProps) {
   return (
-    <Card className='w-[50%] py-6'>
+    <Card className='w-[50%] py-6 overflow-y-auto'>
       <CardContent>
         <div className='flex justify-end gap-2 items-center'>
           {!isWhatsappActivated ? (
@@ -138,7 +138,7 @@ export default function AssistantSettings({
             service_id_rw={assistant.service_id_rw}
           />
         </div>
-        <ScrollArea className='flex flex-col py-4'>
+        <div className='flex flex-col'>
           <div className='flex flex-col mb-4'>
             <Label htmlFor='prompt' className='mb-2'>
               <span className='flex items-center gap-1'>
@@ -399,7 +399,7 @@ export default function AssistantSettings({
               </p>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );

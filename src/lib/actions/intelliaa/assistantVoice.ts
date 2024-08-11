@@ -266,8 +266,96 @@ const deleteAssistantVoice = async (
   }
 };
 
+const updateNumerAssistant = async (
+  id_assistant: string,
+  vapi_id_assistant: string,
+  name_assistant: string,
+  id_number_vapi: string,
+  account_id: string
+) => {
+  console.log(
+    "updateNumerAssistant",
+    id_assistant,
+    vapi_id_assistant,
+    name_assistant,
+    id_number_vapi,
+    account_id
+  );
+  const url = `https://api.vapi.ai/phone-number/${id_number_vapi}`;
+  const body = {
+    assistantId: vapi_id_assistant,
+  };
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers,
+    });
+
+    console.log("VAPI response status:", response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const vapiData = await response.json();
+    console.log("VAPI data:", vapiData);
+
+    const supabase = createClient();
+
+    const { data: updateActiveNumber, error: errorActiveNumber } =
+      await supabase
+        .from("active_numbers")
+        .update({
+          id_assistant,
+          name_assistant,
+          id_number_vapi,
+        })
+        .eq("account_id", account_id)
+        .eq("id_number_vapi", id_number_vapi)
+        .select();
+
+    if (errorActiveNumber) {
+      console.log(
+        `Error updating number in Supabase: ${errorActiveNumber.message}`
+      );
+      throw new Error(
+        `Error updating number in Supabase: ${errorActiveNumber.message}`
+      );
+    }
+
+    console.log(updateActiveNumber);
+
+    let activeNumber;
+    if (
+      updateActiveNumber[0].id_assistant !== "" &&
+      updateActiveNumber[0].name_assistant !== ""
+    ) {
+      console.log("Estan activos");
+      activeNumber = true;
+    } else {
+      console.log("No estan activos");
+      activeNumber = false;
+    }
+
+    console.log(activeNumber);
+    console.log(typeof activeNumber);
+    console.log(id_assistant);
+
+    return vapiData;
+  } catch (e: any) {
+    console.error("Error in updateNumerNumber:", e);
+    throw e;
+  }
+};
+
 export {
   createAssistantVoiceVapi,
   updateAssistantVoiceVapi,
   deleteAssistantVoice,
+  updateNumerAssistant,
 };

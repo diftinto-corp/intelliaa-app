@@ -586,6 +586,22 @@ const getAssistantsVoice = async () => {
   return data;
 };
 
+const purchaseNumber = async (account_id: string) => {
+  const supabaseClient = createClient();
+
+  try {
+    const activeNumbers = supabaseClient
+      .from("active_numbers")
+      .select("*")
+      .eq("account_id", account_id);
+
+    console.log("Active numbers:", activeNumbers);
+    return activeNumbers;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export {
   AssistantsTemplateList,
   NewAssistant,
@@ -601,4 +617,5 @@ export {
   wsStatusActiveUtil,
   deleteAssistant,
   getAssistantsVoice,
+  purchaseNumber,
 };

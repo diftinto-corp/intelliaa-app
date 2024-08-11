@@ -8,6 +8,7 @@ import {
   CodeXmlIcon,
   Package2,
   FileBarChart2,
+  Hash,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,6 +23,7 @@ function NavSideBarComponent({ path }: any) {
     { name: "Asistente", url: `/${safePath}/assistants`, Icon: Bot },
     { name: "Documentos", url: `/${safePath}/documents`, Icon: FileBox },
     { name: "Reportes", url: `/${safePath}/reports`, Icon: FileBarChart2 },
+    { name: "Números", url: `/${safePath}/numbers`, Icon: Hash },
     // { name: "Herramientas", url: `/${path}/tools`, Icon: CodeXmlIcon },
   ];
 
@@ -52,6 +54,7 @@ function NavSideBarResponsiveComponent({ path }: any) {
     { name: "Asistentes", url: `/${safePath}/assistants`, Icon: Bot },
     { name: "Documentos", url: `/${safePath}/documents`, Icon: FileBox },
     { name: "Llamadas", url: `/${safePath}/reports`, Icon: PhoneForwarded },
+    { name: "Numeros", url: `/${safePath}/numbers`, Icon: Hash },
   ];
 
   return (

@@ -113,7 +113,7 @@ export default function Dashboard({ accountSlug, children }: DashboardProps) {
           <div className='w-full flex-1'></div>
           <UserAccountBtn path={accountSlug} />
         </header>
-        <main className='flex md:absolute bg-foreground md:w-[80%] lg:w-[85%] mt-14 lg:mt-[60px]  right-0 flex-col'>
+        <main className='flex md:absolute bg-foreground md:w-[80%] lg:w-[85%] min-h-[93vh] mt-14 lg:mt-[60px]  right-0 flex-col'>
           {children}
         </main>
       </div>
