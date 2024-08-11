@@ -12,15 +12,15 @@ interface NumberDetails {
   price: string;
 }
 
-interface PricingInfo {
-  numberType: string;
-  basePrice: number;
-  currentPrice: number;
-}
-
 interface CountryInfo {
   country: string;
   isoCountry: string;
+}
+
+interface PricingInfo {
+  numberType?: string;
+  basePrice?: number;
+  currentPrice?: number;
 }
 
 interface ListAvailableNumbersResult {
@@ -39,7 +39,7 @@ async function fetchPhoneNumberCountry(
       .countries(countryCode)
       .fetch();
 
-    if (!countryPricing || !countryPricing.phoneNumberPrices) {
+    if (!countryPricing) {
       console.error(
         "No pricing information found for country code:",
         countryCode
@@ -47,17 +47,20 @@ async function fetchPhoneNumberCountry(
       return null;
     }
 
+    // Mapeo para adaptar los nombres de las propiedades
     const pricingInfo: PricingInfo[] = countryPricing.phoneNumberPrices.map(
-      (price) => ({
-        basePrice: price?.basePrice || 0,
-        currentPrice: price?.currentPrice || 0,
-        numberType: price?.numberType || "N/A",
+      (priceInfo: any) => ({
+        numberType: priceInfo.number_type,
+        basePrice: priceInfo.base_price
+          ? parseFloat(priceInfo.base_price)
+          : undefined,
+        currentPrice: priceInfo.current_price
+          ? parseFloat(priceInfo.current_price)
+          : undefined,
       })
     );
 
-    console.log("Pricing information fetched:", pricingInfo);
-
-    if (!pricingInfo) {
+    if (!pricingInfo.length) {
       console.error(
         "No pricing information found for country code:",
         countryCode
@@ -126,7 +129,7 @@ async function listAvailableNumbers(
 
     const priceInfo = pricing.find((p) => p.numberType === type);
 
-    const priceInfoString = priceInfo?.currentPrice.toString() || "0";
+    const priceInfoString = priceInfo?.currentPrice?.toString() || "0";
 
     const numberDetails = pageResultsSlice.map((number) => ({
       number: number.phoneNumber,
