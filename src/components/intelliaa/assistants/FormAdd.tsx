@@ -57,7 +57,7 @@ export default function FormAddComponent({
           template.id,
           template.prompt,
           template.temperature,
-          template.tokens
+          500
         );
       }
       if (type === "voice") {

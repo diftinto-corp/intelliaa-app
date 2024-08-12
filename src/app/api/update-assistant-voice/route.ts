@@ -18,6 +18,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       detectEmotion,
       id_assistant_vapi,
       fileIds,
+      endCallPhrases,
+      endCallMessage,
+      voicemailMessage,
     } = body as {
       id_assistant: string;
       prompt: string;
@@ -30,7 +33,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       detectEmotion: boolean;
       id_assistant_vapi: string;
       fileIds: string[];
+      endCallPhrases: string[];
+      endCallMessage: string;
+      voicemailMessage: string;
     };
+
+    console.log(endCallPhrases, endCallMessage, voicemailMessage);
 
     const response = await updateAssistantVoiceVapi(
       id_assistant,
@@ -43,7 +51,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       backgroundOffice,
       detectEmotion,
       id_assistant_vapi,
-      fileIds
+      fileIds,
+      endCallPhrases,
+      endCallMessage,
+      voicemailMessage
     );
 
     // Asegurarse de que response es serializable

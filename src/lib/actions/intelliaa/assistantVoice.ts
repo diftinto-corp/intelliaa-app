@@ -46,6 +46,15 @@ const createAssistantVoiceVapi = async (
         provider: "twilio",
       },
       backgroundSound: "office",
+      endCallMessage: "Hasta luego, gracias por usar nuestro servicio",
+      endCallPhrases: [
+        "hasta luego",
+        "adios",
+        "chao",
+        "bye",
+        "bye bye",
+        "hasta pronto",
+      ],
     };
     const headers = {
       "Content-Type": "application/json",
@@ -80,6 +89,15 @@ const createAssistantVoiceVapi = async (
             voice_assistant_id: vapiData.id,
             detect_emotion: true,
             background_office: true,
+            end_call_phrases: [
+              "hasta luego",
+              "adios",
+              "chao",
+              "bye",
+              "bye bye",
+              "hasta pronto",
+            ],
+            end_call_message: "Hasta luego, gracias por usar nuestro servicio",
           },
         ])
         .select();
@@ -110,7 +128,10 @@ const updateAssistantVoiceVapi = async (
   backgroundOffice: boolean,
   detectEmotion: boolean,
   id_assistant_vapi: string,
-  fileIds: string[]
+  fileIds: string[],
+  endCallPhrases: string[],
+  endCallMessage: string,
+  voicemailMessage: string
 ) => {
   let backgroundSound = "off";
 
@@ -146,6 +167,12 @@ const updateAssistantVoiceVapi = async (
     recordingEnabled: recordCall,
     firstMessage: welcomeMessage,
     backgroundSound: backgroundSound,
+    voicemailDetection: {
+      provider: "twilio",
+    },
+    endCallPhrases: endCallPhrases,
+    endCallMessage: endCallMessage,
+    voicemailMessage: voicemailMessage,
   };
   const headers = {
     "Content-Type": "application/json",
@@ -169,6 +196,9 @@ const updateAssistantVoiceVapi = async (
         detect_emotion: detectEmotion,
         background_office: backgroundOffice,
         documents_vapi: fileIds,
+        end_call_phrases: endCallPhrases,
+        end_call_message: endCallMessage,
+        voicemail_message: voicemailMessage,
       })
       .eq("id", id_assistant);
 

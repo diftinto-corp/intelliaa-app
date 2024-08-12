@@ -301,7 +301,7 @@ export const MultiSelectVoice = React.forwardRef<
               onKeyDown={handleInputKeyDown}
             />
             <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandEmpty>No hay resultados.</CommandEmpty>
               <CommandGroup>
                 <CommandItem
                   key='all'
@@ -363,7 +363,7 @@ export const MultiSelectVoice = React.forwardRef<
             </CommandList>
           </Command>
         </PopoverContent>
-        {animation > 0 && selectedValues.length > 0 && (
+        {/* {animation > 0 && selectedValues.length > 0 && (
           <WandSparkles
             className={cn(
               "cursor-pointer my-2 text-foreground bg-background w-3 h-3",
@@ -371,7 +371,7 @@ export const MultiSelectVoice = React.forwardRef<
             )}
             onClick={() => setIsAnimating(!isAnimating)}
           />
-        )}
+        )} */}
       </Popover>
     );
   }

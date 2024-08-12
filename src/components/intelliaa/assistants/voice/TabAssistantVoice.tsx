@@ -55,6 +55,27 @@ export default function TabAssistant({
   const [welcomeMessage, setWelcomeMessage] = useState(
     assistant?.welcome_assistant || "Hola, ¿En que te puedo ayudar?"
   );
+  const [endCallPhrases, setEndCallPhrases] = useState(
+    assistant?.endCallPhrases || [
+      "hasta luego",
+      "adios",
+      "chao",
+      "bye",
+      "bye bye",
+      "hasta pronto",
+    ]
+  );
+
+  const [voicemailMessage, setVoicemailMessage] = useState(
+    assistant?.voicemailMessage || ""
+  );
+
+  const [endCallMessage, setEndCallMessage] = useState(
+    assistant?.endCallMessage ||
+      "Hasta luego, gracias por usar nuestro servicio"
+  );
+
+  console.log(endCallMessage);
   const [detectEmotion, setDetectEmotion] = useState<boolean>(
     assistant?.detect_emotion || false
   );
@@ -146,6 +167,21 @@ export default function TabAssistant({
       setIsChangeOptions(false);
       setLoading(false);
       setVoiceAssistantSelected(assistant.voice_assistant || "");
+      setEndCallMessage(
+        assistant.endCallMessage ||
+          "Hasta luego, gracias por usar nuestro servicio"
+      );
+      setVoicemailMessage(assistant.voicemailMessage || "");
+      setEndCallPhrases(
+        assistant.endCallPhrases || [
+          "hasta luego",
+          "adios",
+          "chao",
+          "bye",
+          "bye bye",
+          "hasta pronto",
+        ]
+      );
     };
 
     fetchAssistant();
@@ -181,6 +217,8 @@ export default function TabAssistant({
     const account = await getAccount();
     const account_id = account.account_id;
 
+    console.log(endCallMessage);
+
     try {
       const res = await fetch("/api/update-assistant-voice", {
         method: "POST",
@@ -199,6 +237,9 @@ export default function TabAssistant({
           detectEmotion: detectEmotion,
           id_assistant_vapi: assistant?.voice_assistant_id,
           fileIds: selectedDocuments,
+          endCallPhrases: endCallPhrases,
+          endCallMessage: endCallMessage,
+          voicemailMessage: voicemailMessage,
         }),
       });
 
@@ -239,7 +280,7 @@ export default function TabAssistant({
         <TabsTrigger
           className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
           value='advanced'>
-          Avanzado
+          Incrustar asistente en tu web
         </TabsTrigger>
       </TabsList>
       <TabsContent value='settings'>
@@ -276,6 +317,12 @@ export default function TabAssistant({
             handleSaveAssistant={handleSaveAssistant}
             voiceAssistantSelected={voiceAssistantSelected}
             setVoiceAssistantSelected={setVoiceAssistantSelected}
+            endCallMessage={endCallMessage}
+            setEndCallMessage={setEndCallMessage}
+            voicemailMessage={voicemailMessage}
+            setVoicemailMessage={setVoicemailMessage}
+            endCallPhrases={endCallPhrases}
+            setEndCallPhrases={setEndCallPhrases}
           />
         </div>
       </TabsContent>

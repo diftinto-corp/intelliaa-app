@@ -61,6 +61,12 @@ interface AssistantSettingsProps {
   setWelcomeMessageAssistant: Dispatch<SetStateAction<string>>;
   voiceAssistantSelected: string;
   setVoiceAssistantSelected: Dispatch<SetStateAction<string>>;
+  endCallMessage: string;
+  setEndCallMessage: Dispatch<SetStateAction<string>>;
+  voicemailMessage: string;
+  setVoicemailMessage: Dispatch<SetStateAction<string>>;
+  endCallPhrases: string[];
+  setEndCallPhrases: Dispatch<SetStateAction<string[]>>;
   bdDocs: any[];
 }
 
@@ -96,6 +102,12 @@ export default function AssistantSettings({
   setBackgroundOffice,
   voiceAssistantSelected,
   setVoiceAssistantSelected,
+  endCallMessage,
+  setEndCallMessage,
+  voicemailMessage,
+  setVoicemailMessage,
+  endCallPhrases,
+  setEndCallPhrases,
 }: AssistantSettingsProps) {
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -136,7 +148,7 @@ export default function AssistantSettings({
   };
 
   return (
-    <Card className='flex flex-col w-[100%]'>
+    <Card className='flex flex-col w-[100%] overflow-y-auto'>
       <div className='flex justify-end gap-2 items-center pt-6'>
         {!connected && (
           <Button onClick={handleCallAssistant} disabled={connecting}>
@@ -256,7 +268,7 @@ export default function AssistantSettings({
               <Textarea
                 name='prompt'
                 placeholder='Prompt'
-                className='mx-1 w-[95%] max-h-[500px] min-h-[400px] resize-none'
+                className='mx-1 w-[95%] max-h-[500px] min-h-[150px]'
                 onChange={(e) => {
                   setPromptState(e.target.value);
                   setIsChangeOptions(true);
@@ -264,10 +276,84 @@ export default function AssistantSettings({
                 value={promptState}
               />
             </div>
+            <div className='flex flex-col mt-4 p-1'>
+              <Label htmlFor='endCallMessage' className='mb-2'>
+                <span className='flex items-center gap-1'>
+                  Mensaje de fin de llamada
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle
+                          className='text-primary cursor-pointer'
+                          size={14}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side='bottom'
+                        align='center'
+                        className='p-4 w-[300px]'>
+                        <p className='font-normal text-mute-foreground'>
+                          Ingrese un mensaje de despedida para el asistente de
+                          voz. Este mensaje se mostrará al finalizar una
+                          llamada.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+              </Label>
+              <Textarea
+                name='endCallMessage'
+                placeholder='Mensaje de fin de llamada'
+                className='mx-1 w-[95%]'
+                onChange={(e) => {
+                  setEndCallMessage(e.target.value);
+                  setIsChangeOptions(true);
+                }}
+                value={endCallMessage}
+              />
+            </div>
+            <div className='flex flex-col mt-4 p-1'>
+              <Label htmlFor='voicemailMessage' className='mb-2'>
+                <span className='flex items-center gap-1'>
+                  Mensaje de buzón de voz
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle
+                          className='text-primary cursor-pointer'
+                          size={14}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side='bottom'
+                        align='center'
+                        className='p-4 w-[300px]'>
+                        <p className='font-normal text-mute-foreground'>
+                          Ingrese un mensaje para el buzón de voz del asistente.
+                          Este mensaje se mostrará cuando el asistente no pueda
+                          responder a una llamada.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+              </Label>
+              <Textarea
+                name='voicemailMessage'
+                placeholder='Mensaje de buzón de voz'
+                className='mx-1 w-[95%]'
+                onChange={(e) => {
+                  setVoicemailMessage(e.target.value);
+                  setIsChangeOptions(true);
+                }}
+                value={voicemailMessage}
+              />
+            </div>
           </div>
         </CardContent>
         <CardContent className='w-[30%] px-2'>
-          <ScrollArea className='flex flex-col py-4'>
+          <div className='flex flex-col py-4'>
             <div className='flex flex-col mb-4 p-1'>
               <Label htmlFor='temperature' className='mb-2'>
                 <span className='flex items-center gap-1'>
@@ -538,7 +624,43 @@ export default function AssistantSettings({
                 </span>
               </Label>
             </div>
-          </ScrollArea>
+            <div className='flex flex-col mt-4 p-1'>
+              <Label htmlFor='endCallPhrases' className='mb-2'>
+                <span className='flex items-center gap-1'>
+                  Frases de fin de llamada
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle
+                          className='text-primary cursor-pointer'
+                          size={14}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side='bottom'
+                        align='center'
+                        className='p-4 w-[300px]'>
+                        <p className='font-normal text-mute-foreground'>
+                          Ingrese una o varias frases que el asistente puede
+                          utilizar al finalizar una llamada.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+              </Label>
+              <Textarea
+                name='endCallPhrases'
+                placeholder='Frases de fin de llamada'
+                className='mx-1 w-[95%]'
+                onChange={(e) => {
+                  setEndCallPhrases(e.target.value.split("\n"));
+                  setIsChangeOptions(true);
+                }}
+                value={endCallPhrases.join("\n")}
+              />
+            </div>
+          </div>
         </CardContent>
       </div>
     </Card>

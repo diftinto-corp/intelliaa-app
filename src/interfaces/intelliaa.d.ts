@@ -26,6 +26,9 @@ export interface Assistant {
   record_call: boolean;
   voice_assistant_id: string;
   documents_vapi: string[];
+  endCallPhrases: string[];
+  endCallMessage: string;
+  voicemailMessage: string;
 }
 
 export interface Pdf_Doc {

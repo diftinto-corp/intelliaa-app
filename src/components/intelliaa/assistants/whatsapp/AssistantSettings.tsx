@@ -248,7 +248,7 @@ export default function AssistantSettings({
             <Slider
               className='mx-1 w-[95%]'
               name='tokens'
-              max={500}
+              max={1000}
               step={1}
               defaultValue={[assistant.token]}
               onValueChange={([value]) => {
