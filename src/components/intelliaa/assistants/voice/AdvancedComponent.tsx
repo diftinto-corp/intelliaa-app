@@ -65,8 +65,8 @@ export default function AdvancedComponent({
 
   <script defer="defer" src="https://diftinto-corp.github.io/ctc_out_intelliaa/static/js/main.js"></script>
   <int-widget 
-    id_number_vapi= "${number.id_number_vapi}"
-    voice_assistant_id= "${assistant.voice_assistant_id}"
+    id_number_vapi= "${number.id_number_vapi || ""}"
+    voice_assistant_id= "${assistant.voice_assistant_id || ""}"
     btn-color="#8200d1">
   </int-widget>`;
 
