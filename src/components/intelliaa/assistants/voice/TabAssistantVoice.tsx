@@ -326,7 +326,7 @@ export default function TabAssistant({
           />
         </div>
       </TabsContent>
-      <AdvancedComponent />
+      <AdvancedComponent assistant={assistant} />
     </Tabs>
   );
 }

@@ -38,8 +38,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       voicemailMessage: string;
     };
 
-    console.log(endCallPhrases, endCallMessage, voicemailMessage);
-
     const response = await updateAssistantVoiceVapi(
       id_assistant,
       prompt,

@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { ba } from "@upstash/redis/zmscore-80635339";
 
 const createAssistantVoiceVapi = async (
   account_id: string,
@@ -46,6 +45,7 @@ const createAssistantVoiceVapi = async (
         provider: "twilio",
       },
       backgroundSound: "office",
+      endCallFunctionEnabled: true,
       endCallMessage: "Hasta luego, gracias por usar nuestro servicio",
       endCallPhrases: [
         "hasta luego",
@@ -386,9 +386,134 @@ const updateNumerAssistant = async (
   }
 };
 
+const updateNumberActive = async (
+  id_number_vapi: string,
+  number_transfer: string,
+  voice_assistant_id: string
+) => {
+  const url1 = `https://api.vapi.ai/phone-number/${id_number_vapi}`;
+  const body1 = {
+    assistantId: voice_assistant_id,
+  };
+
+  const url2 = `https://api.vapi.ai/assistant/${voice_assistant_id}`;
+  const body2 = {
+    model: {
+      provider: "openai",
+      model: "gpt-4o-mini",
+    },
+    endCallFunctionEnabled: true,
+    forwardingPhoneNumber: number_transfer,
+  };
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
+  };
+
+  try {
+    // Realiza la primera solicitud a VAPI
+    const response1 = await fetch(url1, {
+      method: "PATCH",
+      body: JSON.stringify(body1),
+      headers,
+    });
+
+    console.log(
+      "VAPI response status (fallbackDestination):",
+      response1.status
+    );
+    if (!response1.ok) {
+      throw new Error(
+        `HTTP error in fallbackDestination update! status: ${response1.status}`
+      );
+    }
+
+    const vapiData1 = await response1.json();
+    console.log("VAPI data (fallbackDestination):", vapiData1);
+
+    // Realiza la segunda solicitud a VAPI
+    const response2 = await fetch(url2, {
+      method: "PATCH",
+      body: JSON.stringify(body2),
+      headers,
+    });
+
+    console.log(
+      "VAPI response status (forwardingPhoneNumber):",
+      response2.status
+    );
+    if (!response2.ok) {
+      throw new Error(
+        `HTTP error in forwardingPhoneNumber update! status: ${response2.status}`
+      );
+    }
+
+    const vapiData2 = await response2.json();
+    console.log("VAPI data (forwardingPhoneNumber):", vapiData2);
+
+    // Retorna ambos resultados en un objeto
+    return {
+      fallbackDestinationUpdate: vapiData1,
+      forwardingPhoneNumberUpdate: vapiData2,
+    };
+  } catch (e: any) {
+    console.error("Error in updateNumberActive:", e);
+    throw e;
+  }
+};
+
+const makeCallAssistant = async (
+  id_number_vapi: string,
+  voice_assistant_id: string,
+  numberTocall: string
+) => {
+  console.log(
+    "makeCallAssistant",
+    id_number_vapi,
+    voice_assistant_id,
+    numberTocall
+  );
+
+  try {
+    const url = "https://api.vapi.ai/call";
+    const body = {
+      phoneNumberId: id_number_vapi,
+      assistantId: voice_assistant_id,
+      customer: {
+        number: numberTocall,
+      },
+    };
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers,
+    });
+
+    if (!response.ok) {
+      console.log(`Error making call: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const vapiData = await response.json();
+
+    return vapiData;
+  } catch (e: any) {
+    console.error("Error in makeCallAssistant:", e);
+    throw e;
+  }
+};
+
 export {
   createAssistantVoiceVapi,
   updateAssistantVoiceVapi,
   deleteAssistantVoice,
   updateNumerAssistant,
+  updateNumberActive,
+  makeCallAssistant,
 };
