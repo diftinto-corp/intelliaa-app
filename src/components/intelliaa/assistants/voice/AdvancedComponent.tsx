@@ -1,4 +1,4 @@
-"use client";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -17,30 +17,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import ModalAddQa from "./ModalAddQa";
-import {
-  Copy,
-  HelpCircle,
-  Loader2,
-  PhoneCall,
-  Save,
-  Trash2,
-} from "lucide-react";
-import { TabsContent } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import EmbedCodeBlock from "./EmbedCodeBlock";
-import { useEffect, useState } from "react";
-
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { Assistant } from "@/interfaces/intelliaa";
-import { set } from "date-fns";
+import { HelpCircle } from "lucide-react";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Loader2 } from "lucide-react";
+import { Save } from "lucide-react";
+import { PhoneCall } from "lucide-react";
+import { TabsContent } from "@/components/ui/tabs";
+import EmbedCodeBlock from "./EmbedCodeBlock";
 
 interface NumbersActive {
   id: string;
@@ -55,23 +47,21 @@ export default function AdvancedComponent({
   assistant: Assistant;
 }) {
   const [numbers, setNumbers] = useState<NumbersActive[]>([]);
-  const [number, setNumber] = useState<NumbersActive>({} as NumbersActive);
+  const [number, setNumber] = useState<NumbersActive | null>(null);
   const [numberTransfer, setNumberTransfer] = useState<string>("");
   const [loadingSave, setLoadingSave] = useState(false);
   const [numberToCall, setNumberToCall] = useState<string>("");
   const [loadingCall, setLoadingCall] = useState(false);
 
   const embedCode = `
-
-  <script defer="defer" src="https://diftinto-corp.github.io/ctc_out_intelliaa/static/js/main.js"></script>
-  <int-widget 
-    id_number_vapi= "${number.id_number_vapi || ""}"
-    voice_assistant_id= "${assistant.voice_assistant_id || ""}"
-    btn-color="#8200d1">
-  </int-widget>`;
+    <script defer="defer" src="https://diftinto-corp.github.io/ctc_out_intelliaa/static/js/main.js"></script>
+    <int-widget 
+      id_number_vapi="${number?.id_number_vapi || ""}"
+      voice_assistant_id="${assistant.voice_assistant_id || ""}"
+      btn-color="#8200d1">
+    </int-widget>`;
 
   useEffect(() => {
-    //get numbers from supabase table active_numbers
     const getNumbers = async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("active_numbers").select("*");
@@ -93,66 +83,100 @@ export default function AdvancedComponent({
         console.log("Error", error);
         return;
       }
-      setNumber(
-        data[0] || {
-          id: "",
-          number: "",
-          is_active: false,
-        }
-      );
+      setNumber(data[0] || null);
       setNumberTransfer(data[0]?.number_transfer || "");
     };
 
     getNumber();
     getNumbers();
-  }, []);
+  }, [assistant.id]);
 
   const handleSaveNumber = async () => {
-    if (!number) return;
-
-    setLoadingSave(true);
     const supabase = createClient();
 
+    setLoadingSave(true);
     try {
-      const { data, error } = await supabase
-        .from("active_numbers")
-        .update({
-          id_assistant: assistant.id,
-          name_assistant: assistant.name,
-          is_active: true,
-          number_transfer: numberTransfer,
-        })
-        .eq("number", number.number)
-        .select("*");
+      if (number === null) {
+        // Handle saving "Sin número"
+        const { data, error } = await supabase
+          .from("active_numbers")
+          .update({
+            id_assistant: "",
+            name_assistant: "",
+            is_active: false,
+            number_transfer: "",
+          })
+          .eq("id_assistant", assistant.id)
+          .select("*");
 
-      if (error) {
-        throw new Error(`Supabase error: ${error.message}`);
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error("No data returned from Supabase");
+        }
+
+        const res = await fetch("/api/update-active-number", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_number_vapi: data[0].id_number_vapi,
+            number_transfer: "",
+            voice_assistant_id: null,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const result = await res.json();
+        console.log("API Response:", result);
+        return result;
+      } else {
+        // Handle saving selected number
+        const { data, error } = await supabase
+          .from("active_numbers")
+          .update({
+            id_assistant: assistant.id,
+            name_assistant: assistant.name,
+            is_active: true,
+            number_transfer: numberTransfer,
+          })
+          .eq("number", number.number)
+          .select("*");
+
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error("No data returned from Supabase");
+        }
+
+        const res = await fetch("/api/update-active-number", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_number_vapi: data[0].id_number_vapi,
+            number_transfer: data[0].number_transfer,
+            voice_assistant_id: assistant.voice_assistant_id,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const result = await res.json();
+        console.log("API Response:", result);
+        return result;
       }
-
-      if (!data || data.length === 0) {
-        throw new Error("No data returned from Supabase");
-      }
-
-      console.log(data[0].number_transfer);
-
-      const res = await fetch("/api/update-active-number", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_number_vapi: data[0].id_number_vapi,
-          number_transfer: data[0].number_transfer,
-          voice_assistant_id: assistant.voice_assistant_id,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const result = await res.json();
-      console.log("API Response:", result);
     } catch (error) {
       console.error("Error during handleSaveNumber:", error);
     } finally {
@@ -169,7 +193,7 @@ export default function AdvancedComponent({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id_number_vapi: number.id_number_vapi,
+          id_number_vapi: number?.id_number_vapi || "",
           voice_assistant_id: assistant.voice_assistant_id,
           numberTocall: numberToCall,
         }),
@@ -218,18 +242,23 @@ export default function AdvancedComponent({
                     </Label>
                     <Select
                       onValueChange={(value) => {
-                        const selectedNumber = numbers.find(
-                          (num) => num.number === value
-                        );
-                        setNumber(selectedNumber || ({} as NumbersActive));
+                        if (value === "sin numero") {
+                          setNumber(null);
+                        } else {
+                          const selectedNumber = numbers.find(
+                            (num) => num.number === value
+                          );
+                          setNumber(selectedNumber || null);
+                        }
                       }}
-                      value={number?.number || ""}>
+                      value={number?.number || "sin numero"}>
                       <SelectTrigger className='w-[50%]'>
                         <SelectValue placeholder='Seleccionar Número' />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Número</SelectLabel>
+                          <SelectItem value='sin numero'>Sin número</SelectItem>
                           {numbers.map((num) => (
                             <SelectItem key={num.id} value={num.number}>
                               {num.number}
@@ -274,7 +303,8 @@ export default function AdvancedComponent({
                   </div>
                   <Button
                     className='bg-primary text-white mt-2'
-                    onClick={handleSaveNumber}>
+                    onClick={handleSaveNumber}
+                    disabled={loadingSave}>
                     {loadingSave ? (
                       <>
                         <Loader2 size={17} className=' animate-spin mr-2' />
@@ -283,68 +313,35 @@ export default function AdvancedComponent({
                     ) : (
                       <>
                         <Save size={17} className='mr-2' />
-                        Guardar
+                        Guardar Número
                       </>
                     )}
                   </Button>
-                </div>
-                <div className='border rounded-sm p-4 mt-4'>
-                  <div className='flex flex-col mb-4'>
-                    <Label htmlFor='prompt' className='mb-2'>
-                      <span className='flex items-center gap-1'>
-                        Probar llamada Saliente
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle
-                                className='text-primary cursor-pointer'
-                                size={14}
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side='bottom'
-                              align='center'
-                              className='p-4 w-[300px]'>
-                              <p className='font-normal text-mute-foreground'>
-                                Haz una llamada de prueba a un número
-                                telefónico.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </span>
-                    </Label>
-                    <div className='flex w-full'>
-                      <Input
-                        name='numberTransfer'
-                        placeholder='+1 123 456 7890'
-                        className='mx-1 w-[50%]'
-                        onChange={(e) => setNumberToCall(e.target.value)}
-                        value={numberToCall}
-                      />
-                      <Button
-                        className='bg-primary text-white ml-2'
-                        onClick={handleCall}>
-                        {loadingCall ? (
-                          <>
-                            <Loader2 size={17} className=' animate-spin mr-2' />
-                            Llamando...
-                          </>
-                        ) : (
-                          <>
-                            <PhoneCall size={17} className='mr-2' />
-                            Llamar
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </CardDescription>
         </CardContent>
-        <CardFooter></CardFooter>
+        <CardFooter>
+          <div className='flex justify-between gap-4'>
+            <Button
+              className='bg-primary text-white'
+              onClick={handleCall}
+              disabled={loadingCall}>
+              {loadingCall ? (
+                <>
+                  <Loader2 size={17} className='animate-spin mr-2' />
+                  Llamando...
+                </>
+              ) : (
+                <>
+                  <PhoneCall size={17} className='mr-2' />
+                  Realizar llamada
+                </>
+              )}
+            </Button>
+          </div>
+        </CardFooter>
       </Card>
     </TabsContent>
   );

@@ -391,6 +391,8 @@ const updateNumberActive = async (
   number_transfer: string,
   voice_assistant_id: string
 ) => {
+  console.log(id_number_vapi, number_transfer, voice_assistant_id);
+
   const url1 = `https://api.vapi.ai/phone-number/${id_number_vapi}`;
   const body1 = {
     assistantId: voice_assistant_id,
