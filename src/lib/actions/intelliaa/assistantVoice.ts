@@ -25,7 +25,7 @@ const createAssistantVoiceVapi = async (
       model: {
         messages: [
           {
-            content: prompt,
+            content: `${prompt} Cuando se te pida transferir, usa la función transferCall y cuando el usuario se despida, usa la función endCall.`,
             role: "system",
           },
         ],
@@ -82,7 +82,7 @@ const createAssistantVoiceVapi = async (
             name,
             type_assistant: type,
             template_id: template_id,
-            prompt: prompt,
+            prompt: `${prompt} Cuando se te pida transferir, usa la función transferCall y cuando el usuario se despida, usa la función endCall.`,
             temperature: temperature,
             token: tokens,
             namespace: namespace,
