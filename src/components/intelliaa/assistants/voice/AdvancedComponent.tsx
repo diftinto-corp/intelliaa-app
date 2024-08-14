@@ -55,11 +55,11 @@ export default function AdvancedComponent({
 
   const embedCode = `
     <script defer="defer" src="https://diftinto-corp.github.io/ctc_out_intelliaa/static/js/main.js"></script>
-    <int-widget 
+    <ctc_intelliaa 
       id_number_vapi="${number?.id_number_vapi || ""}"
       voice_assistant_id="${assistant.voice_assistant_id || ""}"
       btn-color="#8200d1">
-    </int-widget>`;
+    </ctc_intelliaa>`;
 
   useEffect(() => {
     const getNumbers = async () => {
@@ -318,30 +318,63 @@ export default function AdvancedComponent({
                     )}
                   </Button>
                 </div>
+
+                <div className='flex flex-col mt-4'>
+                  <Label htmlFor='numberToCall' className='mb-2'>
+                    <span className='flex items-center gap-1'>
+                      Realizar llamada de prueba
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle
+                              className='text-primary cursor-pointer'
+                              size={14}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side='bottom'
+                            align='center'
+                            className='p-4 w-[300px]'>
+                            <p className='font-normal text-mute-foreground'>
+                              Ingresa el número telefónico al que se realizará
+                              la llamada de prueba.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                  </Label>
+                  <div className='flex items-center gap-2'>
+                    <Input
+                      name='numberToCall'
+                      placeholder='+1 123 456 7890'
+                      className='mx-1 w-[50%]'
+                      onChange={(e) => setNumberToCall(e.target.value)}
+                      value={numberToCall}
+                    />
+                    <Button
+                      className='bg-primary text-white'
+                      onClick={handleCall}
+                      disabled={loadingCall}>
+                      {loadingCall ? (
+                        <>
+                          <Loader2 size={17} className='animate-spin mr-2' />
+                          Llamando...
+                        </>
+                      ) : (
+                        <>
+                          <PhoneCall size={17} className='mr-2' />
+                          Realizar llamada
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </CardDescription>
         </CardContent>
-        <CardFooter>
-          <div className='flex justify-between gap-4'>
-            <Button
-              className='bg-primary text-white'
-              onClick={handleCall}
-              disabled={loadingCall}>
-              {loadingCall ? (
-                <>
-                  <Loader2 size={17} className='animate-spin mr-2' />
-                  Llamando...
-                </>
-              ) : (
-                <>
-                  <PhoneCall size={17} className='mr-2' />
-                  Realizar llamada
-                </>
-              )}
-            </Button>
-          </div>
-        </CardFooter>
+        <CardFooter></CardFooter>
       </Card>
     </TabsContent>
   );
