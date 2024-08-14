@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/intelliaa/documents";
 import {
   activateWs,
+  getAssistantsVoice,
   updateAssistant,
 } from "@/lib/actions/intelliaa/assistants";
 import { activeWsService } from "@/lib/actions/intelliaa/railway";
@@ -32,6 +33,12 @@ interface TabAssistantProps {
   setAssistant: (assistant: Assistant) => void;
   qaList: QAItem[];
   setQaList: (qaList: QAItem[]) => void;
+}
+
+interface voiceAssistant {
+  id: string;
+  name: string;
+  id_elevenlabs: string;
 }
 
 export default function TabAssistant({
@@ -67,6 +74,10 @@ export default function TabAssistant({
   const [loadingActiveWs, setLoadingActiveWs] = useState(false);
   const [errorMessageNumberTransfer, setErrorMessageNumberTransfer] =
     useState("");
+  const [voiceAssistant, setVoiceAssistant] = useState<voiceAssistant[]>([]);
+  const [voiceAssistantSelected, setVoiceAssistantSelected] = useState(
+    assistant.voice_assistant || ""
+  );
 
   const supabase = createClient();
 
@@ -86,6 +97,17 @@ export default function TabAssistant({
         setDocuments(newDocuments);
       }
     };
+    const getAssistantVoice = async () => {
+      const data = await getAssistantsVoice();
+
+      if (data.length === 0) {
+        return;
+      }
+
+      setVoiceAssistant(data);
+    };
+
+    getAssistantVoice();
     getDocuments();
   }, []);
 
@@ -105,6 +127,7 @@ export default function TabAssistant({
       setBdDocs(assistant.docs_keys || []);
       setIsChangeOptions(false);
       setLoading(false);
+      setVoiceAssistantSelected(assistant.voice_assistant || "");
     };
 
     fetchAssistant();
@@ -255,6 +278,7 @@ export default function TabAssistant({
       keyword_transfer_ws: KeywordTransfer,
       number_transfer_ws: NumberTransfer,
       namespace: assistant.namespace,
+      voice_assistant: voiceAssistantSelected,
     };
 
     const newBdDocs = await updateAssistant(
@@ -311,6 +335,10 @@ export default function TabAssistant({
             setErrorMessageNumberTransfer={setErrorMessageNumberTransfer}
             handleActivateWhatsapp={handleActivateWhatsapp}
             handleSaveAssistant={handleSaveAssistant}
+            voiceAssistantSelected={voiceAssistantSelected}
+            setVoiceAssistantSelected={setVoiceAssistantSelected}
+            voiceAssistant={voiceAssistant}
+            setVoiceAssistant={setVoiceAssistant}
           />
         </div>
       </TabsContent>

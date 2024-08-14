@@ -24,6 +24,7 @@ interface AssistantData {
   keyword_transfer_ws?: any;
   number_transfer_ws?: any;
   namespace?: string;
+  voice_assistant?: string;
 }
 
 const username = process.env.NEXT_PUBLIC_USERNAME_FLOWISE;
@@ -146,6 +147,7 @@ const updateAssistant = async (
     keyword_transfer_ws,
     number_transfer_ws,
     namespace: currentNamespace,
+    voice_assistant,
   } = dataAssistant;
 
   const supabase = createClient();
@@ -221,6 +223,7 @@ const updateAssistant = async (
         docs_keys,
         keyword_transfer_ws,
         number_transfer_ws,
+        voice_assistant,
       })
       .eq("account_id", account_id)
       .eq("id", id);
@@ -246,6 +249,7 @@ const updateAssistant = async (
           docs_keys,
           keyword_transfer_ws,
           number_transfer_ws,
+          voice_assistant,
         })
         .eq("account_id", account_id)
         .eq("id", id);

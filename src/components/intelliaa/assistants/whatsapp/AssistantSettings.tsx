@@ -18,6 +18,15 @@ import {
 import { motion } from "framer-motion";
 import { Assistant } from "@/interfaces/intelliaa";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AssistantSettingsProps {
   assistant: Assistant;
@@ -59,6 +68,10 @@ interface AssistantSettingsProps {
   setErrorMessageNumberTransfer: Dispatch<SetStateAction<string>>;
   handleActivateWhatsapp: () => Promise<void>;
   handleSaveAssistant: (e: React.FormEvent) => Promise<void>;
+  voiceAssistantSelected: string;
+  setVoiceAssistantSelected: Dispatch<SetStateAction<string>>;
+  voiceAssistant: any[];
+  setVoiceAssistant: Dispatch<SetStateAction<any[]>>;
 }
 
 export default function AssistantSettings({
@@ -87,6 +100,10 @@ export default function AssistantSettings({
   setErrorMessageNumberTransfer,
   handleActivateWhatsapp,
   handleSaveAssistant,
+  voiceAssistantSelected,
+  setVoiceAssistantSelected,
+  voiceAssistant,
+  setVoiceAssistant,
 }: AssistantSettingsProps) {
   return (
     <Card className='w-[50%] py-6 overflow-y-auto'>
@@ -300,6 +317,54 @@ export default function AssistantSettings({
                 console.log("Options changed:", change)
               }
             />
+          </div>
+          <div className='flex flex-col mb-4 p-1'>
+            <Label htmlFor='voiceAssistant' className='mb-2'>
+              <span className='flex items-center gap-1'>
+                Voz del asistente
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle
+                        className='text-primary cursor-pointer'
+                        size={14}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side='bottom'
+                      align='center'
+                      className='p-4 w-[300px]'>
+                      <p className='font-normal text-mute-foreground'>
+                        Seleccione la voz que desea usar para el asistente.
+                        Puede elegir entre diferentes opciones de voces
+                        disponibles para personalizar la experiencia del
+                        usuario.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </span>
+            </Label>
+            <Select
+              value={voiceAssistantSelected}
+              onValueChange={(value) => {
+                setVoiceAssistantSelected(value);
+                setIsChangeOptions(true);
+              }}>
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Selecciona una voz' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Voces</SelectLabel>
+                  {voiceAssistant.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id_elevenlab}>
+                      {voice.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <div className='flex flex-col'>
             <p className='mb-4 text-lg font-semibold'>Opciones de Whatsapp</p>
