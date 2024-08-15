@@ -106,7 +106,7 @@ export default function AssistantSettings({
   setVoiceAssistant,
 }: AssistantSettingsProps) {
   return (
-    <Card className='w-[50%] py-6 overflow-y-auto'>
+    <Card className='w-[60%] pt-6 overflow-y-auto'>
       <CardContent>
         <div className='flex justify-end gap-2 items-center'>
           {!isWhatsappActivated ? (
@@ -185,7 +185,7 @@ export default function AssistantSettings({
             <Textarea
               name='prompt'
               placeholder='Prompt'
-              className='mx-1 w-[95%]'
+              className='mx-1 w-[95%] min-h-[150px]'
               onChange={(e) => {
                 setPromptState(e.target.value);
                 setIsChangeOptions(true);
@@ -410,7 +410,7 @@ export default function AssistantSettings({
               {...(isWhatsappActivated && { disabled: true })}
             />
           </div>
-          <div className='flex flex-col mb-4'>
+          <div className='flex flex-col'>
             <Label htmlFor='prompt' className='mb-2'>
               <span className='flex items-center gap-1'>
                 Transferencia de número de Whatsapp.

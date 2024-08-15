@@ -184,7 +184,7 @@ export default function ChatWsComponent({
   }, [messages]);
 
   return (
-    <Card className='flex flex-col justify-between w-[50%]'>
+    <Card className='flex flex-col justify-between w-[40%]'>
       <CardContent>
         <div className='flex items-center justify-between my-5'>
           <Label htmlFor='assistant-name' className='text-lg'>

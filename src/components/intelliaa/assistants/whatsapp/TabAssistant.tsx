@@ -308,7 +308,6 @@ export default function TabAssistant({
       </TabsList>
       <TabsContent value='settings'>
         <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh] '>
-          <ChatWsComponent assistant={assistant} />
           <AssistantSettings
             assistant={assistant}
             temperatureState={temperatureState}
@@ -340,6 +339,7 @@ export default function TabAssistant({
             voiceAssistant={voiceAssistant}
             setVoiceAssistant={setVoiceAssistant}
           />
+          <ChatWsComponent assistant={assistant} />
         </div>
       </TabsContent>
       <QuestionsAndAnswers
