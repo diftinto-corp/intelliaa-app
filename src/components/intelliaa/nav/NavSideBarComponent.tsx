@@ -37,7 +37,7 @@ function NavSideBarComponent({ path }: any) {
             (pathName === url
               ? " bg-teal-900 text-primary "
               : "text-muted-foreground") +
-            " flex items-center gap-4 rounded-sm px-3 py-2 hover:bg-teal-900 hover:text-primary"
+            " flex items-center gap-4 rounded-sm px-3 py-2 hover:bg-teal-900 hover:text-primary mb-2"
           }>
           <Icon className='h-4 w-4' />
           {name}
@@ -71,7 +71,7 @@ function NavSideBarResponsiveComponent({ path }: any) {
             (safePath === url
               ? "bg-white text-primary"
               : "text-muted-foreground") +
-            " mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground"
+            " mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground mb-2"
           }>
           <Icon className='h-5 w-5' />
           {name}

@@ -79,7 +79,7 @@ export default function ConfigAssistant({
             {assistantsListPage.map((assistant) => (
               <div
                 key={assistant.id}
-                className={`flex items-center gap-4 justify-between rounded-sm px-3 py-2 border hover:bg-teal-900 text-sm text-muted-foreground font-semibold hover:text-primary cursor-pointer ${
+                className={`flex items-center gap-4 justify-between rounded-sm px-3 py-2 mb-2 border hover:bg-teal-900 text-sm text-muted-foreground font-semibold hover:text-primary cursor-pointer ${
                   assistantSelected?.id === assistant.id
                     ? "bg-teal-900 text-primary"
                     : ""
