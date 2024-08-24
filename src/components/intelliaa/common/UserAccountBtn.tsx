@@ -19,6 +19,8 @@ export default function UserAccountButton({ path }: any) {
   const { data: personalAccount } = usePersonalAccount();
 
   const safePath = path.accountSlug || "defaultPath";
+  console.log("safePath", safePath);
+  console.log(path);
 
   return (
     <DropdownMenu>
@@ -43,8 +45,8 @@ export default function UserAccountButton({ path }: any) {
           {/* <DropdownMenuItem asChild>
             <Link href='/dashboard'>My Account</Link>
           </DropdownMenuItem> */}
-          <DropdownMenuItem asChild>
-            <Link href={`/${safePath}/settings`}>Configuración</Link>
+          <DropdownMenuItem asChild className=' cursor-pointer'>
+            <Link href={`/${path}/settings`}>Configuración</Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

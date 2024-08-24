@@ -11,6 +11,8 @@ import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2 } from "lucide-react";
 import ModalDeleteDocument from "./ModalDeleteDocument";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function DetailsDocuments({
   documentSelected,
@@ -19,14 +21,16 @@ export default function DetailsDocuments({
   documentSelected: string;
   documentKey: string;
 }) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const [DocumentPdf, setDocumentPdf] = useState<Pdf_Doc>({} as Pdf_Doc);
   const [accountId, setAccountId] = useState<string>("" as string);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDocument = async () => {
-      const account = await getAccount();
-      const account_id = account?.account_id;
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const account_id = team_account?.account_id;
       setAccountId(account_id as string);
       const document = await getPdf_Doc(account_id, documentSelected);
       setDocumentPdf(document as unknown as Pdf_Doc);

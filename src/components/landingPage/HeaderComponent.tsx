@@ -8,7 +8,12 @@ import { useEffect, useRef, useState } from "react";
 
 const SCROLL_BOUNDARY = 120;
 
-export function HeaderComponent() {
+export function HeaderComponent({ session }: any) {
+  
+  const slug = JSON.parse(
+    localStorage.getItem("intelliaa-organization") || "{}"
+  );
+  
   const [scrollY, setScrollY] = useState(0);
   const fixedNavRef = useRef<HTMLElement>(null);
 
@@ -138,9 +143,15 @@ export function HeaderComponent() {
       </div>
 
       <div className='relative z-50 hidden w-fit items-center justify-center gap-x-1.5 overflow-hidden rounded-lg bg-primary px-3 py-1.5 text-white outline-none dark:bg-primary dark:text-black lg:inline-flex '>
-        <Link className=' cursor-pointer' href='/auth'>
-          Empieza Ahora
-        </Link>
+      {session.session !== null ? (
+          <Link href={slug}>
+            <span>Dashboard</span>
+          </Link>
+        ) : (
+          <Link className=' cursor-pointer' href='/auth'>
+            Comienza Ahora
+          </Link>
+        )}
       </div>
     </header>
   );

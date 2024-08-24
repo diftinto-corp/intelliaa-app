@@ -18,18 +18,16 @@ type Props = {
 
 export default function EditTeamName({ account }: Props) {
   return (
-    <Card>
+    <Card className='w-[50%]'>
       <CardHeader>
-        <CardTitle>Tenant Info</CardTitle>
-        <CardDescription>
-          Your tenant name and identifier are unique for your team
-        </CardDescription>
+        <CardTitle>Organización</CardTitle>
+        <CardDescription>Cambia el nombre de tu organización.</CardDescription>
       </CardHeader>
-      <form className='animate-in flex-1 text-foreground'>
+      <form className='animate-in flex-1 text-muted-foreground'>
         <input type='hidden' name='accountId' value={account.account_id} />
         <CardContent className='flex flex-col gap-y-6'>
           <div className='flex flex-col gap-y-2'>
-            <Label htmlFor='name'>Tenant Name</Label>
+            <Label htmlFor='name'>Nombre de organización</Label>
             <Input
               defaultValue={account.name}
               name='name'
@@ -40,7 +38,7 @@ export default function EditTeamName({ account }: Props) {
         </CardContent>
         <CardFooter>
           <SubmitButton formAction={editTeamName} pendingText='Updating...'>
-            Save
+            Guardar
           </SubmitButton>
         </CardFooter>
       </form>

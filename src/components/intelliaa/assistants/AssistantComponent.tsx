@@ -12,8 +12,12 @@ import ModalAdd from "./ModalAdd";
 import { Skeleton } from "@/components/ui/skeleton";
 import { set } from "date-fns";
 import { getAllQa } from "@/lib/actions/intelliaa/qa";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function AssistantComponent() {
+  const pathname = usePathname();
+  const path = pathname.split("/")[1];
   const [assistantsList, setAssistantsList] = useState<Assistant[]>([]);
   const [assistantSelected, setAssistantSelected] = useState<Assistant>(
     {} as Assistant
@@ -26,8 +30,8 @@ export default function AssistantComponent() {
 
   useEffect(() => {
     const fetchAssistants = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const accounbySlugt = await getAccountBySlug(null, path);
+      const account_id = accounbySlugt.account_id;
       const newAssistants: any = await GetAllAssistants(account_id);
       if (!newAssistants) return;
       setAssistantsList([...newAssistants]);
@@ -48,8 +52,8 @@ export default function AssistantComponent() {
 
   useEffect(() => {
     const fetchAssistants = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const accounbySlugt = await getAccountBySlug(null, path);
+      const account_id = accounbySlugt.account_id;
 
       const { data, error } = await supabase
         .from("assistants")

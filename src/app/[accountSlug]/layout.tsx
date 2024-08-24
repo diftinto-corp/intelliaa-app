@@ -11,6 +11,12 @@ export default async function PersonalAccountDashboard({
 }) {
   const supabaseClient = createClient();
 
+  const { data: session } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    redirect("/auth");
+  }
+
   const { data: teamAccount, error } = await supabaseClient.rpc(
     "get_account_by_slug",
     {
@@ -22,5 +28,9 @@ export default async function PersonalAccountDashboard({
     redirect("/auth");
   }
 
-  return <Dashboard accountSlug={accountSlug}>{children}</Dashboard>;
+  return (
+    <Dashboard accountSlug={accountSlug} account={teamAccount.account_id}>
+      {children}
+    </Dashboard>
+  );
 }

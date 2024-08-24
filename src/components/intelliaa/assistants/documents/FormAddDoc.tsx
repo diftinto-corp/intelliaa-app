@@ -8,10 +8,12 @@ import {
   newPdf_Doc,
   resumenPdf,
 } from "@/lib/actions/intelliaa/documents";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CloudHail, FileText, Loader2 } from "lucide-react";
 import { useAccounts } from "@usebasejump/next";
 import Loadable from "next/dist/shared/lib/loadable.shared-runtime";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 const initialState = { message: null };
 
@@ -20,11 +22,20 @@ export default function FormAddDocComponent({
 }: {
   setOpenModal: any;
 }) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { data } = useAccounts();
-  const account_id = data?.[1]?.account_id ?? "";
+  const [account_id, setAccount_id] = useState<string>("" as string);
+
+  useEffect(() => {
+    const getaccountId = async () => {
+      const team_account = await getAccountBySlug(null, accountSlug);
+      setAccount_id(team_account?.account_id as string);
+    };
+    getaccountId();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -17,6 +17,8 @@ import { Assistant } from "@/interfaces/intelliaa";
 import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants";
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { FormAssignAssistantToNumber } from "./FormAssignAssistantToNumber";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 interface ActiveNumber {
   number: string;
@@ -32,14 +34,16 @@ export default function ModalAssignAssistantToNumber({
 }: {
   number: ActiveNumber;
 }) {
+  const pathname = usePathname();
+  const path = pathname.split("/")[1];
   const [open, setOpen] = useState(false);
   const [assistants, setAssistants] = useState<Assistant[]>([]);
 
   useEffect(() => {
     const getAssistants = async () => {
       try {
-        const account = await getAccount();
-        const account_id = account.account_id;
+        const accounbySlugt = await getAccountBySlug(null, path);
+        const account_id = accounbySlugt.account_id;
 
         const result = await GetAllAssistants(account_id);
 

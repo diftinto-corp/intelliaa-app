@@ -12,6 +12,8 @@ import { NewAssistant } from "@/lib/actions/intelliaa/assistants";
 
 import { useAccounts } from "@usebasejump/next";
 import { AssistantTemplate } from "@/interfaces/intelliaa";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function FormAddComponent({
   dataTemplates,
@@ -22,6 +24,8 @@ export default function FormAddComponent({
   };
   setOpenModal: any;
 }) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const [nameAssistant, setNameAssistant] = useState<string>("");
   const [templateSelected, setTemplateSelected] = useState<AssistantTemplate>(
     dataTemplates.templates[0]
@@ -42,6 +46,8 @@ export default function FormAddComponent({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
+    const team_account = await getAccountBySlug(null, accountSlug);
+
     const name = nameAssistant;
     const type = typeSelected;
     const template = templateSelected;
@@ -51,7 +57,7 @@ export default function FormAddComponent({
     try {
       if (type === "whatsapp") {
         await NewAssistant(
-          account_id,
+          team_account.account_id,
           name,
           type,
           template.id,
@@ -68,7 +74,7 @@ export default function FormAddComponent({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              account_id,
+              account_id: team_account.account_id,
               name,
               type,
               template_id: template.id,

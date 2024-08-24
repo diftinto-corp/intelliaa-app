@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { createTeam } from "@/lib/actions/teams";
 
 interface data {
   email: string;
@@ -24,10 +23,7 @@ export async function login(Data: data) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    return {
-      type: "error",
-      messages: error.message,
-    };
+    return error.message;
   }
 
   const { data: teamAccount } = await supabase.rpc("get_accounts");
@@ -36,10 +32,9 @@ export async function login(Data: data) {
     (account: any) => account.personal_account === false
   );
 
-  return {
-    type: "success",
-    slug: teamAccountFilter[0]?.slug,
-  };
+  return redirect(
+    teamAccountFilter[0]?.slug ? `/${teamAccountFilter[0]?.slug}` : "/tenant"
+  );
 }
 
 export async function signup(Data: data) {
@@ -52,14 +47,12 @@ export async function signup(Data: data) {
     password: Data.password as string,
   };
 
-  const { data: dataSignup, error: errorSignup } = await supabase.auth.signUp(
-    data
-  );
+  const { error } = await supabase.auth.signUp(data);
 
-  if (errorSignup) {
+  if (error) {
     return {
-      type: "error",
-      messages: errorSignup.message,
+      messages: error.message,
+      error: true,
     };
   }
 
@@ -69,22 +62,9 @@ export async function signup(Data: data) {
     (account: any) => account.personal_account === false
   );
 
-  if (teamAccountFilter[0]?.slug) {
-    return redirect(`/${teamAccountFilter[0].slug}`);
-  }
-
-  const formdata = new FormData();
-  formdata.append("name", `${data.email}'s Org`);
-  formdata.append("slug", `${data.email}-org`);
-
-  const slug = await createTeam(null, formdata);
-
-  if (slug) {
-    return {
-      type: "success",
-      slug: slug,
-    };
-  }
+  return redirect(
+    teamAccountFilter[0]?.slug ? `/${teamAccountFilter[0]?.slug}` : "/tenant"
+  );
 }
 
 export async function logout() {

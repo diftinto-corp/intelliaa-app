@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { SubmitButton } from "../ui/submit-button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Label } from "../ui/label";
 import { GetAccountResponse } from "@usebasejump/shared";
 import {
@@ -26,9 +26,9 @@ export default async function EditPersonalAccountName({ account }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your info</CardTitle>
+        <CardTitle>Tu Perfil</CardTitle>
         <CardDescription>
-          Your name is used on your personal profile as well as in your teams
+          Actualiza la información de tu cuenta.
         </CardDescription>
       </CardHeader>
       <form className='animate-in flex-1 text-foreground'>
@@ -38,11 +38,11 @@ export default async function EditPersonalAccountName({ account }: Props) {
           value={personalAccount.account_id}
         />
         <CardContent className='flex flex-col gap-y-6'>
-          <div className='flex flex-col gap-y-2'>
-            <Label htmlFor='name'>Name</Label>
+          <div className='flex flex-col gap-y-2 text-muted-foreground'>
+            <Label htmlFor='name'>Tu Nombre</Label>
             <Input
               defaultValue={personalAccount.name}
-              name='name'
+              name='Nombre'
               placeholder='Marty Mcfly'
               required
             />
@@ -51,8 +51,8 @@ export default async function EditPersonalAccountName({ account }: Props) {
         <CardFooter>
           <SubmitButton
             formAction={editPersonalAccountName}
-            pendingText='Updating...'>
-            Save
+            pendingText='Actualizar...'>
+            Guardar
           </SubmitButton>
         </CardFooter>
       </form>

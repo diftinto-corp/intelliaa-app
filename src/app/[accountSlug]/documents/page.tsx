@@ -8,10 +8,15 @@ import { Pdf_Doc } from "../../../interfaces/intelliaa";
 import { createClient } from "@/lib/supabase/client";
 import ConfigDocuments from "@/components/intelliaa/assistants/documents/ConfigDocuments";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 //TODO: Agregar renderizado condicional con loading
 
 export default function DocumentPage() {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
+
   const [documents, setDocuments] = useState<Pdf_Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [documentSelected, setDocumentSelected] = useState(documents[0]?.id);
@@ -20,8 +25,8 @@ export default function DocumentPage() {
 
   useEffect(() => {
     const fetchDocuments = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const account_id = team_account.account_id;
 
       const newDocuments: any = await getAllPdf_Doc(account_id);
       if (!documents) return;

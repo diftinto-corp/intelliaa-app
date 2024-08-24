@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useAccounts } from "@usebasejump/next";
 import { Textarea } from "@/components/ui/textarea";
 import { upsertQa } from "@/lib/actions/intelliaa/qa";
 import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function FormAddQaRegisterComponent({
   register,
@@ -19,11 +20,21 @@ export default function FormAddQaRegisterComponent({
   assistant: any;
   lastChat: any;
 }) {
-  const { data } = useAccounts();
-  const account_id = data?.[1]?.account_id ?? "";
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const [question, setQuestion] = useState(register?.question || "");
   const [answer, setAnswer] = useState(register?.answer || "");
   const [loading, setLoading] = useState(false);
+  const [account_id, setAccount_id] = useState<string>("" as string);
+
+  useEffect(() => {
+    const getAccountId = async () => {
+      const team_account = await getAccountBySlug(null, accountSlug);
+      setAccount_id(team_account.account_id as string);
+    };
+
+    getAccountId();
+  }, []);
 
   useEffect(() => {
     setQuestion(register?.question || "");

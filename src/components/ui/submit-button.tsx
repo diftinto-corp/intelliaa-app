@@ -5,8 +5,10 @@ import { type ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "./alert";
 import { AlertTriangle } from "lucide-react";
+import { set } from "date-fns";
 
 type Props = Omit<ComponentProps<typeof Button>, "formAction"> & {
+  setOpenModal?: (open: boolean) => void;
   pendingText?: string;
   formAction: (prevState: any, formData: FormData) => Promise<any>;
   errorMessage?: string;
@@ -21,6 +23,7 @@ export function SubmitButton({
   formAction,
   errorMessage,
   pendingText = "Submitting...",
+  setOpenModal,
   ...props
 }: Props) {
   const { pending, action } = useFormStatus();
@@ -41,7 +44,10 @@ export function SubmitButton({
           {...props}
           type='submit'
           aria-disabled={pending}
-          formAction={internalFormAction}>
+          formAction={internalFormAction}
+          onClick={() => {
+            setOpenModal && setOpenModal(false);
+          }}>
           {isPending ? pendingText : children}
         </Button>
       </div>

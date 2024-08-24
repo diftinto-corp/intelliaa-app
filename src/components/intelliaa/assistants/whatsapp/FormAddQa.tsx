@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Assistant } from "@/interfaces/intelliaa";
 
 import { addQa, upsertQa } from "@/lib/actions/intelliaa/qa";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function FormAddQaComponent({
   setOpenModal,
@@ -18,8 +20,11 @@ export default function FormAddQaComponent({
   setOpenModal: any;
   assistant: Assistant;
 }) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
+
   const { data } = useAccounts();
-  const account_id = data?.[1]?.account_id ?? "";
+
   const [loading, setLoading] = useState(false);
 
   let formData = new FormData();
@@ -27,6 +32,7 @@ export default function FormAddQaComponent({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
+    const team_account = await getAccountBySlug(null, accountSlug);
 
     const question = e.target.question.value;
     const answer = e.target.answare.value;
@@ -46,7 +52,7 @@ export default function FormAddQaComponent({
       return;
     }
     await addQa(
-      account_id,
+      team_account.account_id,
       assistant.id,
       formData,
       assistant.namespace,

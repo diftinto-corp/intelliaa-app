@@ -15,6 +15,8 @@ import {
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { deleteAssistant } from "@/lib/actions/intelliaa/assistants";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export function ModalDeleteAssistant({
   id_assistant,
@@ -25,12 +27,14 @@ export function ModalDeleteAssistant({
   namespace: string;
   service_id_rw: string;
 }) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [open, setOpen] = useState(false);
 
   const handleDeleteAssistant = async () => {
-    const account = await getAccount();
-    const account_id = account.account_id;
+    const team_account = await getAccountBySlug(null, accountSlug);
+    const account_id = team_account.account_id;
     setLoadingDelete(true);
     await deleteAssistant(id_assistant, namespace, service_id_rw, account_id);
     setLoadingDelete(false);

@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
+import { useRouter, useParams } from "next/navigation";
 
 import {
   Form,
@@ -28,11 +29,16 @@ const formSchema = z.object({
 });
 
 export const FormAuth = () => {
+  const params = useParams<{ token: string }>();
+
+  console.log(params);
+
+  const router = useRouter();
   const { toast } = useToast();
 
   const [isRegister, setIsRegister] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,37 +50,26 @@ export const FormAuth = () => {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!isRegister) {
-      setLoading(true);
-      const response = await signup(values);
+    setLoading(true);
+    const response = isRegister ? await login(values) : await signup(values);
 
-      if (response) {
-        console.log(response);
-        toast({
-          variant: "destructive",
-          title: "No se pudo registrar",
-          description: "Por favor, intente de nuevo",
-        });
-      }
-
-      setLoading(false);
+    if (response?.type === "error") {
+      toast({
+        variant: "destructive",
+        title: isRegister
+          ? "No se pudo iniciar sesión"
+          : "No se pudo registrar",
+        description: "Por favor, intente de nuevo",
+      });
+      setLoading(false); // Set loading to false on error
+    } else {
+      localStorage.setItem(
+        "intelliaa-organization",
+        JSON.stringify(response?.slug)
+      );
+      setLoading(false); // Set loading to false before redirection
+      router.push(`/${response?.slug}`);
     }
-
-    if (isRegister) {
-      setLoading(true);
-      const response = await login(values);
-      if (response) {
-        console.log(response);
-        toast({
-          variant: "destructive",
-          title: "No se pudo iniciar sesión",
-          description: "Por favor, intente de nuevo",
-        });
-      }
-      setLoading(false);
-    }
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
   }
 
   return (

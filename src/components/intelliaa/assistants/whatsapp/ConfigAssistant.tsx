@@ -11,6 +11,8 @@ import TabAssistant from "./TabAssistant";
 import { getTemplate } from "@/lib/actions/intelliaa/assistants";
 import TabAssistantVoice from "../voice/TabAssistantVoice";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function ConfigAssistant({
   templates,
@@ -27,7 +29,8 @@ export default function ConfigAssistant({
   qaList: [];
   setQaList: any;
 }) {
-  console.log(assistantSelected.type_assistant);
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
 
   const [assistant, setAssistant] = useState<any>(
     assistantsListPage[0] ? assistantsListPage[0] : {}
@@ -37,8 +40,8 @@ export default function ConfigAssistant({
 
   useEffect(() => {
     const fetchAssistants = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const account_id = team_account.account_id;
       const supabase = createClient();
 
       const { data, error } = await supabase

@@ -29,16 +29,18 @@ export default function DeleteTeamInvitationButton({invitationId}: Props) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Cancel pending invitation</DialogTitle>
+          <DialogTitle className="text-primary">
+            Cancelar invitación al equipo
+          </DialogTitle>
           <DialogDescription>
-            Are you sure? This cannot be undone
+            ¿Estás seguro de que quieres cancelar esta invitación? No podrás deshacer esta acción.
           </DialogDescription>
         </DialogHeader>
         <form>
             <input type="hidden" name="invitationId" value={invitationId} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <SubmitButton variant="destructive" formAction={deleteInvitation} pendingText="Cancelling...">
-                Cancel invitation
+            <SubmitButton variant="destructive" formAction={deleteInvitation} pendingText="Cancelando...">
+                Cancelar invitación
             </SubmitButton>
         </form>
       </DialogContent>

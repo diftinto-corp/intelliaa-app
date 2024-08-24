@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -21,10 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
 import { Assistant } from "@/interfaces/intelliaa";
-import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { Loader2, Save } from "lucide-react";
+import { getAccountBySlug } from "@/lib/actions/accounts";
+import { usePathname } from "next/navigation";
 
 const FormSchema = z.object({
   assistant: z.string({
@@ -50,6 +50,8 @@ export function FormAssignAssistantToNumber({
   assistants: Assistant[];
   setOpen: (open: boolean) => void;
 }) {
+  const pathname = usePathname();
+  const path = pathname.split("/")[1];
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -66,8 +68,8 @@ export function FormAssignAssistantToNumber({
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     console.log("Form data:", data);
 
-    const account = await getAccount();
-    const account_id = account.account_id;
+    const accounbySlugt = await getAccountBySlug(null, path);
+    const account_id = accounbySlugt.account_id;
 
     // Check if 'no_assistant' was selected
     const isNoAssistantSelected = data.assistant === "no_assistant";

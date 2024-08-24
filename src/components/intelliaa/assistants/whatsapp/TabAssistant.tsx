@@ -19,6 +19,8 @@ import ChatWsComponent from "./Chat";
 import AssistantSettings from "./AssistantSettings";
 import QuestionsAndAnswers from "./QuestionsAndAnswers";
 import { deleteQa } from "@/lib/actions/intelliaa/qa";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 interface QAItem {
   id: string;
@@ -47,6 +49,9 @@ export default function TabAssistant({
   qaList,
   setQaList,
 }: TabAssistantProps) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
+
   if (!assistant) return null;
 
   const [temperatureState, setTemperatureState] = useState(
@@ -83,9 +88,8 @@ export default function TabAssistant({
 
   useEffect(() => {
     const getDocuments = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
-      const data: any = await getAllPdf_Doc(account_id);
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const data: any = await getAllPdf_Doc(team_account.account_id);
       setSelectedDocuments(bdDocs);
 
       if (data.length > 0) {
@@ -113,9 +117,6 @@ export default function TabAssistant({
 
   useEffect(() => {
     const fetchAssistant = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
-
       setTemperatureState(assistant.temperature || 0);
       setMaxTokens(assistant.token || 0);
       setPromptState(assistant.prompt || "");
@@ -222,8 +223,6 @@ export default function TabAssistant({
 
   const handleActivateWhatsapp = async () => {
     setLoadingActiveWs(true);
-    const account = await getAccount();
-    const account_id = account.account_id;
 
     const data = await activeWsService(
       assistant.id,
@@ -250,11 +249,10 @@ export default function TabAssistant({
   ) => {
     setLoading(true);
 
-    const account = await getAccount();
-    const account_id = account.account_id;
+    const team_account = await getAccountBySlug(null, accountSlug);
 
     await deleteDocuments(document_id, namespace);
-    await deleteQa(account_id, id);
+    await deleteQa(team_account.account_id, id);
 
     setLoading(false);
   };
@@ -262,8 +260,7 @@ export default function TabAssistant({
   const handleSaveAssistant = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingAssistant(true);
-    const account = await getAccount();
-    const account_id = account.account_id;
+    const team_account = await getAccountBySlug(null, accountSlug);
 
     const data = {
       temperature: temperatureState,
@@ -282,7 +279,7 @@ export default function TabAssistant({
     };
 
     const newBdDocs = await updateAssistant(
-      account_id,
+      team_account.account_id,
       assistant.id,
       data,
       bdDocs

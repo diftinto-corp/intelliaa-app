@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,8 +13,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import ChatHistory from "./ChatHistory";
 import { GetAssistant } from "@/lib/actions/intelliaa/assistants";
-import { useAccounts } from "@usebasejump/next";
 import FormAddQaRegisterComponent from "./FormAddQaRegister";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 interface ModalEditRegisterProps {
   setOpenModal: (open: boolean) => void;
@@ -26,6 +26,8 @@ const ModalEditRegister: React.FC<ModalEditRegisterProps> = ({
   setOpenModal,
   register,
 }) => {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const chatHistory = register.chat_history;
   const lastChat =
     chatHistory && chatHistory.length > 0
@@ -35,12 +37,13 @@ const ModalEditRegister: React.FC<ModalEditRegisterProps> = ({
   const [registerSelected, setRegisterSelected] = useState(lastChat);
   const [assistant, setAssistant] = useState<any>({});
 
-  const { data } = useAccounts();
-  const account_id = data?.[1]?.account_id ?? "";
-
   useEffect(() => {
     const getAssistant = async () => {
-      const assistant = await GetAssistant(account_id, register.assistant_id);
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const assistant = await GetAssistant(
+        team_account.account_id,
+        register.assistant_id
+      );
       setAssistant(assistant);
     };
     getAssistant();

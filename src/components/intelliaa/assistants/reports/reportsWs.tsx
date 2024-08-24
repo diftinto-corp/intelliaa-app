@@ -5,7 +5,6 @@ import {
   TableBody,
   TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -13,23 +12,24 @@ import {
 import { getReportsWs } from "@/lib/actions/intelliaa/reports";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-import { useAccounts } from "@usebasejump/next";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Edit, Eye } from "lucide-react";
 import ModalEditRegister from "./ModalEditRegister";
-import { Input } from "@/components/ui/input";
 import { Search } from "../../common/inputSearch";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export function ReportWsComponent() {
-  const { data } = useAccounts();
-  const account_id = data?.[1]?.account_id ?? "";
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
 
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState<any[] | { message: string }>([]);
+  const [account_id, setAccount_id] = useState<string>("" as string);
 
   useEffect(() => {
     const fetchReports = async () => {
+      const team_account = await getAccountBySlug(null, accountSlug);
+      setAccount_id(team_account.account_id as string);
       if (
         !account_id ||
         !account_id.match(

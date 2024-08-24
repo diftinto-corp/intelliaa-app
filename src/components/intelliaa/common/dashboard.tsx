@@ -20,15 +20,34 @@ import {
 } from "@/components/intelliaa/nav/NavSideBarComponent";
 import useScreenSize from "@/lib/hooks/render-screen";
 import UserAccountBtn from "./UserAccountBtn";
+import { Label } from "@/components/ui/label";
+import AccountSelector from "@/components/basejump/account-selector";
 
 interface DashboardProps {
   accountSlug: any;
+  account: any;
   children: React.ReactNode;
 }
 
-export default function Dashboard({ accountSlug, children }: DashboardProps) {
+export default function Dashboard({
+  accountSlug,
+  account,
+  children,
+}: DashboardProps) {
   const isSmallScreen = useScreenSize();
   const router = useRouter();
+  const [accountSelected, setAccountSelected] = React.useState<any>(null);
+  const [accountId, setAccountId] = React.useState<string>(
+    account || accountSelected?.account_id
+  );
+
+  useEffect(() => {
+    if (accountSelected) {
+      router.push(`/${accountSelected.slug}`);
+
+      setAccountId(accountSelected.account_id);
+    }
+  }, [accountSelected]);
 
   useEffect(() => {
     if (isSmallScreen) {
@@ -58,6 +77,15 @@ export default function Dashboard({ accountSlug, children }: DashboardProps) {
             </Button>
           </div>
           <div className='flex-1'>
+            <div className='flex flex-col items-start justify-center h-10 p-4 mt-4'>
+              <Label className='mb-2 text-muted-foreground'>Organización</Label>
+              <AccountSelector
+                className='text-muted-foreground'
+                accountId={accountId}
+                placeholder='Selecciona una organización'
+                onAccountSelected={setAccountSelected}
+              />
+            </div>
             <NavSideBarComponent path={accountSlug} />
           </div>
           <div className='mt-auto p-4'>

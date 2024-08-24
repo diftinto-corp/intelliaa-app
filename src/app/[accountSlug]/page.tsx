@@ -26,6 +26,7 @@ import { PieChartAssistants } from "@/components/intelliaa/common/dashboard/PieC
 import { set } from "date-fns";
 import { ChartChats } from "@/components/intelliaa/common/dashboard/ChartChats";
 import { usePersonalAccount } from "@usebasejump/next";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export default function HomePage() {
   const pathname = usePathname();
@@ -42,8 +43,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchAssistants = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const accounbySlugt = await getAccountBySlug(null, path);
+      const account_id = accounbySlugt.account_id;
       const data = await GetAllAssistants(account_id);
       if (!data) {
         return;
@@ -52,8 +53,8 @@ export default function HomePage() {
     };
 
     const fetchDocuments = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const accounbySlugt = await getAccountBySlug(null, path);
+      const account_id = accounbySlugt.account_id;
       const data = await getAllPdf_Doc(account_id);
       if (!data) {
         return;
@@ -63,8 +64,8 @@ export default function HomePage() {
     };
 
     const fetchReportsWs = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const accounbySlugt = await getAccountBySlug(null, path);
+      const account_id = accounbySlugt.account_id;
       const data = await getReportsWs(account_id);
       if (!data) {
         return;
@@ -86,7 +87,7 @@ export default function HomePage() {
     <div className='flex-1 p-6'>
       <section className='bg-slate-50 dark:bg-foreground p-6 md:p-10 rounded-sm'>
         <div className=' flex flex-col'>
-          <h1 className='text-3xl font-bold mb-2 text-muted-foreground'>
+          <h1 className='text-3xl font-bold mb-2 text-primary'>
             ¡Bienvenido de vuelta, {personalAccount?.name}!
           </h1>
           <p className='text-muted-foreground dark:text-muted-foreground mb-6'>
@@ -230,7 +231,7 @@ export default function HomePage() {
                 </Card>
               ))
             ) : (
-              <div className='flex'>
+              <div className='flex text-muted-foreground'>
                 <h3>
                   No se encontraron asistentes. Por favor, cree un nuevo
                   asistente para comenzar.
@@ -267,7 +268,7 @@ export default function HomePage() {
                 </Card>
               ))
             ) : (
-              <div className='flex'>
+              <div className='flex text-muted-foreground'>
                 <h3>
                   No se encontraron documentos. Por favor, suba un documento
                   para comenzar.

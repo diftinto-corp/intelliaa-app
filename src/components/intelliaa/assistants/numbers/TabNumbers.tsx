@@ -59,6 +59,8 @@ import ModalAssignAssistantToNumber from "./ModalAssignAssistantToNumber";
 import { ScrollBar, ScrollArea } from "@/components/ui/scroll-area";
 import Page from "twilio/lib/base/Page";
 import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 interface Pais {
   country: string;
@@ -85,6 +87,9 @@ interface ActiveNumber {
 }
 
 export function TabsNumber() {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
+
   const [open, setOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>("US");
   const [paises, setPaises] = useState<Pais[]>([]);
@@ -125,8 +130,8 @@ export function TabsNumber() {
     const fetchCountries = async () => {
       setCountriesLoading(true);
       setActiveLoading(true);
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const account_id = team_account.account_id;
       try {
         const result = await listVoiceCountry();
         const activeNumbers = await purchaseNumber(account_id);

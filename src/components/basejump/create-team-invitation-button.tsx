@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,28 +8,41 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import NewInvitationForm from "./new-invitation-form"
+} from "@/components/ui/dialog";
+import NewInvitationForm from "./new-invitation-form";
+import { useState } from "react";
 
 type Props = {
-    accountId: string
-}
+  accountId: string;
+  account: any;
+};
 
-export default function CreateTeamInvitationButton({accountId}: Props) {
+export default function CreateTeamInvitationButton({
+  accountId,
+  account,
+}: Props) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Invite new member</Button>
+        <Button variant='outline'>Crear nueva invitación</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
-          <DialogTitle>Create a new invitation</DialogTitle>
+          <DialogTitle className='text-primary'>
+            Crear nueva invitación
+          </DialogTitle>
           <DialogDescription>
-            Invitation links can be given to anyone to join your team
+            Invita a un nuevo miembro a tu organización.
           </DialogDescription>
         </DialogHeader>
-        <NewInvitationForm accountId={accountId} />
+        <NewInvitationForm
+          accountId={accountId}
+          account={account}
+          setOpen={setOpen}
+        />
       </DialogContent>
     </Dialog>
-  )
+  );
 }

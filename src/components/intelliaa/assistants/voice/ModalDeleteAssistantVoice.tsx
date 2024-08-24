@@ -15,6 +15,8 @@ import {
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { deleteAssistant } from "@/lib/actions/intelliaa/assistants";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 export function ModalDeleteAssistantVoice({
   id_assistant,
@@ -23,12 +25,14 @@ export function ModalDeleteAssistantVoice({
   id_assistant: string;
   voice_assistant_id: string;
 }) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [open, setOpen] = useState(false);
 
   const handleDeleteAssistant = async () => {
-    const account = await getAccount();
-    const account_id = account.account_id;
+    const team_account = await getAccountBySlug(null, accountSlug);
+    const account_id = team_account.account_id;
     setLoadingDelete(true);
     try {
       const res = await fetch("/api/delete-assistant-voice", {

@@ -24,6 +24,8 @@ import {
   updateQa,
   upsertQa,
 } from "@/lib/actions/intelliaa/qa";
+import { getAccountBySlug } from "@/lib/actions/accounts";
+import { usePathname } from "next/navigation";
 
 export default function FormEditQaComponent({
   qa,
@@ -35,7 +37,8 @@ export default function FormEditQaComponent({
   assistant: Assistant;
 }) {
   const { data } = useAccounts();
-  const account_id = data?.[1]?.account_id ?? "";
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
 
   const [question, setQuestion] = useState(qa.question);
   const [answer, setAnswer] = useState(qa.answer);
@@ -43,6 +46,7 @@ export default function FormEditQaComponent({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const team_account = await getAccountBySlug(null, accountSlug);
 
     setLoading(true);
 
@@ -50,7 +54,7 @@ export default function FormEditQaComponent({
 
     await upsertQa(answer, qa.namespace, qa.id_document, question);
 
-    await updateQa(account_id, question, answer, qa.id);
+    await updateQa(team_account.account_id, question, answer, qa.id);
 
     setLoading(false);
     setOpenModal(false);

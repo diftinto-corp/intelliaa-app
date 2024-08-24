@@ -21,6 +21,8 @@ import { deleteQa } from "@/lib/actions/intelliaa/qa";
 import AdvancedComponent from "./AdvancedComponent";
 import { updateAssistantVoiceVapi } from "@/lib/actions/intelliaa/assistantVoice";
 import { set } from "date-fns";
+import { usePathname } from "next/navigation";
+import { getAccountBySlug } from "@/lib/actions/accounts";
 
 interface QAItem {
   id: string;
@@ -48,6 +50,9 @@ export default function TabAssistant({
   setAssistant,
 }: TabAssistantProps) {
   if (!assistant) return null;
+
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
 
   const [temperatureState, setTemperatureState] = useState(
     assistant?.temperature || 0
@@ -120,8 +125,8 @@ export default function TabAssistant({
 
   useEffect(() => {
     const getDocuments = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
+      const team_account = await getAccountBySlug(null, accountSlug);
+      const account_id = team_account.account_id;
       const data: any = await getAllPdf_Doc(account_id);
       setSelectedDocuments(bdDocs);
 
@@ -150,9 +155,6 @@ export default function TabAssistant({
 
   useEffect(() => {
     const fetchAssistant = async () => {
-      const account = await getAccount();
-      const account_id = account.account_id;
-
       setTemperatureState(assistant.temperature || 0);
       setMaxTokens(assistant.token || 0);
       setPromptState(assistant.prompt || "");
@@ -214,8 +216,6 @@ export default function TabAssistant({
   const handleSaveAssistant = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingAssistant(true);
-    const account = await getAccount();
-    const account_id = account.account_id;
 
     console.log(endCallMessage);
 
