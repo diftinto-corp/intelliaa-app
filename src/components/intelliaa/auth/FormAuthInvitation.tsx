@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { PasswordInput } from "./password-input";
 
-
 const formSchema = z.object({
   email: z.string().email(),
   password: z
@@ -69,7 +68,7 @@ export const FormAuthInvitation = ({ token }: { token: string }) => {
       setLoading(false); // Set loading to false on error
     } else {
       localStorage.setItem(
-        "intelliaa-organization",
+        "intelliaa-organitation",
         JSON.stringify(response?.slug || response)
       );
       setLoading(false); // Set loading to false before redirection

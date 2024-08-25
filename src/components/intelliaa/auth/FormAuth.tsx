@@ -38,7 +38,7 @@ export const FormAuth = () => {
 
   const [isRegister, setIsRegister] = useState(true);
   const [loading, setLoading] = useState(false);
-  
+
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,7 +64,7 @@ export const FormAuth = () => {
       setLoading(false); // Set loading to false on error
     } else {
       localStorage.setItem(
-        "intelliaa-organization",
+        "intelliaa-organitation",
         JSON.stringify(response?.slug)
       );
       setLoading(false); // Set loading to false before redirection

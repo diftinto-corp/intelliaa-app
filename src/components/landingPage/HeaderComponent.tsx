@@ -5,15 +5,23 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { set } from "date-fns";
 
 const SCROLL_BOUNDARY = 120;
 
 export function HeaderComponent({ session }: any) {
-  
-  const slug = JSON.parse(
-    localStorage.getItem("intelliaa-organization") || "{}"
-  );
-  
+  const [slug, setSlug] = useState("{}");
+  console.log(slug);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const path = JSON.parse(
+        localStorage.getItem("intelliaa-organitation") || "{}"
+      );
+      setSlug(path);
+    }
+  }, []);
+
   const [scrollY, setScrollY] = useState(0);
   const fixedNavRef = useRef<HTMLElement>(null);
 
@@ -143,7 +151,7 @@ export function HeaderComponent({ session }: any) {
       </div>
 
       <div className='relative z-50 hidden w-fit items-center justify-center gap-x-1.5 overflow-hidden rounded-lg bg-primary px-3 py-1.5 text-white outline-none dark:bg-primary dark:text-black lg:inline-flex '>
-      {session.session !== null ? (
+        {session.session !== null ? (
           <Link href={slug}>
             <span>Dashboard</span>
           </Link>
