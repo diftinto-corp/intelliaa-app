@@ -11,7 +11,6 @@ const SCROLL_BOUNDARY = 120;
 
 export function HeaderComponent({ session }: any) {
   const [slug, setSlug] = useState("{}");
-  console.log(slug);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

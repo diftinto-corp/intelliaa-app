@@ -1,4 +1,3 @@
-import { use, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
