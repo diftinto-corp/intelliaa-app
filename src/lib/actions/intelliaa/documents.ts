@@ -6,6 +6,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { createClient } from "@/lib/supabase/server";
+import { GetAssistant } from "./assistants";
 
 const s3Client = new S3Client({
   region: process.env.NEXT_AWS_S3_REGION || "us-east-1",
@@ -349,6 +350,76 @@ const deleteEmbedPDF = async (
   return data;
 };
 
+const searchAssistantByDocument = async (
+  accountId: string,
+  pdf_doc_key: string,
+  documents_vapi: string
+) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("embedded_pdfs")
+    .select("*")
+    .eq("account_id", accountId)
+    .eq("pdf_doc_key", pdf_doc_key);
+
+  if (error) {
+    console.error("Error fetching embedded PDFs:", error);
+    return { message: error.message };
+  }
+
+  const assistantsVoiceName = await getAssistantsVoiceName(documents_vapi);
+  const assistantsWsName = await getAssistantsWsName(accountId, data);
+
+  return [...assistantsWsName, ...assistantsVoiceName];
+};
+
+const getAssistantsVoiceName = async (documents_vapi: string) => {
+  const supabase = createClient();
+  const assistantsVoiceName: string[] = [];
+
+  const { data: assistantsByDocumentVapi, error } = await supabase
+    .from("assistants")
+    .select("name")
+    .filter("documents_vapi", "cs", `{${documents_vapi}}`);
+
+  if (error) {
+    console.error("Error fetching assistants:", error);
+    return [];
+  }
+
+  if (assistantsByDocumentVapi.length > 0) {
+    assistantsVoiceName.push(
+      ...assistantsByDocumentVapi.map((assistant) => assistant.name)
+    );
+  } else {
+    console.log("No hay asistentes");
+  }
+
+  return assistantsVoiceName;
+};
+
+const getAssistantsWsName = async (accountId: string, data: any[]) => {
+  const assistantsWsName: string[] = [];
+
+  if (data.length > 0) {
+    const assistantIds = data.map((assistant: any) => assistant.assistant_id);
+
+    const assistantPromises = assistantIds.map(async (assistantId) => {
+      const assistant = await GetAssistant(accountId, assistantId);
+      if (assistant) {
+        assistantsWsName.push(assistant.name);
+      }
+    });
+
+    await Promise.all(assistantPromises);
+  } else {
+    console.log("No hay asistentes");
+  }
+
+  return assistantsWsName;
+};
+
 export {
   uploadPdf,
   deletePdfS3,
@@ -361,4 +432,5 @@ export {
   newEmbedPDF,
   deleteEmbedPDF,
   deleteDocuments,
+  searchAssistantByDocument,
 };

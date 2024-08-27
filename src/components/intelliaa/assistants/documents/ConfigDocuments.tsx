@@ -10,6 +10,7 @@ import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants";
 import ModalAddDocument from "./ModalAddDocument";
 import DetailsDocuments from "./DetailsDocuments";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { set } from "date-fns";
 
 export default function ConfigDocuments({
   documentsListPage,
@@ -21,6 +22,9 @@ export default function ConfigDocuments({
   setDocumentSelected: Function;
 }) {
   const [s3_key, setS3_key] = useState(documentsListPage[0]?.s3_key);
+  const [idVapiDoc, setIdVapiDoc] = useState(documentsListPage[0]?.id_vapi_doc);
+
+  console.log(idVapiDoc);
 
   const handleSelectDocument = (id: string, s3_key: string) => {
     setDocumentSelected(id);
@@ -60,6 +64,7 @@ export default function ConfigDocuments({
             <DetailsDocuments
               documentSelected={documentSelected}
               documentKey={s3_key}
+              documentIdVapiDoc={idVapiDoc}
             />
           </div>
         </div>

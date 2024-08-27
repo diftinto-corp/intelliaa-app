@@ -108,12 +108,26 @@ export default function FormAddDocComponent({
         type='submit'
         disabled={!file || loading}>
         {loading ? (
-          <Loader2 className='animate-spin mr-2' />
+          <>
+            <Loader2 className='animate-spin mr-2' />
+            Subiendo..
+          </>
         ) : (
-          <FileText className='mr-2' />
+          <>
+            <FileText className='mr-2' />
+            Subir
+          </>
         )}
-        Subir
       </Button>
+      {loading && (
+        <div className='flex items-center justify-center gap-x-2 text-muted-foreground'>
+          <Loader2 className='animate-spin' />
+          <span>
+            Subiendo archivo... Esto puede tardar unos segundos dependiendo del
+            tamaño del archivo.
+          </span>
+        </div>
+      )}
     </form>
   );
 }
