@@ -43,6 +43,13 @@ interface voiceAssistant {
   id_elevenlabs: string;
 }
 
+interface DocumentType {
+  name: string;
+  s3_key: string;
+  id_document: string;
+  namespace: string;
+}
+
 export default function TabAssistant({
   assistant,
   setAssistant,
@@ -262,15 +269,24 @@ export default function TabAssistant({
     setLoadingAssistant(true);
     const team_account = await getAccountBySlug(null, accountSlug);
 
+    // Aseguramos que bdDocs tenga el tipo correcto
+    const existingDocs = new Map<string, string>(
+      bdDocs.map((doc: DocumentType) => [doc.s3_key, doc.id_document])
+    );
+
+    console.log("existingDocs", existingDocs);
+
     const data = {
       temperature: temperatureState,
       token: maxTokens,
       prompt: promptState,
-      docs_keys: selectedDocuments.map((doc) => ({
+      docs_keys: selectedDocuments.map((doc: DocumentType) => ({
         name: doc.name,
         s3_key: doc.s3_key,
         namespace: assistant.namespace,
-        id_document: Math.random().toString(36).substr(2, 9),
+        id_document:
+          existingDocs.get(doc.s3_key) ||
+          Math.random().toString(36).substr(2, 9),
       })),
       keyword_transfer_ws: KeywordTransfer,
       number_transfer_ws: NumberTransfer,

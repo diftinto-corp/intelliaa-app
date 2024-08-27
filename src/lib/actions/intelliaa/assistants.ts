@@ -150,6 +150,8 @@ const updateAssistant = async (
     voice_assistant,
   } = dataAssistant;
 
+  console.log(docs_keys, bdDocd_keys);
+
   const supabase = createClient();
 
   const upsertPDFs = async (
@@ -213,7 +215,18 @@ const updateAssistant = async (
     );
 
     await Promise.all(addPromises);
+  };
 
+  try {
+    // Verificar si hay cambios en los documentos antes de sincronizar
+    const docsChanged =
+      JSON.stringify(docs_keys) !== JSON.stringify(bdDocd_keys);
+
+    if (docsChanged) {
+      await syncArrays();
+    }
+
+    // Actualizar el asistente
     const { data, error } = await supabase
       .from("assistants")
       .update({
@@ -231,34 +244,8 @@ const updateAssistant = async (
     if (error) {
       throw new Error(`Error updating assistant: ${error.message}`);
     }
-  };
 
-  try {
-    // Sincronizar documentos antes de actualizar el asistente
-    if (docs_keys) {
-      await syncArrays();
-      return docs_keys;
-    } else {
-      // Actualizar el asistente
-      const { data, error } = await supabase
-        .from("assistants")
-        .update({
-          temperature,
-          token,
-          prompt,
-          docs_keys,
-          keyword_transfer_ws,
-          number_transfer_ws,
-          voice_assistant,
-        })
-        .eq("account_id", account_id)
-        .eq("id", id);
-
-      if (error) {
-        throw new Error(`Error updating assistant: ${error.message}`);
-      }
-      return [];
-    }
+    return docs_keys;
   } catch (error) {
     console.error(error);
     return { message: error };
