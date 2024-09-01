@@ -5,12 +5,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { set } from "date-fns";
 
 const SCROLL_BOUNDARY = 120;
 
 export function HeaderComponent({ session }: any) {
   const [slug, setSlug] = useState("{}");
+  const [isSessionValid, setIsSessionValid] = useState(false);
+  console.log(isSessionValid, session.session.user);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -21,9 +22,20 @@ export function HeaderComponent({ session }: any) {
     }
   }, []);
 
+  useEffect(() => {
+    // Verificar si la sesión es válida
+    if (session && session.session.user) {
+      const currentTime = new Date().getTime();
+      const expiresAt = new Date(session.session.expires_at).getTime();
+      console.log(expiresAt, currentTime);
+      setIsSessionValid(currentTime < expiresAt);
+    } else {
+      setIsSessionValid(false);
+    }
+  }, [session]);
+
   const [scrollY, setScrollY] = useState(0);
   const fixedNavRef = useRef<HTMLElement>(null);
-
   const { theme } = useTheme();
 
   const getBreakpoint = (width: number) => {
@@ -35,23 +47,17 @@ export function HeaderComponent({ session }: any) {
     return "2xl";
   };
 
-  const [breakpoint, setBreakpoint] = useState("xl"); // Default to 'xl' or any other default value
+  const [breakpoint, setBreakpoint] = useState("xl");
 
   useEffect(() => {
-    // This function will only run in the client-side environment
     const handleResize = () => {
       setBreakpoint(getBreakpoint(window.innerWidth));
     };
 
-    // Set the initial value when the component mounts
     handleResize();
-
-    // Optionally, update the breakpoint on window resize
     window.addEventListener("resize", handleResize);
-
-    // Cleanup the event listener when the component unmounts
     return () => window.removeEventListener("resize", handleResize);
-  }, []); // Empty dependency array ensures this effect runs only once on mount
+  }, []);
 
   const active =
     scrollY >= SCROLL_BOUNDARY ||
@@ -65,7 +71,6 @@ export function HeaderComponent({ session }: any) {
     };
 
     window.addEventListener("scroll", handleScroll);
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
@@ -80,7 +85,6 @@ export function HeaderComponent({ session }: any) {
           <img src='/Logo-Intelliaa-Dark.svg' className='h-full w-full' />
         </a>
       </div>
-      {/* <h1 className='hidden lg:flex'>Logo</h1> */}
       <div className='fixed inset-x-0 top-8 z-40 flex items-center justify-center '>
         <motion.div
           initial={{ x: 0 }}
@@ -150,7 +154,7 @@ export function HeaderComponent({ session }: any) {
       </div>
 
       <div className='relative z-50 hidden w-fit items-center justify-center gap-x-1.5 overflow-hidden rounded-lg bg-primary px-3 py-1.5 text-white outline-none dark:bg-primary dark:text-black lg:inline-flex '>
-        {session.session !== null ? (
+        {isSessionValid ? (
           <Link href={slug}>
             <span>Dashboard</span>
           </Link>

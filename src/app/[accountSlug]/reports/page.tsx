@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReportWsComponent } from "@/components/intelliaa/assistants/reports/reportsWs";
+import TabsReports from "@/components/intelliaa/assistants/reports/TabsReports";
 
 //TODO: Agregar renderizado condicional con loading
 
@@ -29,7 +30,8 @@ export default function ReportsPage() {
             Informes de Whatsapp
           </h1>
         </div>
-        <ReportWsComponent />
+        <TabsReports />
+        {/* <ReportWsComponent /> */}
       </div>
     </div>
   );

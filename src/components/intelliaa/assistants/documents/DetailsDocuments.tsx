@@ -131,7 +131,7 @@ export default function DetailsDocuments({
                 <Button
                   variant='outline'
                   size='icon'
-                  className='text-red-600 hover:bg-red-50 hover:text-red-500'
+                  className='text-red-600 hover:bg-red-400 hover:text-white'
                   onClick={handleDelete}
                   disabled={assistantsName.length > 0 || loading}>
                   {loading ? (
