@@ -121,6 +121,7 @@ const NewAssistant = async (
         temperature: temperature,
         token: tokens,
         namespace: namespace,
+        voice_assistant: "2d7rEMnN7U2yC7k3Ie3g",
       },
     ])
     .select();

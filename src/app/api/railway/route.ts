@@ -11,6 +11,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       service: { name: string };
     };
 
+    console.log("statusRw", statusRw, "service", service);
+
     if (statusRw === "SUCCESS") {
       const response = await wsStatusActiveUtil(service.name);
       // Asegurarse de que response es serializable
