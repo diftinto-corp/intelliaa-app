@@ -11,7 +11,10 @@ const SCROLL_BOUNDARY = 120;
 export function HeaderComponent({ session }: any) {
   const [slug, setSlug] = useState("{}");
   const [isSessionValid, setIsSessionValid] = useState(false);
-  console.log(isSessionValid, session.session.user);
+
+  console.log(session);
+
+  console.log(isSessionValid);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -23,11 +26,15 @@ export function HeaderComponent({ session }: any) {
   }, []);
 
   useEffect(() => {
-    // Verificar si la sesión es válida
-    if (session && session.session.user) {
+    // Verificar si la sesión es válida usando session.session
+    if (session && session.session && session.session.user) {
       const currentTime = new Date().getTime();
-      const expiresAt = new Date(session.session.expires_at).getTime();
-      console.log(expiresAt, currentTime);
+      let expiresAt = new Date(session.session.expires_at).getTime();
+      // Convertir expiresAt a milisegundos si está en segundos
+      if (expiresAt < 1000000000000) {
+        // Esto asume que si es menor a un valor razonable para milisegundos, está en segundos
+        expiresAt *= 1000;
+      }
       setIsSessionValid(currentTime < expiresAt);
     } else {
       setIsSessionValid(false);
@@ -159,7 +166,7 @@ export function HeaderComponent({ session }: any) {
             <span>Dashboard</span>
           </Link>
         ) : (
-          <Link className=' cursor-pointer' href='/auth'>
+          <Link className='cursor-pointer' href='/auth'>
             Comienza Ahora
           </Link>
         )}

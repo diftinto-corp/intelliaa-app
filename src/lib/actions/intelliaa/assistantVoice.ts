@@ -87,6 +87,7 @@ const createAssistantVoiceVapi = async (
             token: tokens,
             namespace: namespace,
             voice_assistant_id: vapiData.id,
+            voice_assistant: "2d7rEMnN7U2yC7k3Ie3g",
             detect_emotion: true,
             background_office: true,
             end_call_phrases: [
@@ -172,7 +173,7 @@ const updateAssistantVoiceVapi = async (
     },
     endCallPhrases: endCallPhrases,
     endCallMessage: endCallMessage,
-    voicemailMessage: voicemailMessage,
+    // voicemailMessage: voicemailMessage,
   };
   const headers = {
     "Content-Type": "application/json",
