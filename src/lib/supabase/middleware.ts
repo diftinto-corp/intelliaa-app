@@ -17,6 +17,11 @@ function forceLoginWithReturn(request: NextRequest) {
 
 export const validateSession = async (request: NextRequest) => {
   try {
+    // Excluir rutas de API
+    if (request.nextUrl.pathname.startsWith("/api")) {
+      return NextResponse.next();
+    }
+
     let response = NextResponse.next();
 
     const supabase = createServerClient(
@@ -46,7 +51,7 @@ export const validateSession = async (request: NextRequest) => {
     const urlParts = request.nextUrl.pathname.split("/");
     const slug = urlParts[1]; // Esto captura el slug dinámico
     const isProtectedRoute =
-      slug && slug !== "auth" && slug !== "" && slug !== "public"; // Ajustar según tus rutas públicas
+      slug && slug !== "auth" && slug !== "" && slug !== "public";
 
     // Redirige si no hay usuario y es una ruta protegida
     if (!user && isProtectedRoute) {
