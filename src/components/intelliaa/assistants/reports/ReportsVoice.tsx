@@ -44,6 +44,7 @@ type CallRecord = {
   recording_url?: string;
   transcript?: string;
   summary?: string;
+  created_at: string;
 };
 
 const formatTranscription = (transcription: string) => {
@@ -98,13 +99,14 @@ export default function ReportsVoice() {
       const calls = await getReportsVoice(account_id);
 
       if (calls && !("message" in calls)) {
-        setCallRecords(calls as CallRecord[]);
+        // Invertir los registros para que los más recientes sean los primeros
+        setCallRecords(calls.reverse() as CallRecord[]);
       } else {
         console.error("Error fetching call records:", calls.message);
       }
     };
     getCalls();
-  }, []);
+  }, [accountSlug]);
 
   const handleRowClick = (record: CallRecord) => {
     setSelectedRecord(record);
@@ -128,6 +130,8 @@ export default function ReportsVoice() {
     indexOfFirstRecord,
     indexOfLastRecord
   );
+
+  console.log(currentRecords);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -190,56 +194,83 @@ export default function ReportsVoice() {
   }, [waveform]);
   return (
     <div className='flex flex-col mx-auto w-[100%] p-4 min-h-[75vh]'>
-      <div className='flex-grow'>
-        <Table>
-          <TableHeader>
-            <TableRow className='bg-foreground'>
-              <TableHead className='text-primary'>Tipo</TableHead>
-              <TableHead className='text-primary'>
-                Causa de finalización
-              </TableHead>
-              <TableHead className='text-primary'>Número del cliente</TableHead>
-              <TableHead className='text-primary'>Asistente</TableHead>
-              <TableHead className='text-primary'>
-                Número del asistente
-              </TableHead>
-              <TableHead className='text-primary'>Duración</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentRecords.map((record) => (
-              <TableRow
-                key={record.id}
-                onClick={() => handleRowClick(record)}
-                className='cursor-pointer text-muted-foreground hover:bg-muted'>
-                <TableCell>{record.type}</TableCell>
-                <TableCell>{record.ended_reason}</TableCell>
-                <TableCell>{record.customer_assistant}</TableCell>
-                <TableCell>{record.assistant_name}</TableCell>
-                <TableCell>{record.assistant_number}</TableCell>
-                <TableCell>{record.duration_minutes}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className='mt-auto'>
-        \
-        <div className='flex justify-center space-x-2 mt-4'>
-          {Array.from(
-            { length: Math.ceil(callRecords.length / recordsPerPage) },
-            (_, i) => (
-              <Button
-                key={i + 1}
-                onClick={() => paginate(i + 1)}
-                variant={currentPage === i + 1 ? "default" : "outline"}>
-                {i + 1}
-              </Button>
-            )
-          )}
+      {callRecords.length > 0 ? (
+        <>
+          <div className='flex-grow'>
+            <Table>
+              <TableHeader>
+                <TableRow className='bg-foreground'>
+                  <TableHead className='text-primary'>
+                    Fecha de la llamada
+                  </TableHead>
+                  <TableHead className='text-primary'>Tipo</TableHead>
+                  <TableHead className='text-primary'>
+                    Causa de finalización
+                  </TableHead>
+                  <TableHead className='text-primary'>
+                    Número del cliente
+                  </TableHead>
+                  <TableHead className='text-primary'>Asistente</TableHead>
+                  <TableHead className='text-primary'>
+                    Número del asistente
+                  </TableHead>
+                  <TableHead className='text-primary'>Duración</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentRecords.map((record) => (
+                  <TableRow
+                    key={record.id}
+                    onClick={() => handleRowClick(record)}
+                    className='cursor-pointer text-muted-foreground hover:bg-muted hover:text-white'>
+                    <TableCell>
+                      {new Date(record.created_at)
+                        .toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })
+                        .replace(",", "")}
+                    </TableCell>
+                    <TableCell>{record.type}</TableCell>
+                    <TableCell>{record.ended_reason}</TableCell>
+                    <TableCell>{record.customer_assistant}</TableCell>
+                    <TableCell>{record.assistant_name}</TableCell>
+                    <TableCell>{record.assistant_number}</TableCell>
+                    <TableCell>
+                      {parseFloat(record.duration_minutes).toFixed(2)} min
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className='mt-auto'>
+            <div className='flex justify-center space-x-2 mt-4'>
+              {Array.from(
+                { length: Math.ceil(callRecords.length / recordsPerPage) },
+                (_, i) => (
+                  <Button
+                    key={i + 1}
+                    onClick={() => paginate(i + 1)}
+                    variant={currentPage === i + 1 ? "default" : "outline"}>
+                    {i + 1}
+                  </Button>
+                )
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className='flex items-center justify-center h-full'>
+          <p className='text-muted-foreground'>
+            Aún no hay registros de llamadas.
+          </p>
         </div>
-      </div>
-      )
+      )}
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
         <SheetContent side='right' className='w-[400px] sm:w-[540px]'>
           <SheetHeader>

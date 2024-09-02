@@ -350,7 +350,7 @@ export function TabsNumber() {
                 </TableHeader>
                 <TableBody>
                   {numbers.map((number) => (
-                    <TableRow key={number.number}>
+                    <TableRow key={number.number} className='hover:text-white'>
                       <TableCell className='font-medium'>
                         {number.number}
                       </TableCell>
@@ -359,7 +359,7 @@ export function TabsNumber() {
                       <TableCell>{number.price}</TableCell>
                       <TableCell className='text-right'>
                         <Button
-                          className='bg-primary text-white'
+                          className='bg-primary text-muted-foreground'
                           size='sm'
                           onClick={() => console.log("Comprar número")}>
                           <ShoppingCart className='h-4 w-4 mr-2' />
@@ -405,7 +405,9 @@ export function TabsNumber() {
                 </TableHeader>
                 <TableBody>
                   {activeNumbers?.map((number) => (
-                    <TableRow key={number.number}>
+                    <TableRow
+                      key={number.number}
+                      className='text-muted-foreground hover:text-white'>
                       <TableCell>{number.number}</TableCell>
                       <TableCell>{number.country}</TableCell>
                       <TableCell>{number.type}</TableCell>
