@@ -382,6 +382,8 @@ const wsStatusActiveUtil = async (namespace: string) => {
 
   namespace = namespace.replace(/^"(.*)"$/, "$1");
 
+  console.log("Namespace:", namespace);
+
   // Verificar si el namespace existe antes de intentar actualizar
   const { data: existingRecords, error: fetchError } = await supabase
     .from("assistants")

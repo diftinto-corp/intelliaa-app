@@ -11,6 +11,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       service: { name: string };
     };
 
+    console.log("Pase por aqui");
     console.log("statusRw", statusRw, "service", service);
 
     if (statusRw === "SUCCESS") {
