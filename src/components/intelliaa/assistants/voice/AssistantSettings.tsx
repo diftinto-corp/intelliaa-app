@@ -1,11 +1,18 @@
-import { Dispatch, SetStateAction, useState, useEffect } from "react";
+import { Dispatch, SetStateAction, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { HelpCircle, Loader2, Save, Speech, StopCircle } from "lucide-react";
+import {
+  HelpCircle,
+  Loader2,
+  Play,
+  Save,
+  Speech,
+  StopCircle,
+} from "lucide-react";
 import { MultiSelect } from "../../common/MultiSelect";
 import { ModalDeleteAssistantVoice } from "./ModalDeleteAssistantVoice";
 import {
@@ -111,6 +118,20 @@ export default function AssistantSettings({
 }: AssistantSettingsProps) {
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [mp3Url, setMp3Url] = useState("");
+
+  useEffect(() => {
+    if (voiceAssistantSelected) {
+      setMp3Url(`/mp3/${voiceAssistantSelected}.mp3`);
+    }
+  }, [voiceAssistantSelected]);
+
+  const handlePlayAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.play();
+    }
+  };
 
   useEffect(() => {
     vapi.on("call-start", () => {
@@ -474,53 +495,63 @@ export default function AssistantSettings({
                 maxCount={3}
               />
             </div>
-            <div className='flex flex-col mb-4 p-1'>
-              <Label htmlFor='voiceAssistant' className='mb-2'>
-                <span className='flex items-center gap-1'>
-                  Voz del asistente
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle
-                          className='text-primary cursor-pointer'
-                          size={14}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side='bottom'
-                        align='center'
-                        className='p-4 w-[300px]'>
-                        <p className='font-normal text-mute-foreground'>
-                          Seleccione la voz que desea usar para el asistente.
-                          Puede elegir entre diferentes opciones de voces
-                          disponibles para personalizar la experiencia del
-                          usuario.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </span>
-              </Label>
-              <Select
-                value={voiceAssistantSelected}
-                onValueChange={(value) => {
-                  setVoiceAssistantSelected(value);
-                  setIsChangeOptions(true);
-                }}>
-                <SelectTrigger className='w-[180px]'>
-                  <SelectValue placeholder='Selecciona una voz' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Voces</SelectLabel>
-                    {voiceAssistant.map((voice) => (
-                      <SelectItem key={voice.id} value={voice.id_elevenlab}>
-                        {voice.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <div className='flex items-center mb-4'>
+              <div className=''>
+                <Label htmlFor='voiceAssistant' className='mb-2'>
+                  <span className='flex items-center gap-1'>
+                    Voz del asistente
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle
+                            className='text-primary cursor-pointer'
+                            size={14}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side='bottom'
+                          align='center'
+                          className='p-4 w-[300px]'>
+                          <p className='font-normal text-mute-foreground'>
+                            Seleccione la voz que desea usar para el asistente.
+                            Puede elegir entre diferentes opciones de voces
+                            disponibles para personalizar la experiencia del
+                            usuario.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </span>
+                </Label>
+                <Select
+                  value={voiceAssistantSelected}
+                  onValueChange={(value) => {
+                    setVoiceAssistantSelected(value);
+                    setIsChangeOptions(true);
+                  }}>
+                  <SelectTrigger className='w-[180px]'>
+                    <SelectValue placeholder='Selecciona una voz' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Voces</SelectLabel>
+                      {voiceAssistant.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id_elevenlab}>
+                          {voice.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={handlePlayAudio}
+                variant='outline'
+                size='icon'
+                className='ml-4 mt-4 p-2 rounded-full border-primary'>
+                <Play className='text-primary' />
+              </Button>
+              <audio ref={audioRef} src={mp3Url} />
             </div>
             <div className='flex items-center space-x-2 p-1'>
               <Switch

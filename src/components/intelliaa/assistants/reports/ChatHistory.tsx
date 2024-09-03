@@ -6,18 +6,26 @@ import React from "react";
 interface ChatHistoryProps {
   chatHistory: any;
   setRegisterSelected: (chat: any) => void;
+  containerStyle?: React.CSSProperties;
 }
 
 const ChatHistory: React.FC<ChatHistoryProps> = ({
   chatHistory,
   setRegisterSelected,
+  containerStyle = {},
 }) => {
   const handleSelectRegister = (chat: any) => {
     setRegisterSelected(chat);
   };
 
   return (
-    <ScrollArea className='h-[400px] w-[550px] rounded-md border p-4 bg-foreground'>
+    <ScrollArea
+      className='rounded-md border p-4 bg-foreground'
+      style={{
+        ...containerStyle,
+        maxHeight: "400px", // Limita la altura del contenedor
+        overflowY: "auto", // Añade la barra de desplazamiento vertical
+      }}>
       {chatHistory.map((chat: any, index: number) => (
         <div
           key={index}
