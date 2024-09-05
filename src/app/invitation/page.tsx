@@ -4,15 +4,21 @@ import { redirect } from "next/navigation";
 export default async function AcceptInvitationPage({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: { token?: string; email?: string };
 }) {
+
+
+  console.log(searchParams);
+
   if (!searchParams.token) {
     redirect("/");
   }
 
+
+
   return (
     <div className='max-w-md mx-auto w-full my-12'>
-      <AcceptTeamInvitation token={searchParams.token} />
+      <AcceptTeamInvitation token={searchParams.token} email={searchParams.email || ""} />
     </div>
   );
 }

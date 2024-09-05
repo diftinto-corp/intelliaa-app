@@ -28,7 +28,7 @@ const formSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters long" }),
 });
 
-export const FormAuthInvitation = ({ token }: { token: string }) => {
+  export const FormAuthInvitation = ({ token, email }: { token: string, email: string }) => {
   const params = useParams<{ token: string }>();
 
   console.log(token);
@@ -36,13 +36,13 @@ export const FormAuthInvitation = ({ token }: { token: string }) => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [isRegister, setIsRegister] = useState(true);
+  const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      email: email,
       password: "",
     },
   });
@@ -80,10 +80,10 @@ export const FormAuthInvitation = ({ token }: { token: string }) => {
     <div className='flex flex-col justify-center items-center md:w-[40%] text-center mt-56'>
       <h1 className='text-2xl text-primary font-medium mb-2'>
         {isRegister
-          ? "Haz recibido una invitación inicia sesión para aceptarla"
-          : "Haz recibido una invitación regístrate para aceptarla"}
+          ? "Has recibido una invitación"
+          : "Has recibido una invitación"}
       </h1>
-      <p className='text-foreground text-xs'>
+      <p className='text-muted-foreground text-xs'>
         {isRegister
           ? "Ingrese su correo electrónico a continuación para Iniciar sesión. Para aceptar la invitación."
           : "Ingrese su correo electrónico a continuación para crear su cuenta. Para aceptar la invitación."}
@@ -97,14 +97,14 @@ export const FormAuthInvitation = ({ token }: { token: string }) => {
               <>
                 <FormItem>
                   <FormControl>
-                    <Input className='mt-6' placeholder='email' {...field} />
+                    <Input className='mt-6 text-muted-foreground' placeholder='email' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
                 <FormItem>
                   <FormControl>
                     <PasswordInput
-                      className='mt-2'
+                      className='mt-2 text-muted-foreground'
                       placeholder='Contraseña'
                       {...form.register("password")}
                     />
@@ -125,7 +125,7 @@ export const FormAuthInvitation = ({ token }: { token: string }) => {
         </form>
       </Form>
       <div className='flex'>
-        <span className='text-foreground text-sm mt-6 mr-1'>
+        <span className='text-muted-foreground text-sm mt-6 mr-1'>
           {isRegister ? "¿No tienes cuenta?" : "Ya tienes cuenta"}
         </span>
         <span
@@ -134,7 +134,7 @@ export const FormAuthInvitation = ({ token }: { token: string }) => {
           {isRegister ? "Regístrate" : "Inicia Sesión"}
         </span>
       </div>
-      <p className='text-foreground text-xs mt-6'>
+      <p className='text-muted-foreground text-xs mt-6'>
         Al hacer clic en continuar, aceptas nuestros Términos de Servicio y
         Política de Privacidad.
       </p>

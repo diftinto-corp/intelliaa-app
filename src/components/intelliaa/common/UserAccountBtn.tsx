@@ -22,6 +22,14 @@ export default function UserAccountButton({ path }: any) {
   console.log("safePath", safePath);
   console.log(path);
 
+  const handleLogout = () => {
+    logout().then(() => {
+      localStorage.removeItem('intelliaa-organitation');
+    }).catch((error) => {
+      console.error('Error al cerrar sesión:', error);
+    });
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -51,9 +59,7 @@ export default function UserAccountButton({ path }: any) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <form action={logout}>
-            <button>Cerrar sesión</button>
-          </form>
+          <button onClick={handleLogout}>Cerrar sesión</button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

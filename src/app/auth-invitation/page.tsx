@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export default function pagePage({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: { token?: string; email?: string };
 }) {
 
   if (!searchParams.token) {
@@ -15,7 +15,7 @@ export default function pagePage({
   }
 
   const token = searchParams.token;
-
+  const email = searchParams.email;
   return (
     <>
       <div className='flex items-center justify-center w-full p-4'>
@@ -24,7 +24,7 @@ export default function pagePage({
             <Image
               src='/Logo-Intelliaa-Dark.svg'
               alt='Image'
-              width='180'
+              width='140'
               height='60'
               className=''
             />
@@ -32,7 +32,7 @@ export default function pagePage({
         </div>
       </div>
 
-      <FormAuthInvitation token={token} />
+      <FormAuthInvitation token={token} email={email || ""} />
     </>
   );
 }

@@ -25,7 +25,9 @@ const formSchema = z.object({
   email: z.string().email(),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 characters long" }),
+    .min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
+  fullName: z.string().min(1, { message: "El nombre es requerido" }),
+  organizationName: z.string().min(1, { message: "El nombre de la organización es requerido" }),
 });
 
 export const FormAuth = () => {
@@ -45,13 +47,17 @@ export const FormAuth = () => {
     defaultValues: {
       email: "",
       password: "",
+      fullName: "",
+      organizationName: "",
     },
   });
+
+  console.log(isRegister);
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const response = isRegister ? await login(values) : await signup(values);
+    const response = isRegister ? await signup(values)  : await login(values);
 
     if (response?.type === "error") {
       toast({
@@ -144,43 +150,78 @@ export const FormAuth = () => {
           </p>
         </div>
       )}
-      {!isRegister && (
+       {!isRegister && (
         <div className='flex flex-col justify-center items-center md:w-[40%] text-center mt-56'>
           <h1 className=' text-2xl text-primary font-medium mb-2'>
             Crea una cuenta
           </h1>
           <p className='text-muted-foreground text-xs'>
-            Ingrese su correo electrónico a continuación para crear su cuenta.
+            Ingrese sus datos a continuación para crear su cuenta.
           </p>
           <Form {...form}>
             <form className='w-full' onSubmit={form.handleSubmit(onSubmit)}>
               <FormField
                 control={form.control}
+                name='fullName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        className='mt-6 text-muted-foreground'
+                        placeholder='Nombre completo'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='organizationName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        className='mt-2 text-muted-foreground'
+                        placeholder='Nombre de la organización'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name='email'
                 render={({ field }) => (
-                  <>
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          className='mt-6 text-muted-foreground'
-                          placeholder='email'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-
-                    <FormItem>
-                      <FormControl>
-                        <PasswordInput
-                          className='mt-2 text-muted-foreground'
-                          placeholder='Contraseña'
-                          {...form.register("password")}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </>
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        className='mt-2 text-muted-foreground'
+                        placeholder='email'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <PasswordInput
+                        className='mt-2 text-muted-foreground'
+                        placeholder='Contraseña'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               <Button className=' mt-4 w-[100%]'>
@@ -193,14 +234,9 @@ export const FormAuth = () => {
               </Button>
             </form>
           </Form>
-          {/* <p className='text-xs mt-6'>ó puedes continuar con:</p>
-          <Button className=' border bg-white text-primary mt-6 w-[100%] hover:text-white'>
-            <BsGoogle className='mr-2 h-4 w-4' /> Registrar con Google
-          </Button> */}
-
           <div className='flex '>
             <span className='text-muted-foreground text-sm mt-6 mr-1'>
-              Ya tienes cuenta{" "}
+              ¿Ya tienes una cuenta?{" "}
             </span>
             <span
               className='text-primary text-sm mt-6 font-bold cursor-pointer'

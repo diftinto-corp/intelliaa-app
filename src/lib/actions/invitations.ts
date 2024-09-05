@@ -32,7 +32,7 @@ export async function createInvitation(
     };
   }
 
-  const urlInvitation = fullInvitationUrl(data.token as string);
+  const urlInvitation = `${fullInvitationUrl(data.token as string)}&email=${email}`;
 
   // Construir la URL completa
   const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";

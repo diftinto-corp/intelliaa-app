@@ -22,6 +22,8 @@ export default async function ManageTeamMembers({ accountId }: Props) {
     account_id: accountId,
   });
 
+  console.log(members)
+
   const { data } = await supabaseClient.auth.getUser();
   const isPrimaryOwner = members?.find(
     (member: any) => member.user_id === data?.user?.id
@@ -42,13 +44,13 @@ export default async function ManageTeamMembers({ accountId }: Props) {
               <TableRow key={member.user_id}>
                 <TableCell>
                   <div className='flex gap-x-2'>
-                    {member.name}
+                    {member.email}
                     <Badge
                       variant={
-                        member.account_role === "owner" ? "default" : "outline"
+                        member.account_role === "owner" ? "default" : "default"
                       }>
                       {member.is_primary_owner
-                        ? "Primary Owner"
+                        ? "Propietario"
                         : member.account_role}
                     </Badge>
                   </div>

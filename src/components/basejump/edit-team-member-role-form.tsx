@@ -39,7 +39,7 @@ export default function EditTeamMemberRoleForm({
       <input type='hidden' name='accountId' value={accountId} />
       <input type='hidden' name='userId' value={teamMember.user_id} />
       <input type='hidden' name='returnUrl' value={pathName} />
-      <div className='flex flex-col gap-y-2'>
+      <div className='flex flex-col gap-y-2 text-muted-foreground'>
         <Label htmlFor='accountRole' className='text-muted-foreground'>
           Rol de la organización
         </Label>

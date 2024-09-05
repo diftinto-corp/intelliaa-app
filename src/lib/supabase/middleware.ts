@@ -48,10 +48,15 @@ export const validateSession = async (request: NextRequest) => {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const urlParts = request.nextUrl.pathname.split("/");
-    const slug = urlParts[1]; // Esto captura el slug dinámico
+    const pathname = request.nextUrl.pathname;
     const isProtectedRoute =
-      slug && slug !== "auth" && slug !== "" && slug !== "public";
+      !pathname.startsWith("/invitation") &&
+      !pathname.startsWith("/auth") &&
+      !pathname.startsWith("/auth-invitation") &&
+      !pathname.startsWith("/change-password") &&
+      !pathname.startsWith("/recovery-password") &&
+      pathname !== "/" &&
+      !pathname.startsWith("/public");
 
     // Redirige si no hay usuario y es una ruta protegida
     if (!user && isProtectedRoute) {

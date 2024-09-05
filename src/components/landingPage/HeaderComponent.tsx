@@ -9,8 +9,10 @@ import { useEffect, useRef, useState } from "react";
 const SCROLL_BOUNDARY = 120;
 
 export function HeaderComponent({ session }: any) {
-  const [slug, setSlug] = useState("{}");
+  const [slug, setSlug] = useState<string | Record<string, unknown>>('{}');
   const [isSessionValid, setIsSessionValid] = useState(false);
+
+  console.log(isSessionValid, slug);
 
   console.log(session);
 
@@ -18,10 +20,18 @@ export function HeaderComponent({ session }: any) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const path = JSON.parse(
-        localStorage.getItem("intelliaa-organitation") || "{}"
-      );
-      setSlug(path);
+      const storedPath = localStorage.getItem("intelliaa-organitation");
+      if (storedPath) {
+        try {
+          const parsedPath = JSON.parse(storedPath);
+          setSlug(parsedPath);
+        } catch (error) {
+          console.error("Error parsing stored path:", error);
+          setSlug({});
+        }
+      } else {
+        setSlug({});
+      }
     }
   }, []);
 
@@ -161,12 +171,12 @@ export function HeaderComponent({ session }: any) {
       </div>
 
       <div className='relative z-50 hidden w-fit items-center justify-center gap-x-1.5 overflow-hidden rounded-lg bg-primary px-3 py-1.5 text-white outline-none dark:bg-primary dark:text-black lg:inline-flex '>
-        {isSessionValid ? (
-          <Link href={slug}>
+        {isSessionValid && slug && Object.keys(slug).length > 0 ? (
+          <Link href={`/${slug}`}>
             <span>Dashboard</span>
           </Link>
         ) : (
-          <Link className='cursor-pointer' href='/auth'>
+          <Link href='/auth' className='cursor-pointer'>
             Comienza Ahora
           </Link>
         )}
