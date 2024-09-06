@@ -21,7 +21,7 @@ const changePasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export const ChangePasswordForm = () => {
+const ChangePasswordForm = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -138,3 +138,5 @@ export const ChangePasswordForm = () => {
     </div>
   );
 };
+
+export default ChangePasswordForm;
