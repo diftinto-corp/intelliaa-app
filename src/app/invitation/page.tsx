@@ -18,7 +18,7 @@ export default async function AcceptInvitationPage({
 
   return (
     <div className='max-w-md mx-auto w-full my-12'>
-      <AcceptTeamInvitation token={searchParams.token} email={searchParams.email || ""} />
+      <AcceptTeamInvitation token={searchParams.token} />
     </div>
   );
 }
