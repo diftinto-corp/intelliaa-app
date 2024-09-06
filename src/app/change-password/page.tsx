@@ -1,3 +1,5 @@
+"use client";
+
 import { ChangePasswordForm } from "@/components/intelliaa/auth/ChangePasswordForm";
 import { Toaster } from "@/components/ui/toaster";
 
