@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createTeam } from '@/lib/actions/teams';
 
-
 export default function ConfirmPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -12,7 +11,6 @@ export default function ConfirmPage() {
 
   useEffect(() => {
     const handleConfirmation = async () => {
-      // Obtener el token de confirmación de los parámetros de la URL
       const token = searchParams.get('token');
       const organizationName = searchParams.get('org');
 
@@ -23,14 +21,12 @@ export default function ConfirmPage() {
       }
 
       try {
-        // Confirmar el registro del usuario con Supabase
         const { error } = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
 
         if (error) {
           throw error;
         }
 
-        // Si la confirmación es exitosa y tenemos un nombre de organización, crear el equipo
         if (organizationName) {
           const formData = new FormData();
           formData.append('name', organizationName);
