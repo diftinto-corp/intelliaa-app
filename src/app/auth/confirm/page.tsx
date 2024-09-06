@@ -21,7 +21,4 @@ export default function ConfirmPage() {
   );
 }
 
-// Configuración para desactivar la generación estática de esta ruta
-export const config = {
-  runtime: 'edge',
-};
+
