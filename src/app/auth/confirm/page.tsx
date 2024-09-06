@@ -1,55 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useSearchParams } from 'next/navigation';
 import { createTeam } from '@/lib/actions/teams';
 
 export default function ConfirmPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
   useEffect(() => {
     const handleConfirmation = async () => {
-      const token = searchParams.get('token');
       const organizationName = searchParams.get('org');
 
-      if (!token) {
-        console.error("Token de confirmación no proporcionado");
-        router.push("/auth");
-        return;
-      }
-
-      try {
-        const { error } = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
-
-        if (error) {
-          throw error;
-        }
-
-        if (organizationName) {
-          const formData = new FormData();
-          formData.append('name', organizationName);
-          
-          const slug = await createTeam(null, formData);
-
-          if (slug) {
-            router.push(`/${slug}`);
-          } else {
-            router.push("/auth");
-          }
-        } else {
-          router.push("/auth");
-        }
-      } catch (error) {
-        console.error("Error al confirmar el registro:", error);
-        router.push("/auth");
+      if (organizationName) {
+        const formData = new FormData();
+        formData.append('name', organizationName);
+        
+        await createTeam(null, formData);
       }
     };
 
     handleConfirmation();
-  }, []);
+  }, [searchParams]);
 
-  return <div>Confirmando tu cuenta...</div>;
+  return <div>Procesando confirmación...</div>;
 }
