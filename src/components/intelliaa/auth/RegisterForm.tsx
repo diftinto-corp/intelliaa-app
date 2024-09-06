@@ -12,21 +12,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { PasswordInput } from "./password-input";
-import { acceptInvitation } from "@/app/auth/actions";
 
 const registerSchema = z.object({
-  fullName: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
   email: z.string().email(),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
+  fullName: z.string().min(1, { message: "El nombre es requerido" }),
+  organizationName: z.string().min(1, { message: "El nombre de la organización es requerido" }),
 });
 
-type RegisterFormProps = {
-  onToggleForm: () => void;
-  onSuccess: () => void;
-  invitationToken?: string | null;
-};
-
-export const RegisterForm = ({ onToggleForm, onSuccess, invitationToken }: RegisterFormProps) => {
+export const RegisterForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -34,127 +28,144 @@ export const RegisterForm = ({ onToggleForm, onSuccess, invitationToken }: Regis
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: "",
       email: "",
       password: "",
+      fullName: "",
+      organizationName: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("fullName", values.fullName);
-      formData.append("email", values.email);
-      formData.append("password", values.password);
-      if (invitationToken) {
-        formData.append("invitationToken", invitationToken);
-      }
-      
-      const response = await signup(null, formData);
-      
-      if (response.success) {
-        if (invitationToken) {
-          // Si hay un token de invitación, aceptamos la invitación después del registro
-          await acceptInvitation(invitationToken);
-        }
-        onSuccess();
-        // Verificamos si response tiene la propiedad slug antes de usarla
-        if ('slug' in response && typeof response.slug === 'string') {
-          router.push(`/${response.slug}`);
-        } else {
-          // Si no hay slug, redirigimos a una ruta por defecto
-          router.push('/dashboard');
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error de registro",
-          description: response.message || "Por favor, intente de nuevo",
-        });
-      }
-    } catch (error) {
-      console.error("Error al registrarse:", error);
+    const response = await signup(values);
+
+    if (response?.type === "error") {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Ocurrió un error inesperado. Por favor, intenta de nuevo más tarde.",
+        title: "No se pudo registrar",
+        description: "Por favor, intente de nuevo",
       });
-    } finally {
-      setLoading(false);
+    } else {
+      // Nuevo toast para registro exitoso
+      toast({
+        variant: "default",
+        title: "Registro exitoso",
+        className: "bg-primary",
+        description: `Se ha enviado un correo de confirmación a ${values.email}`,
+      });
+      
+      // Verificamos si response tiene la propiedad message antes de acceder a ella
+      if (response && 'message' in response) {
+        // Mostramos el mensaje de éxito
+        toast({
+          variant: "default",
+          title: "Éxito",
+          description: response.message,
+        });
+      }
+      
+      // Ya no necesitamos guardar el slug en localStorage ni redirigir,
+      // ya que el usuario debe confirmar su correo primero
     }
+    setLoading(false);
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name='fullName'
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  className='mt-6 text-muted-foreground'
-                  placeholder='Nombre completo'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='email'
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  className='mt-2 text-muted-foreground'
-                  placeholder='Correo electrónico'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='password'
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <PasswordInput
-                  className='mt-2 text-muted-foreground'
-                  placeholder='Contraseña'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Registrando...
-            </>
-          ) : (
-            <>
-              <Mail className="mr-2 h-4 w-4" /> Registrarse
-            </>
-          )}
-        </Button>
-      </form>
-      <p className='mt-4 text-sm'>
-        ¿Ya tienes una cuenta?{" "}
-        <button type="button" onClick={onToggleForm} className="text-primary">
-          Inicia sesión
-        </button>
+    <div className='flex flex-col justify-center items-center md:w-[40%] text-center mt-56'>
+      <h1 className='text-2xl text-primary font-medium mb-2'>Crea una cuenta</h1>
+      <p className='text-muted-foreground text-xs'>
+        Ingrese sus datos a continuación para crear su cuenta.
       </p>
-    </Form>
+      <Form {...form}>
+        <form className='w-full' onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            control={form.control}
+            name='fullName'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    className='mt-6 text-muted-foreground'
+                    placeholder='Tu Nombre'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='organizationName'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    className='mt-2 text-muted-foreground'
+                    placeholder='Nombre de la organización'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    className='mt-2 text-muted-foreground'
+                    placeholder='email'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='password'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <PasswordInput
+                    className='mt-2 text-muted-foreground'
+                    placeholder='Contraseña'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button className='mt-4 w-[100%]' type="submit">
+            {loading ? (
+              <Loader2 size={17} className='animate-spin mr-2' />
+            ) : (
+              <Mail className='mr-2 h-4 w-4' />
+            )}
+            Regístrate
+          </Button>
+        </form>
+      </Form>
+      <div className='flex'>
+        <span className='text-muted-foreground text-sm mt-6 mr-1'>
+          ¿Ya tienes una cuenta?{" "}
+        </span>
+        <span
+          className='text-primary text-sm mt-6 font-bold cursor-pointer'
+          onClick={onToggleForm}>
+          Inicia Sesión
+        </span>
+      </div>
+      <p className='text-muted-foreground text-xs mt-6'>
+        Al hacer clic en continuar, aceptas nuestros Términos de Servicio y
+        Política de Privacidad.
+      </p>
+    </div>
   );
-}
+};

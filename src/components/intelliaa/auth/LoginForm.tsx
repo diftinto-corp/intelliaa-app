@@ -13,20 +13,13 @@ import { useRouter } from "next/navigation";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { PasswordInput } from "./password-input";
 import Link from "next/link";
-import { acceptInvitation } from "@/app/auth/actions";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
 });
 
-type LoginFormProps = {
-  onToggleForm: () => void;
-  onSuccess: () => void;
-  invitationToken?: string | null;
-};
-
-export const LoginForm = ({ onToggleForm, onSuccess, invitationToken }: LoginFormProps) => {
+export const LoginForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -41,113 +34,90 @@ export const LoginForm = ({ onToggleForm, onSuccess, invitationToken }: LoginFor
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("email", values.email);
-      formData.append("password", values.password);
-      if (invitationToken) {
-        formData.append("invitationToken", invitationToken);
-      }
-      
-      const response = await login(null, formData);
-      
-      if (response.success) {
-        if (invitationToken) {
-          // Si hay un token de invitación, aceptamos la invitación después del login
-          try {
-            await acceptInvitation(invitationToken);
-          } catch (error) {
-            console.error("Error al aceptar la invitación:", error);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "No se pudo aceptar la invitación. Por favor, intenta de nuevo.",
-            });
-          }
-        }
-        onSuccess();
-        // Verificamos si response tiene la propiedad slug antes de usarla
-        if ('slug' in response) {
-          router.push(`/${response.slug}`);
-        } else {
-          // Si no hay slug, redirigimos a una ruta por defecto
-          router.push('/dashboard');
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error de inicio de sesión",
-          description: response.message || "Por favor, intente de nuevo",
-        });
-      }
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
+    const response = await login(values);
+
+    if (response?.type === "error") {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Ocurrió un error inesperado. Por favor, intenta de nuevo más tarde.",
+        title: "No se pudo iniciar sesión",
+        description: "Por favor, intente de nuevo",
       });
-    } finally {
-      setLoading(false);
+    } else {
+      localStorage.setItem("intelliaa-organitation", JSON.stringify(response?.slug));
+      router.push(`/${response?.slug}`);
     }
+    setLoading(false);
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name='email'
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  className='mt-6 text-muted-foreground'
-                  placeholder='Correo electrónico'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='password'
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <PasswordInput
-                  className='mt-2 text-muted-foreground'
-                  placeholder='Contraseña'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Iniciando sesión...
-            </>
-          ) : (
-            <>
-              <Mail className="mr-2 h-4 w-4" /> Iniciar sesión
-            </>
-          )}
-        </Button>
-      </form>
-      <p className='mt-4 text-sm'>
-        ¿No tienes una cuenta?{" "}
-        <Link href="/register" passHref>
-          <button type="button" className="text-primary">
-            Regístrate
-          </button>
-        </Link>
+    <div className='flex flex-col justify-center items-center md:w-[40%] text-center mt-56'>
+      <h1 className='text-2xl text-primary font-medium mb-2'>Inicia Sesión</h1>
+      <p className='text-muted-foreground text-xs'>
+        Ingrese su correo electrónico a continuación para Iniciar sesión.
       </p>
-    </Form>
+      <Form {...form}>
+        <form className='w-full' onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    className='mt-6 text-muted-foreground'
+                    placeholder='email'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='password'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <PasswordInput
+                    className='mt-2 text-muted-foreground'
+                    placeholder='Contraseña'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-between items-center mt-2 mb-4">
+            <Link href="/recovery-password" className="text-primary text-sm">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+          <Button className='mt-4 w-[100%]' type="submit">
+            {loading ? (
+              <Loader2 size={17} className='animate-spin mr-2' />
+            ) : (
+              <Mail className='mr-2 h-4 w-4' />
+            )}{" "}
+            Inicia Sesión
+          </Button>
+        </form>
+      </Form>
+      <div className='flex'>
+        <span className='text-muted-foreground text-sm mt-6 mr-1'>
+          ¿No tienes cuenta?{" "}
+        </span>
+        <span
+          className='text-primary text-sm mt-6 font-bold cursor-pointer'
+          onClick={onToggleForm}>
+          Regístrate
+        </span>
+      </div>
+      <p className='text-muted-foreground text-xs mt-6'>
+        Al hacer clic en continuar, aceptas nuestros Términos de Servicio y
+        Política de Privacidad.
+      </p>
+    </div>
   );
-}
+};
