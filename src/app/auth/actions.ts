@@ -40,9 +40,22 @@ export async function login(prevState: any, formData: FormData) {
 export async function signup(prevState: any, formData: FormData) {
   const supabase = createClient();
 
+<<<<<<< HEAD
   const validatedFields = formSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+=======
+  const { data: dataSignup, error: errorSignup } = await supabase.auth.signUp({
+    email: Data.email,
+    password: Data.password,
+    options: {
+      data: {
+        full_name: Data.fullName,
+        organization_name: Data.organizationName
+      },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback` // URL para redirigir después de confirmar el correo
+    }
+>>>>>>> parent of 5af502a (Fix: Add use-client to page change-password and recovery-password4)
   });
 
   if (!validatedFields.success) {
