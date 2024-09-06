@@ -5,73 +5,66 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createTeam } from "@/lib/actions/teams";
 
-interface data {
-  email: string;
-  password: string;
-  fullName?: string;
-  organizationName?: string;
-}
+const formSchema = z.object({
+  email: z.string().email("Ingrese un correo electrónico válido"),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
+});
 
-
-export async function login(Data: data) {
+export async function login(prevState: any, formData: FormData) {
   const supabase = createClient();
 
-  console.log(Data);
+  const validatedFields = formSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: Data.email as string,
-    password: Data.password as string,
-  };
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const { email, password } = validatedFields.data;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return {
-      type: "error",
-      messages: error.message,
+      message: error.message,
     };
   }
 
-  const { data: teamAccount } = await supabase.rpc("get_accounts");
-
-  const teamAccountFilter = teamAccount.filter(
-    (account: any) => account.personal_account === false
-  );
-
-  return {
-    type: "success",
-    slug: teamAccountFilter[0]?.slug,
-  };
+  return { success: true };
 }
 
-export async function signup(Data: data) {
+export async function signup(prevState: any, formData: FormData) {
   const supabase = createClient();
 
-  const { data: dataSignup, error: errorSignup } = await supabase.auth.signUp({
-    email: Data.email,
-    password: Data.password,
-    options: {
-      data: {
-        full_name: Data.fullName,
-        organization_name: Data.organizationName
-      },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm` // Cambia esta URL
-    }
+  const validatedFields = formSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
   });
 
-  if (errorSignup) {
+  if (!validatedFields.success) {
     return {
-      type: "error",
-      messages: errorSignup.message,
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
-  return {
-    type: "success",
-    message: "Se ha enviado un correo de confirmación. Por favor, verifica tu bandeja de entrada."
-  };
+  const { email, password } = validatedFields.data;
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    return {
+      message: error.message,
+    };
+  }
+
+  return { success: true };
 }
 
 export async function logout() {
@@ -79,45 +72,60 @@ export async function logout() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    redirect("/auth/error");
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 
-  redirect("/auth");
+  return { success: true };
+}
+
+export async function acceptInvitation(token: string) {
+  const supabase = createClient();
+
+  const { error } = await supabase.rpc("accept_invitation", {
+    invitation_token: token,
+  });
+
+  if (error) {
+    return {
+      message: error.message,
+    };
+  }
+
+  return { success: true };
 }
 
 export async function solicitarRecuperacionContrasena(email: string) {
   const supabase = createClient();
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_URL}/change-password`, // URL donde rediriges después de hacer clic en el correo
+    redirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/change-password`,
   });
 
   if (error) {
-    console.error("Error al enviar el correo de recuperación:", error.message);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 
   return { success: true };
 }
 
 export async function cambiarContrasena(token: string, newPassword: string) {
-  // Establece la sesión con el token de recuperación
   const supabase = createClient();
-  const { data: session, error: sessionError } = await supabase.auth.setSession({
-    access_token: token,
-    refresh_token: token,
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
   });
 
-  if (sessionError) {
-    console.error("Error al establecer la sesión:", sessionError.message);
-    return { success: false, error: sessionError.message };
-  }
-
-  // Cambia la contraseña
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-
   if (error) {
-    console.error("Error al cambiar la contraseña:", error.message);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 
   return { success: true };
