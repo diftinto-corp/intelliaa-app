@@ -53,8 +53,19 @@ export const RegisterForm = ({ onToggleForm }: { onToggleForm: () => void }) => 
         className: "bg-primary",
         description: `Se ha enviado un correo de confirmación a ${values.email}`,
       });
-      localStorage.setItem("intelliaa-organitation", JSON.stringify(response?.slug));
-      router.push(`/${response?.slug}`);
+      
+      // Verificamos si response tiene la propiedad message antes de acceder a ella
+      if (response && 'message' in response) {
+        // Mostramos el mensaje de éxito
+        toast({
+          variant: "default",
+          title: "Éxito",
+          description: response.message,
+        });
+      }
+      
+      // Ya no necesitamos guardar el slug en localStorage ni redirigir,
+      // ya que el usuario debe confirmar su correo primero
     }
     setLoading(false);
   }
