@@ -11,21 +11,10 @@ export default function ConfirmPage() {
 
   useEffect(() => {
     const handleConfirmation = async () => {
-      const token = searchParams.get('token');
+      
       const organizationName = searchParams.get('org');
 
-      if (!token) {
-        console.error("Token de confirmación no proporcionado");
-        router.push("/auth");
-        return;
-      }
-
-      try {
-        const { error } = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
-
-        if (error) {
-          throw error;
-        }
+      
 
         if (organizationName) {
           const formData = new FormData();
@@ -41,10 +30,7 @@ export default function ConfirmPage() {
         } else {
           router.push("/auth");
         }
-      } catch (error) {
-        console.error("Error al confirmar el registro:", error);
-        router.push("/auth");
-      }
+
     };
 
     handleConfirmation();
