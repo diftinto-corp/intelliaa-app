@@ -57,7 +57,7 @@ export async function signup(Data: data) {
         full_name: Data.fullName,
         organization_name: Data.organizationName
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm` // Cambia esta URL
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm?org=${Data.organizationName}` // Cambia esta URL
     }
   });
 

@@ -1,50 +1,58 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createTeam } from '@/lib/actions/teams';
 
+
 export default function ConfirmPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
     const handleConfirmation = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Obtener el token de confirmación de los parámetros de la URL
+      const token = searchParams.get('token');
+      const organizationName = searchParams.get('org');
 
-      if (user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('full_name, organization_name')
-          .eq('id', user.id)
-          .single();
+      if (!token) {
+        console.error("Token de confirmación no proporcionado");
+        router.push("/auth");
+        return;
+      }
 
-        if (userData) {
-          const organizationSlug = userData.organization_name.toLowerCase().replace(/\s+/g, '-');
+      try {
+        // Confirmar el registro del usuario con Supabase
+        const { error } = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
 
-          const formdata = new FormData();
-          formdata.append("name", userData.organization_name);
-          formdata.append("slug", organizationSlug);
+        if (error) {
+          throw error;
+        }
 
-          const slug = await createTeam(null, formdata);
+        // Si la confirmación es exitosa y tenemos un nombre de organización, crear el equipo
+        if (organizationName) {
+          const formData = new FormData();
+          formData.append('name', organizationName);
+          
+          const slug = await createTeam(null, formData);
 
           if (slug) {
-            await supabase
-              .from('profiles')
-              .upsert({ id: user.id, full_name: userData.full_name });
-
             router.push(`/${slug}`);
           } else {
-            // Manejar error en la creación de la organización
+            router.push("/auth");
           }
+        } else {
+          router.push("/auth");
         }
-      } else {
-        // Manejar el caso en que no hay usuario autenticado
+      } catch (error) {
+        console.error("Error al confirmar el registro:", error);
+        router.push("/auth");
       }
     };
 
     handleConfirmation();
-  }, []);
+  }, [router, searchParams, supabase]);
 
-  return <div>Confirmando tu cuenta...</div>;
+  return <div className='flex items-center justify-center h-screen text-muted-foreground'>Confirmando tu cuenta...</div>;
 }
