@@ -61,20 +61,15 @@ export const ChangePasswordForm = () => {
             </Button>
           ),
         });
-        // Removemos el router.push de aquí para dar al usuario la opción de usar el botón
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.error || "Ocurrió un error al cambiar la contraseña.",
-        });
+        throw new Error(result.error || "Ocurrió un error al cambiar la contraseña.");
       }
     } catch (error) {
       console.error("Error al cambiar la contraseña:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Ocurrió un error inesperado al cambiar la contraseña.",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado al cambiar la contraseña.",
       });
     } finally {
       setLoading(false);

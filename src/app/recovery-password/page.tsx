@@ -1,4 +1,4 @@
-"use client";
+
 
 import { RecoveryPasswordForm } from "@/components/intelliaa/auth/RecoveryPasswordForm";
 import { Toaster } from "@/components/ui/toaster";
