@@ -54,8 +54,14 @@ export const ChangePasswordForm = () => {
         toast({
           title: "Contraseña cambiada",
           description: "Tu contraseña ha sido cambiada exitosamente.",
+          className: "bg-primary text-muted-foreground",
+          action: (
+            <Button variant="outline" onClick={() => router.push("/auth")}>
+              Ir a iniciar sesión
+            </Button>
+          ),
         });
-        router.push("/login"); // Redirige al usuario a la página de inicio de sesión
+        // Removemos el router.push de aquí para dar al usuario la opción de usar el botón
       } else {
         toast({
           variant: "destructive",
@@ -88,7 +94,7 @@ export const ChangePasswordForm = () => {
       </div>
       <h1 className='text-2xl text-primary font-medium mb-2'>Cambiar Contraseña</h1>
       <p className='text-muted-foreground text-xs mb-6'>
-        Ingresa tu nueva contraseña.
+        Ingresa tu nueva contraseña para completar el proceso de recuperación.
       </p>
       <Form {...form}>
         <form className='w-full' onSubmit={form.handleSubmit(onSubmit)}>
@@ -99,7 +105,7 @@ export const ChangePasswordForm = () => {
               <FormItem>
                 <FormControl>
                   <PasswordInput
-                    className='mt-2 text-muted-foreground'
+                    className='mt-6 text-muted-foreground'
                     placeholder='Nueva contraseña'
                     {...field}
                   />
@@ -124,7 +130,7 @@ export const ChangePasswordForm = () => {
               </FormItem>
             )}
           />
-          <Button className='mt-4 w-[100%]' type="submit">
+          <Button className='mt-4 w-[100%]' type="submit" disabled={loading}>
             {loading ? (
               <Loader2 size={17} className='animate-spin mr-2' />
             ) : (

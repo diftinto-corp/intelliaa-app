@@ -46,6 +46,13 @@ export const RegisterForm = ({ onToggleForm }: { onToggleForm: () => void }) => 
         description: "Por favor, intente de nuevo",
       });
     } else {
+      // Nuevo toast para registro exitoso
+      toast({
+        variant: "default",
+        title: "Registro exitoso",
+        className: "bg-primary text-muted-foreground",
+        description: `Se ha enviado un correo de confirmación a ${values.email}`,
+      });
       localStorage.setItem("intelliaa-organitation", JSON.stringify(response?.slug));
       router.push(`/${response?.slug}`);
     }

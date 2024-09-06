@@ -5,6 +5,7 @@ import { Card, CardContent } from "../ui/card";
 import { SubmitButton } from "../ui/submit-button";
 import { Input } from "../ui/input";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
 type Props = {
   token: string;
@@ -25,6 +26,15 @@ export default async function AcceptTeamInvitation({ token, email }: Props) {
   return (
     <Card>
       <CardContent className='p-8 text-center flex flex-col gap-y-8'>
+        <div className="mb-6 flex justify-center">
+          <Image
+            src="/Logo-Intelliaa-Dark.svg"
+            alt="Intellia Logo"
+            width={150}
+            height={50}
+            priority
+          />
+        </div>
         <div>
           <p className='text-sm text-muted-foreground'>
             Haz sido invitado para usar Intelliaa
@@ -48,7 +58,7 @@ export default async function AcceptTeamInvitation({ token, email }: Props) {
             </SubmitButton>
           </form>
         ) : (
-          <Alert variant='destructive'>
+          <Alert variant='destructive' className="bg-destructive text-muted-foreground">
             Esta invitación ha sido cancelada. Por favor, pide una nueva
             invitación.
           </Alert>

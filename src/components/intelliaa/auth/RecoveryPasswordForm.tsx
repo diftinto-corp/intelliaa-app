@@ -40,7 +40,9 @@ export const RecoveryPasswordForm = () => {
       if (result.success) {
         toast({
           title: "Correo enviado",
-          description: "Se ha enviado un correo con instrucciones para recuperar tu contraseña.",
+          variant: "default",
+          className: "bg-primary",
+          description: `Se ha enviado un correo a ${values.email} con instrucciones para recuperar tu contraseña.`,
         });
         form.reset(); // Limpia el formulario después de un envío exitoso
       } else {
@@ -61,7 +63,6 @@ export const RecoveryPasswordForm = () => {
       setLoading(false);
     }
   }
-
   return (
     <div className='flex flex-col justify-center items-center md:w-[20%] text-center mt-56'>
       <div className="mb-6">
@@ -107,4 +108,4 @@ export const RecoveryPasswordForm = () => {
       </Form>
     </div>
   );
-};
+}

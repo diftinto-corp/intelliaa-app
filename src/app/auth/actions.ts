@@ -1,12 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
 import { z } from "zod";
-import { sendEmail } from "@/lib/email";
-import { generateResetToken, verifyResetToken } from "@/lib/tokens";
-import { updateUserPassword } from "@/lib/updateUserPassword";
 import { createClient } from "@/lib/supabase/server";
 import { createTeam } from "@/lib/actions/teams";
 
@@ -17,14 +12,6 @@ interface data {
   organizationName?: string;
 }
 
-const recuperarContrasenaSchema = z.object({
-  email: z.string().email(),
-});
-
-const cambiarContrasenaSchema = z.object({
-  token: z.string(),
-  password: z.string().min(6),
-});
 
 export async function login(Data: data) {
   const supabase = createClient();
@@ -69,7 +56,8 @@ export async function signup(Data: data) {
       data: {
         full_name: Data.fullName,
         organization_name: Data.organizationName
-      }
+      },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback` // URL para redirigir después de confirmar el correo
     }
   });
 
@@ -102,6 +90,7 @@ export async function signup(Data: data) {
     return {
       type: "success",
       slug: slug,
+      message: "Se ha enviado un correo de confirmación. Por favor, verifica tu bandeja de entrada."
     };
   }
 
