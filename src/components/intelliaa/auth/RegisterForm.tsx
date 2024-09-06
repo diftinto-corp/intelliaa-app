@@ -50,7 +50,7 @@ export const RegisterForm = ({ onToggleForm }: { onToggleForm: () => void }) => 
       toast({
         variant: "default",
         title: "Registro exitoso",
-        className: "bg-primary text-muted-foreground",
+        className: "bg-primary",
         description: `Se ha enviado un correo de confirmación a ${values.email}`,
       });
       localStorage.setItem("intelliaa-organitation", JSON.stringify(response?.slug));

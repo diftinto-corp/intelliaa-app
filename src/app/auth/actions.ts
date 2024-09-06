@@ -57,7 +57,7 @@ export async function signup(Data: data) {
         full_name: Data.fullName,
         organization_name: Data.organizationName
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback` // URL para redirigir después de confirmar el correo
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth` // URL para redirigir después de confirmar el correo
     }
   });
 
