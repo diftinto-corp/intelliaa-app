@@ -57,7 +57,7 @@ export async function signup(Data: data) {
         full_name: Data.fullName,
         organization_name: Data.organizationName
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth` // URL para redirigir después de confirmar el correo
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm` // Cambia esta URL
     }
   });
 
@@ -68,35 +68,9 @@ export async function signup(Data: data) {
     };
   }
 
-  const organizationSlug = Data.organizationName?.toLowerCase().replace(/\s+/g, '-');
-
-  const formdata = new FormData();
-  formdata.append("name", Data.organizationName ?? '');
-  formdata.append("slug", organizationSlug ?? '');
-
-  const slug = await createTeam(null, formdata);
-
-  if (slug) {
-    // Actualizar el perfil del usuario con el nombre completo
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ full_name: Data.fullName })
-      .eq('id', dataSignup.user?.id);
-
-    if (profileError) {
-      console.error('Error al actualizar el perfil:', profileError);
-    }
-
-    return {
-      type: "success",
-      slug: slug,
-      message: "Se ha enviado un correo de confirmación. Por favor, verifica tu bandeja de entrada."
-    };
-  }
-
   return {
-    type: "error",
-    messages: "Error al crear la organización",
+    type: "success",
+    message: "Se ha enviado un correo de confirmación. Por favor, verifica tu bandeja de entrada."
   };
 }
 
