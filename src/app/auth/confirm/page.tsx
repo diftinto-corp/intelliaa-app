@@ -1,26 +1,27 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { createTeam } from '@/lib/actions/teams';
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
+// Importamos el componente ConfirmationHandler de forma dinámica
+const ConfirmationHandler = dynamic(
+  () => import('@/components/intelliaa/ConfirmationHandler'),
+  { ssr: false }
+);
+
+// Componente principal de la página de confirmación
 export default function ConfirmPage() {
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const handleConfirmation = async () => {
-      const organizationName = searchParams.get('org');
-
-      if (organizationName) {
-        const formData = new FormData();
-        formData.append('name', organizationName);
-        
-        await createTeam(null, formData);
-      }
-    };
-
-    handleConfirmation();
-  }, [searchParams]);
-
-  return <div>Procesando confirmación...</div>;
+  return (
+    <div>
+      <Suspense fallback={<div>Procesando confirmación...</div>}>
+        <ConfirmationHandler />
+        <p>Confirmando...</p>
+      </Suspense>
+    </div>
+  );
 }
+
+// Configuración para desactivar la generación estática de esta ruta
+export const config = {
+  runtime: 'edge',
+};

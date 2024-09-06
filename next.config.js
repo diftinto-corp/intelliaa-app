@@ -7,12 +7,7 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-  },
-  // Deshabilitar la generación estática para la ruta /auth/confirm
-  experimental: {
-    workerThreads: false,
-    cpus: 1
-  },
+  }
 };
 
 module.exports = nextConfig;
