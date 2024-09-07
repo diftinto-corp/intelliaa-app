@@ -23,20 +23,8 @@ export default function ConfirmationHandler() {
         
         try {
           // Crear la organización y obtener el resultado
-          const teamResult = await createTeam(null, formData);
-          console.log(teamResult.slug) 
-
-          // Verificar si el resultado tiene la propiedad 'slug'
-          if ('slug' in teamResult) {
-            // Llamar a la función para manejar la confirmación
-            const confirmationResult = await handleConfirmation(fullName, email);
-            if (confirmationResult.success) {
-              console.log("Redirigiendo a:", teamResult.slug); // Para depuración
-              router.push(`/${teamResult.slug}`);
-            } else {
-              console.error("Error al manejar la confirmación:", confirmationResult.error);
-            }
-          }
+          await createTeam(null, formData);
+          
         } catch (error) {
           console.error("Error en el proceso de confirmación:", error);
         }
