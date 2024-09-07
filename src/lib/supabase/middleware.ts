@@ -55,6 +55,7 @@ export const validateSession = async (request: NextRequest) => {
       !pathname.startsWith("/auth-invitation") &&
       !pathname.startsWith("/change-password") &&
       !pathname.startsWith("/recovery-password") &&
+      !pathname.startsWith("/confirm") &&
       pathname !== "/" &&
       !pathname.startsWith("/public");
 

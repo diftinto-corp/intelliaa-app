@@ -20,12 +20,9 @@ export async function createTeam(prevState: any, formData: FormData) {
       message: error.message,
     };
   }
+  console.log("Pase por aqui");
 
-  // redirect(`/${data.slug}`);
-
-  return {
-    slug: slug,
-  };
+  redirect(`/${data.slug}`);
 }
 
 export async function editTeamName(prevState: any, formData: FormData) {

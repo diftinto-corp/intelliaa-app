@@ -57,10 +57,13 @@ export async function signup(Data: data) {
         full_name: Data.fullName,
         organization_name: Data.organizationName
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm?org=${Data.organizationName}&fullName=${Data.fullName}&email=${Data.email}` // URL sin userId
+      
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/confirm?org=${Data.organizationName}&fullName=${Data.fullName}&email=${Data.email}` // URL sin userId
     }
+    
   });
 
+  console.log(`${process.env.NEXT_PUBLIC_URL}/confirm?org=${Data.organizationName}&fullName=${Data.fullName}&email=${Data.email}`);
   if (errorSignup) {
     return {
       type: "error",
@@ -125,22 +128,18 @@ export async function cambiarContrasena(token: string, newPassword: string) {
   return { success: true };
 }
 
-export async function handleConfirmation( fullName: string, email: string) {
+export async function handleConfirmation(fullName: string, email: string) {
   const supabase = createClient();
 
-   // Realizar una consulta para obtener el userId usando el email en la tabla users
-   const { data: userData, error } = await supabase
-   .from('users') // Asegúrate de que esta sea la tabla correcta
-   .select('id')
-   .eq('email', email)
-   .single(); // Obtener un solo registro
+  // Realizar una consulta para obtener el userId usando el email en la tabla auth.users
+  const { data: userData } = await supabase
+    .from('auth.users') // Especificar el esquema 'auth'
+    .select('id')
+    .eq('email', email)
+    .single(); // Obtener un solo registro
 
- if (error) {
-   console.error("Error al obtener el userId:", error.message);
-   return { success: false, error: error.message };
- }
 
- const userId = userData?.id;
+  const userId = userData?.id;
 
   // Insertar en la tabla profiles
   const { error: profileError } = await supabase
