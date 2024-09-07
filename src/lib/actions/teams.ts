@@ -21,7 +21,11 @@ export async function createTeam(prevState: any, formData: FormData) {
     };
   }
 
-  redirect(`/${data.slug}`);
+  // redirect(`/${data.slug}`);
+
+  return {
+    slug: slug,
+  };
 }
 
 export async function editTeamName(prevState: any, formData: FormData) {

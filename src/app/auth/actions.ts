@@ -49,7 +49,7 @@ export async function login(Data: data) {
 export async function signup(Data: data) {
   const supabase = createClient();
 
-  const { data: dataSignup, error: errorSignup } = await supabase.auth.signUp({
+  const { error: errorSignup } = await supabase.auth.signUp({
     email: Data.email,
     password: Data.password,
     options: {
@@ -57,7 +57,7 @@ export async function signup(Data: data) {
         full_name: Data.fullName,
         organization_name: Data.organizationName
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm?org=${Data.organizationName}` // Cambia esta URL
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/confirm?org=${Data.organizationName}&fullName=${Data.fullName}&email=${Data.email}` // URL sin userId
     }
   });
 
@@ -73,6 +73,8 @@ export async function signup(Data: data) {
     message: "Se ha enviado un correo de confirmación. Por favor, verifica tu bandeja de entrada."
   };
 }
+
+
 
 export async function logout() {
   const supabase = createClient();
@@ -120,5 +122,36 @@ export async function cambiarContrasena(token: string, newPassword: string) {
     return { success: false, error: error.message };
   }
 
+  return { success: true };
+}
+
+export async function handleConfirmation( fullName: string, email: string) {
+  const supabase = createClient();
+
+   // Realizar una consulta para obtener el userId usando el email en la tabla users
+   const { data: userData, error } = await supabase
+   .from('users') // Asegúrate de que esta sea la tabla correcta
+   .select('id')
+   .eq('email', email)
+   .single(); // Obtener un solo registro
+
+ if (error) {
+   console.error("Error al obtener el userId:", error.message);
+   return { success: false, error: error.message };
+ }
+
+ const userId = userData?.id;
+
+  // Insertar en la tabla profiles
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert([{ id: userId, full_name: fullName, email: email }]);
+
+  if (profileError) {
+    console.error("Error al agregar el perfil:", profileError.message);
+    return { success: false, error: profileError.message };
+  }
+
+  // Retornar éxito si se inserta el perfil correctamente
   return { success: true };
 }

@@ -1,22 +1,25 @@
-'use client';
 
-import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import ConfirmationHandler from "@/components/intelliaa/ConfirmationHandler";
+import { redirect } from "next/navigation";
 
-// Importamos el componente ConfirmationHandler de forma dinámica
-const ConfirmationHandler = dynamic(
-  () => import('@/components/intelliaa/ConfirmationHandler'),
-  { ssr: false }
-);
+export default async function ConfirmPage({
+  searchParams,
+}: {
+  searchParams: { email?: string, org:string, fullName:string };
+}) {
 
-// Componente principal de la página de confirmación
-export default function ConfirmPage() {
+
+  console.log(searchParams);
+
+  if (!searchParams.org || !searchParams.fullName || !searchParams.email) {
+    redirect("/");
+  }
+
+
+
   return (
-    <div>
-      <Suspense fallback={<div>Procesando confirmación...</div>}>
-        <ConfirmationHandler />
-        <p>Confirmando...</p>
-      </Suspense>
+    <div className='max-w-md mx-auto w-full my-12'>
+      <ConfirmationHandler />
     </div>
   );
 }
