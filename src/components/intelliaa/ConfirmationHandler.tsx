@@ -9,15 +9,13 @@ import Image from "next/image";
 
 export default function ConfirmationHandler() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  
 
   useEffect(() => {
     const handleConfirmationProcess = async () => {
-      const organizationName = searchParams.get('org'); // Obtener el ID del usuario
-      const email = searchParams.get('email'); // Obtener el email del usuario
-      const fullName = searchParams.get('fullName'); // Obtener el nombre completo del usuario
+      const organizationName = searchParams.get('org'); 
 
-      if (organizationName && email && fullName) {
+      if (organizationName ) {
         const formData = new FormData();
         formData.append('name', organizationName);
         
@@ -32,7 +30,7 @@ export default function ConfirmationHandler() {
     };
 
     handleConfirmationProcess();
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   return (
     <Card>
