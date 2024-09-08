@@ -48,9 +48,8 @@ export const RegisterForm = ({ onToggleForm }: { onToggleForm: () => void }) => 
     } else {
       // Nuevo toast para registro exitoso
       toast({
-        variant: "default",
         title: "Registro exitoso",
-        className: "bg-primary",
+        className: "bg-primary text-white",
         description: `Se ha enviado un correo de confirmación a ${values.email}`,
       });
       
