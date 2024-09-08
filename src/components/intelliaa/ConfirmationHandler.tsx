@@ -57,7 +57,8 @@ export default function ConfirmationHandler() {
     confirmUserAndCreateOrganization();
   }, [searchParams, router]);
 
-  <Card>
+  return (
+    <Card>
       <CardContent className='p-8 text-center flex flex-col gap-y-8'>
         <div className="mb-6 flex justify-center">
           <Image
@@ -77,4 +78,5 @@ export default function ConfirmationHandler() {
        
       </CardContent>
     </Card>
+  )
 }
