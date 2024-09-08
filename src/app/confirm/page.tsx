@@ -5,13 +5,13 @@ import { redirect } from "next/navigation";
 export default async function ConfirmPage({
   searchParams,
 }: {
-  searchParams: { email?: string, org:string, fullName:string };
+  searchParams: { org:string  };
 }) {
 
 
   console.log(searchParams);
 
-  if (!searchParams.org || !searchParams.fullName || !searchParams.email) {
+  if (!searchParams.org) {
     redirect("/");
   }
 
