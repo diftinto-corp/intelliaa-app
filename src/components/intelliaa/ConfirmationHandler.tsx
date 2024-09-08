@@ -57,10 +57,6 @@ export default function ConfirmationHandler() {
     confirmUserAndCreateOrganization();
   }, [searchParams, router]);
 
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
-
   <Card>
       <CardContent className='p-8 text-center flex flex-col gap-y-8'>
         <div className="mb-6 flex justify-center">
@@ -74,7 +70,7 @@ export default function ConfirmationHandler() {
         </div>
         <div>
           <p className='text-sm text-muted-foreground'>
-            {loading ? 'Corfirmando' : 'Ha sido confirmada tu cuenta, Gracias por usar Intelliaa'}
+            {loading ? 'Corfirmando...' : 'Ha sido confirmada tu cuenta, Gracias por usar Intelliaa'}
           </p>
           
         </div>
