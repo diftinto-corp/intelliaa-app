@@ -1,28 +1,28 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { createTeam } from '@/lib/actions/teams';
-import { handleConfirmation } from '@/app/auth/actions'; 
+import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 
 export default function ConfirmationHandler() {
   const searchParams = useSearchParams();
-  
 
   useEffect(() => {
     const handleConfirmationProcess = async () => {
-      const organizationName = searchParams.get('org'); 
+      const organizationName = searchParams.get('org');
+      const email = searchParams.get('email');
+      const fullName = searchParams.get('fullName');
 
-      if (organizationName ) {
+      if (organizationName && email && fullName) {
         const formData = new FormData();
         formData.append('name', organizationName);
         
         try {
           // Crear la organización y obtener el resultado
           await createTeam(null, formData);
-          
+          // La redirección se maneja dentro de createTeam
         } catch (error) {
           console.error("Error en el proceso de confirmación:", error);
         }
@@ -45,14 +45,11 @@ export default function ConfirmationHandler() {
           />
         </div>
         <div>
-          
           <h3 className='text-xl font-bold text-primary'>
             Confirmando...
           </h3>
         </div>
-        
       </CardContent>
     </Card>
-
-  )
+  );
 }

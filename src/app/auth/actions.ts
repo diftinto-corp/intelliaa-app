@@ -58,12 +58,12 @@ export async function signup(Data: data) {
         organization_name: Data.organizationName
       },
       
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/confirm?org=${Data.organizationName}&fullName=${Data.fullName}&email=${Data.email}` // URL sin userId
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/confirm?org=${Data.organizationName}` // URL sin userId
     }
     
   });
 
-  console.log(`${process.env.NEXT_PUBLIC_URL}/confirm?org=${Data.organizationName}&fullName=${Data.fullName}&email=${Data.email}`);
+  console.log(`${process.env.NEXT_PUBLIC_URL}/confirm?org=${Data.organizationName}`);
   if (errorSignup) {
     return {
       type: "error",
