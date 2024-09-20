@@ -309,7 +309,7 @@ const getMessages = async (sessionId: string) => {
       {
         method: "GET",
         headers: {
-          Authorization: "Basic " + btoa(username + ":" + password),
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_FLOWISE_KEY}`,
         },
       }
     );
