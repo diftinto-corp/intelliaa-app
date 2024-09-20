@@ -137,10 +137,10 @@ export function ChartChats() {
   );
 
   return (
-    <Card className='w-[70%]'>
+    <Card className='w-[70%] bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
       <CardHeader className='flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row'>
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6'>
-          <CardTitle>Chats</CardTitle>
+          <CardTitle className="bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent">Chats</CardTitle>
           <CardDescription>
             Mostrando el total de respuestas y las sin respuesta de los últimos
             30 días.

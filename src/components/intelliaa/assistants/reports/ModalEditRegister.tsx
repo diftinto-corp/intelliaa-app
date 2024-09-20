@@ -1,13 +1,14 @@
 "use client";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Edit } from "lucide-react";
+import { Edit, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { useEffect, useState } from "react";
@@ -66,6 +67,10 @@ const ModalEditRegister: React.FC<ModalEditRegisterProps> = ({
             Pregunta y Respuesta.
           </DialogDescription>
         </DialogHeader>
+        <DialogClose className="absolute right-4 top-4 rounded-sm  ring-offset-background transition-opacity  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4 text-red-600" />
+          <span className="sr-only">Cerrar</span>
+        </DialogClose>
         <div className='flex flex-row'>
           <div className='w-1/2'>
             <div className='text-sm font-semibold text-gray-500'>Pregunta</div>

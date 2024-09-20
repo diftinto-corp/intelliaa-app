@@ -1,6 +1,7 @@
 "use client";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -19,6 +20,7 @@ import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { FormAssignAssistantToNumber } from "./FormAssignAssistantToNumber";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
+import { X } from "lucide-react";
 
 interface ActiveNumber {
   number: string;
@@ -91,7 +93,7 @@ export default function ModalAssignAssistantToNumber({
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle className='text-muted-foreground'>
+          <DialogTitle className='font-semibold text-2xl bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
             Asignar asistente para llamadas entrantes
           </DialogTitle>
           <DialogDescription>
@@ -104,6 +106,10 @@ export default function ModalAssignAssistantToNumber({
             setOpen={setOpen}
           />
         </DialogHeader>
+        <DialogClose className="absolute right-4 top-4 rounded-sm  ring-offset-background transition-opacity  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4 text-red-600" />
+          <span className="sr-only">Cerrar</span>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );

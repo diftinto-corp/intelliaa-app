@@ -24,7 +24,7 @@ export default function ReportsPage() {
     <div className='flex flex-col h-[92vh] items-center p-6'>
       <div className='flex flex-col bg-background items-center w-full h-[92vh] rounded-sm  p-4 '>
         <div className='flex flex-col w-[100%] mb-4'>
-          <h1 className='text-2xl font-semibold text-primary self-start mb-10'>
+          <h1 className='text-2xl font-semibold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent self-start mb-10'>
             Números telefónicos
           </h1>
           <TabsNumber />

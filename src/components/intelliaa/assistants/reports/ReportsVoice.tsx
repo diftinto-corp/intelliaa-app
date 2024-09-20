@@ -89,7 +89,6 @@ export default function ReportsVoice() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [callRecords, setCallRecords] = useState<CallRecord[]>([]);
 
-  console.log(selectedRecord);
 
   useEffect(() => {
     const getCalls = async () => {
@@ -256,7 +255,7 @@ export default function ReportsVoice() {
                   <Button
                     key={i + 1}
                     onClick={() => paginate(i + 1)}
-                    variant={currentPage === i + 1 ? "default" : "outline"}>
+                    className={currentPage === i + 1 ? "bg-background border border-primary rounded-md text-primary" : " bg-background border border-muted-foreground rounded-md text-muted-foreground"}>
                     {i + 1}
                   </Button>
                 )

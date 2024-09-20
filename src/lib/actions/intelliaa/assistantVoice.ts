@@ -25,7 +25,7 @@ const createAssistantVoiceVapi = async (
       model: {
         messages: [
           {
-            content: `${prompt} Cuando se te pida transferir, usa la función transferCall y cuando el usuario se despida, usa la función endCall.`,
+            content: `${prompt} Cuando se te pida transferir pidele confirmación al usuario que desea ser transferido y si la respuesta es afirmativa usa la función transferCall y cuando el usuario se despida pidele confirmación al usuario que quiere finalizar si la respuesta es afirmativa, usa la función endCall.`,
             role: "system",
           },
         ],

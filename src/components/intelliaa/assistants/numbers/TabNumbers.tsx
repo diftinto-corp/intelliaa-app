@@ -219,7 +219,7 @@ export function TabsNumber() {
                     variant='outline'
                     role='combobox'
                     aria-expanded={open}
-                    className='w-[200px] justify-between'>
+                    className='w-[200px] justify-between '>
                     {countriesLoading
                       ? "Cargando..."
                       : paises.find(
@@ -359,7 +359,7 @@ export function TabsNumber() {
                       <TableCell>{number.price}</TableCell>
                       <TableCell className='text-right'>
                         <Button
-                          className='bg-primary text-muted-foreground'
+                          className='bg-primary'
                           size='sm'
                           onClick={() => console.log("Comprar número")}>
                           <ShoppingCart className='h-4 w-4 mr-2' />

@@ -42,11 +42,13 @@ export function PieChartAssistants({ assistants }: { assistants: any[] }) {
   }));
 
   return (
-    <Card className='flex flex-col w-[30%]'>
-      <CardHeader className='items-center pb-0'>
-        <CardTitle>Asistentes</CardTitle>
+    <Card className='flex flex-col bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden w-[30%]'>
+      <CardHeader className='items-start pb-0'>
+        <CardTitle className="bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent">Asistentes</CardTitle>
         {/* <CardDescription>January - June 2024</CardDescription> */}
+
       </CardHeader>
+
       <CardContent className='flex-1 pb-0'>
         <ChartContainer
           config={chartConfig}

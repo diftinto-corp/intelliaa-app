@@ -122,7 +122,7 @@ export default function AssistantSettings({
   };
 
   return (
-    <Card className='w-[60%] pt-6 overflow-y-auto'>
+    <Card className='w-[60%] text-muted-foreground pt-6 bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-y-auto'>
       <CardContent>
         <div className='flex justify-end gap-2 items-center'>
           {!isWhatsappActivated ? (

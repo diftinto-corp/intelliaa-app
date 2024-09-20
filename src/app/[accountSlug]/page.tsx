@@ -85,9 +85,11 @@ export default function HomePage() {
 
   return (
     <div className='flex-1 p-6'>
-      <section className='bg-slate-50 dark:bg-foreground p-6 md:p-10 rounded-sm'>
-        <div className=' flex flex-col'>
-          <h1 className='text-3xl font-bold mb-2 text-primary'>
+      <div className='bg-slate-50 dark:bg-background p-6 md:p-10 rounded-sm'>
+      <section className='p-6 md:p-10 rounded-sm'>
+          <div className=' flex flex-col'>
+
+          <h1 className='text-3xl font-bold mb-2 bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
             ¡Bienvenido de vuelta, {personalAccount?.name}!
           </h1>
           <p className='text-muted-foreground dark:text-muted-foreground mb-6'>
@@ -168,7 +170,7 @@ export default function HomePage() {
       <section className='p-6 md:p-10'>
         <div className=''>
           <div className='flex items-center justify-between mb-6'>
-            <h2 className='text-2xl font-bold text-muted-foreground'>
+            <h2 className='text-2xl font-bold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
               Gestión de Asistente
             </h2>
             {/* <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -179,7 +181,7 @@ export default function HomePage() {
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {Array.isArray(assistants) && assistants.length > 0 ? (
               assistants.map((assistant, index) => (
-                <Card key={assistant.id}>
+                <Card key={assistant.id} className='bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
                   <CardHeader>
                     <div className='flex items-center gap-2'>
                       <Avatar>
@@ -203,7 +205,7 @@ export default function HomePage() {
                   <CardContent>
                     <div className='grid grid-cols-2 gap-4'>
                       <div>
-                        <p className='text-gray-500 dark:text-gray-400 text-sm'>
+                        <p className='text-gray-500 dark:text-gray-400 text-sm '>
                           Documentos
                         </p>
                         <p>{assistant.type_assistant}</p>
@@ -241,10 +243,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <section className='bg-slate-50 dark:bg-foreground p-6 md:p-10 rounded-sm'>
+      <section className=' p-6 md:p-10 rounded-sm'>
         <div className=''>
           <div className='flex items-center justify-between mb-6'>
-            <h2 className='text-2xl font-bold text-muted-foreground'>
+            <h2 className='text-2xl font-bold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
               Documentos
             </h2>
             <Button onClick={handleAddDocument}>
@@ -255,7 +257,7 @@ export default function HomePage() {
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {Array.isArray(documents) && documents.length > 0 ? (
               documents.map((document) => (
-                <Card>
+                <Card key={document.id} className='bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
                   <CardHeader>
                     <div className='flex items-center gap-2'>
                       <FileTextIcon className='h-6 w-6 text-gray-500 dark:text-gray-400' />
@@ -278,6 +280,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
+
 }

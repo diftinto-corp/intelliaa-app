@@ -184,7 +184,7 @@ export default function ChatWsComponent({
   }, [messages]);
 
   return (
-    <Card className='flex flex-col justify-between w-[40%]'>
+    <Card className='flex flex-col text-muted-foreground bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden justify-between w-[40%]'>
       <CardContent>
         <div className='flex items-center justify-between my-5'>
           <Label htmlFor='assistant-name' className='text-lg'>
@@ -214,9 +214,10 @@ export default function ChatWsComponent({
                   transition={{ duration: 1 }}
                   className={`flex flex-col p-4 m-4 max-w-[80%] ${
                     message.role === "userMessage"
-                      ? "bg-teal-900 rounded-lg rounded-br-none"
-                      : "bg-teal-800 rounded-lg rounded-bl-none"
+                      ? "bg-teal-900 rounded-lg rounded-br-none text-white"
+                      : "bg-teal-800 rounded-lg rounded-bl-none text-white"
                   }`}>
+
                   {message.role === "apiMessage" ? (
                     <Markdown className='text-md'>{message.content}</Markdown>
                   ) : (

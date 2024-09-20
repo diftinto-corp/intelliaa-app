@@ -57,7 +57,7 @@ export default function QuestionsAndAnswers({
           </div>
           <div className='flex flex-wrap w-full justify-start gap-4 overflow-y-auto max-h-[60vh] mt-2 ml-4'>
             {qaList.map((qa) => (
-              <Card key={qa.id} className='w-[48%]'>
+              <Card key={qa.id} className='w-[48%] bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
                 <CardHeader>
                   <CardTitle>{qa.question}</CardTitle>
                 </CardHeader>

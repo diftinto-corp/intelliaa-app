@@ -1,16 +1,5 @@
-import { HeaderComponent } from "@/components/landingPage/HeaderComponent";
-import { HeroComponent } from "@/components/landingPage/HeroComponent";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from 'next/navigation';
 
-export default async function Index() {
-  const supabase = createClient();
-
-  const { data: session } = await supabase.auth.getSession();
-
-  return (
-    <>
-      <HeaderComponent session={session} />
-      <HeroComponent />
-    </>
-  );
+export default function Home() {
+  redirect('/auth');
 }

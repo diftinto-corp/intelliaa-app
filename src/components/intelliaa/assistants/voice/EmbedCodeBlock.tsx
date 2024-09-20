@@ -15,7 +15,7 @@ const EmbedCodeBlock: React.FC<EmbedCodeBlockProps> = ({ code }) => {
   };
 
   return (
-    <div className='flex flex-col w-[50%] min-h-[60vh] border rounded-sm p-4 justify-between'>
+    <div className='flex flex-col w-[50%] min-h-[70vh] bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden border rounded-sm p-4 justify-between'>
       <div className='flex flex-col bg-slate-800 p-4 rounded-sm'>
         <div className='flex w-full justify-end'>
           <Copy

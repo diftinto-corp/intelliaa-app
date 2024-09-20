@@ -49,18 +49,18 @@ export const validateSession = async (request: NextRequest) => {
     } = await supabase.auth.getUser();
 
     const pathname = request.nextUrl.pathname;
-    const isProtectedRoute =
-      !pathname.startsWith("/invitation") &&
-      !pathname.startsWith("/auth") &&
-      !pathname.startsWith("/auth-invitation") &&
-      !pathname.startsWith("/change-password") &&
-      !pathname.startsWith("/recovery-password") &&
-      !pathname.startsWith("/confirm") &&
-      pathname !== "/" &&
-      !pathname.startsWith("/public");
+    const isPublicRoute =
+      pathname.startsWith("/invitation") ||
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/auth-invitation") ||
+      pathname.startsWith("/change-password") ||
+      pathname.startsWith("/recovery-password") ||
+      pathname.startsWith("/confirm") ||
+      pathname === "/" ||
+      pathname.startsWith("/public");
 
-    // Redirige si no hay usuario y es una ruta protegida
-    if (!user && isProtectedRoute) {
+    // Redirige si no hay usuario y no es una ruta pública
+    if (!user && !isPublicRoute) {
       return forceLoginWithReturn(request);
     }
 
@@ -72,5 +72,5 @@ export const validateSession = async (request: NextRequest) => {
 };
 
 export const config = {
-  matcher: ["/:slug*"], // Aplicar middleware a todas las rutas dinámicas
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

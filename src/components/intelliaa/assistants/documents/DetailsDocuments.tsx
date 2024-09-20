@@ -15,6 +15,7 @@ import ModalDeleteDocument from "./ModalDeleteDocument";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { set } from "date-fns";
+import { Card } from "@/components/ui/card";
 
 export default function DetailsDocuments({
   documentSelected,
@@ -82,20 +83,20 @@ export default function DetailsDocuments({
 
   return (
     <div>
-      <p className='text-left text-xl font-semibold text-muted-foreground my-4'>
+      <p className='text-left text-xl font-semibold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent my-4'>
         {DocumentPdf?.name}
       </p>
       <div className='flex w-full gap-4'>
-        <div className='flex flex-col gap-2 w-[50%] h-[78vh] rounded overflow-hidden'>
+        <div className='flex flex-col gap-2 w-[50%] h-[78vh] rounded  overflow-hidden '>
           <iframe
             className='rounded w-full h-full'
             src={DocumentPdf?.url}
             allow='fullscreen'
             allowFullScreen></iframe>
         </div>
-        <div className='flex flex-col gap-4 w-[50%] pl-6'>
+        <Card className='flex flex-col bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden gap-4 w-[50%] pl-6'>
           <div className='flex flex-col w-[80%]'>
-            <p className='text-left text-lg font-semibold text-muted-foreground my-4'>
+            <p className='text-left text-lg font-semibold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent  my-4'>
               Resumen:
             </p>
             <p className='text-left text-sm font-semibold text-muted-foreground my-4 h-[100px] overflow-hidden'>
@@ -147,7 +148,7 @@ export default function DetailsDocuments({
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

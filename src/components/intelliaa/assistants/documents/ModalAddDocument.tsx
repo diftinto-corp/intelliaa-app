@@ -1,13 +1,14 @@
 "use client";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
@@ -33,7 +34,7 @@ export default function ModalAddDocument() {
           e.preventDefault();
         }}>
         <DialogHeader>
-          <DialogTitle className='text-muted-foreground'>
+          <DialogTitle className='font-semibold text-2xl bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
             Agregar nuevo documento
           </DialogTitle>
           <DialogDescription>
@@ -41,6 +42,10 @@ export default function ModalAddDocument() {
             documento
           </DialogDescription>
         </DialogHeader>
+        <DialogClose className="absolute right-4 top-4 rounded-sm  ring-offset-background transition-opacity  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4 text-red-600" />
+          <span className="sr-only">Cerrar</span>
+        </DialogClose>
         <FormAddDocComponent setOpenModal={setOpen} />
       </DialogContent>
     </Dialog>

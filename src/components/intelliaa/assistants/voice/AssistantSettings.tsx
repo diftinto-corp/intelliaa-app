@@ -169,7 +169,7 @@ export default function AssistantSettings({
   };
 
   return (
-    <Card className='flex flex-col w-[100%] overflow-y-auto'>
+    <Card className='flex flex-col w-[100%] text-muted-foreground bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)]  overflow-y-auto'>
       <div className='flex justify-end gap-2 items-center pt-6 mr-2'>
         {!connected && (
           <Button onClick={handleCallAssistant} disabled={connecting}>
