@@ -1,354 +1,578 @@
 "use server";
 
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
 import { createClient } from "@/lib/supabase/server";
 import { GetAssistant } from "./assistants";
+import { flowiseService } from "@/services/flowiseService";
+import { vapiService } from "@/services/vapiService";
 
-const s3Client = new S3Client({
-  region: process.env.NEXT_AWS_S3_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.NEXT_AWS_S3_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.NEXT_AWS_S3_SECRET_ACCESS_KEY || "",
-  },
-});
+const supabase = createClient();
 
-async function uploadPdf(prevState: any, formData: FormData) {
-  try {
-    const file = formData.get("file") as File;
+async function createDocumentStorage(account_id: string, formData: FormData) {
+  const name = formData.get("name");
+  const description = formData.get("description");
+  const file = formData.get("file") as File;
 
-    if (file.size === 0) {
-      return { status: "error", message: "Empty file" };
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const filename = file.name;
-    const filenameLarge = `${Math.random()
-      .toString(36)
-      .substring(2, 15)}_${filename}`;
-    const key = `pdfs-intelliaa/${filenameLarge}`;
-    const urlFile = `${process.env.NEXT_AWS_S3_BUCKET_URL_FILE}${key}`;
-
-    const putObjectCommand = new PutObjectCommand({
-      Bucket: process.env.NEXT_AWS_S3_BUCKET_NAME || "",
-      Key: key,
-      Body: buffer,
-      ContentType: "application/pdf",
-    });
-
-    const s3UploadResponse = await s3Client.send(putObjectCommand);
-
-    if (s3UploadResponse.$metadata.httpStatusCode !== 200) {
-      throw new Error("Error uploading to S3");
-    }
-
-    // S3 upload successful, proceed to upload to VAPI
-    const vapiForm = new FormData();
-    vapiForm.append("file", file);
-
-    const vapiOptions = {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
-        // 'Content-Type': 'multipart/form-data' // Note: Do not set this header manually, let fetch set it for you.
-      },
-      body: vapiForm,
-    };
-
-    const vapiResponse = await fetch("https://api.vapi.ai/file", vapiOptions);
-    const vapiResult = await vapiResponse.json();
-
-    if (!vapiResponse.ok) {
-      throw new Error(
-        `Error uploading to VAPI: ${vapiResult.message || "Unknown error"}`
-      );
-    }
-
-    return {
-      status: "success",
-      message: "Document uploaded successfully to S3 and VAPI",
-      data: {
-        s3: {
-          filename,
-          key,
-          urlFile,
-        },
-        vapi: vapiResult,
-      },
-    };
-  } catch (error: any) {
-    console.error(error);
-    return {
-      status: "error",
-      message: `Error uploading document: ${error.message}`,
-    };
+  if (file.size === 0) {
+    return { status: "error", message: "Empty file" };
   }
-}
 
-async function deletePdfS3(key: string) {
+  const base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
+
   try {
-    const deleteObjectCommand = new DeleteObjectCommand({
-      Bucket: process.env.NEXT_AWS_S3_BUCKET_NAME || "",
-      Key: key,
-    });
+    // Crear documento en Flowise
 
-    await s3Client.send(deleteObjectCommand);
-  } catch (error) {
-    console.error(error);
-    return { status: "error", message: "Error deleting document" };
-  }
-}
+    const documentStorageNamespace = `${name
+      ?.toString()
+      .replace(/\s+/g, "-")}-${Math.random().toString(36).substring(2, 8)}`;
 
-async function resumenPdf(key: string) {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_FLOWISE}prediction/${process.env.NEXT_PUBLIC_FLOWISE_CHATID_RESUMEN_PDF}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_FLOWISE_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: "resumen en menos de 2 lineas el documento",
-          overrideConfig: {
-            keyName: key,
-          },
-        }),
-      }
+    const documentStorage = await flowiseService.createDocumentStore(
+      name as string,
+      description as string
     );
-    const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error("Error al resumir el archivo");
+    // Procesar archivo
+    let processFile;
+    try {
+      processFile = await flowiseService.processFile(documentStorage.id, {
+        docId: null,
+        loader: {
+          name: "pdfFile",
+          config: {
+            loaderId: "pdfFile",
+            legacyBuild: "",
+            textSplitter: "",
+            metadata: "",
+            omitMetadataKeys: "",
+            pdfFile: `data:application/pdf;base64,${base64File},filename:${file.name}`,
+            usage: "perPage",
+          },
+        },
+        splitter: {
+          name: "recursiveCharacterTextSplitter",
+          config: {
+            chunkSize: 1500,
+            chunkOverlap: 750,
+            separator: "",
+          },
+        },
+        embedding: {
+          name: "openAIEmbeddings",
+          config: {
+            modelName: "text-embedding-3-small",
+            stripNewLines: "",
+            batchSize: "",
+            timeout: "",
+            basepath: "",
+            dimensions: "",
+            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+          },
+        },
+        vectorStore: {
+          name: "pinecone",
+          config: {
+            document: "",
+            embeddings: "",
+            recordManager: "",
+            pineconeIndex: "intelliaa",
+            pineconeNamespace: documentStorageNamespace,
+            fileUpload: "",
+            pineconeTextKey: "",
+            pineconeMetadataFilter: "",
+            topK: "10",
+            searchType: "similarity",
+            fetchK: "",
+            lambda: "",
+            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+          },
+        },
+        recordManager: {
+          name: "postgresRecordManager",
+          config: {
+            host: "aws-0-us-east-1.pooler.supabase.com",
+            database: "postgres",
+            port: "6543",
+            additionalConfig: "",
+            tableName: "",
+            namespace: documentStorageNamespace,
+            cleanup: "full",
+            sourceIdKey: "source",
+            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+          },
+        },
+      });
+
+      console.log("processFile", processFile);
+    } catch (error) {
+      console.error("Error al procesar el archivo con Flowise:", error);
+      throw new Error("Error al procesar el archivo con Flowise");
     }
 
-    return result.text;
+    //Subir a Vapi
+    const vapiResult = await vapiService.uploadFile(file);
+
+    // console.log("processFile.file.id", processFile.file.id);
+
+    const {
+      data: createDocumentStorageSupabase,
+      error: errorCreateDocumentStorageSupabase,
+    } = await supabase
+      .from("document_storages")
+      .insert([
+        {
+          id: documentStorage.id,
+          account_id,
+          name: documentStorage.name,
+          description: documentStorage.description,
+          namespace: documentStorageNamespace,
+        },
+      ])
+      .select();
+
+    if (errorCreateDocumentStorageSupabase) {
+      console.error(errorCreateDocumentStorageSupabase);
+    }
+
+    const { data: pdfDocsSupabase, error: errorPdfDocsSupabase } =
+      await supabase
+        .from("pdf_docs")
+        .insert([
+          {
+            id: processFile.docId,
+            account_id: createDocumentStorageSupabase?.[0]?.account_id,
+            document_storage_id: documentStorage.id,
+            name: file.name,
+            id_vapi_doc: vapiResult.id,
+            url: vapiResult.url,
+          },
+        ])
+        .select();
+
+    if (errorPdfDocsSupabase) {
+      console.error(errorPdfDocsSupabase);
+    }
+
+    return {
+      createDocumentStorageSupabase,
+      pdfDocsSupabase,
+    };
   } catch (error) {
-    console.error((error as Error).message);
+    console.error(error);
+    throw new Error("Error al crear el documento");
   }
 }
 
-async function getAllPdf_Doc(account_id: string) {
+async function getAllDocumentStorage(account_id: string) {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from("pdf_docs")
+    .from("document_storages")
     .select("*")
     .eq("account_id", account_id);
 
   if (error) {
-    return { message: error.message };
+    console.log(error);
   }
 
   return data;
 }
 
-async function getPdf_Doc(account_id: string, id: string) {
+async function getDocumentStorageById(documentStorageId: string) {
+  const supabase = createClient();
+  try {
+    const { data, error } = await supabase
+      .from("document_storages")
+      .select("*")
+      .eq("id", documentStorageId);
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function deleteDocumentStorageById(documentStorageId: string) {
+  const supabase = createClient();
+
+  try {
+    const deleteDocumentStorageFlowise =
+      await flowiseService.deleteDocumentStore(documentStorageId);
+
+    if (deleteDocumentStorageFlowise.status !== "success") {
+      throw new Error("Failed to delete document storage in Flowise");
+    }
+
+    const { error: errorDeleteDocumentsPDF } = await supabase
+      .from("pdf_docs")
+      .delete()
+      .eq("document_storage_id", documentStorageId);
+
+    if (errorDeleteDocumentsPDF) {
+      throw new Error(
+        `Error deleting PDF documents: ${errorDeleteDocumentsPDF.message}`
+      );
+    }
+
+    const { error: errorDeleteDocumentQA } = await supabase
+      .from("qa_docs")
+      .delete()
+      .eq("document_storage_id", documentStorageId);
+
+    if (errorDeleteDocumentQA) {
+      throw new Error(
+        `Error deleting QA documents: ${errorDeleteDocumentQA.message}`
+      );
+    }
+
+    const { error: errorDeleteDocumentStorage } = await supabase
+      .from("document_storages")
+      .delete()
+      .eq("id", documentStorageId);
+
+    if (errorDeleteDocumentStorage) {
+      throw new Error(
+        `Error deleting document storage: ${errorDeleteDocumentStorage.message}`
+      );
+    }
+  } catch (error) {
+    console.error("Error in deleteDocumentStorageById:", error);
+    throw error; // Re-throw the error after logging it
+  }
+}
+
+async function getDocumentCounts(documentStorageId: string) {
+  const supabase = createClient();
+
+  // Obtener registros de la tabla `pdf_docs`
+  const { data: pdfDocs, error: pdfError } = await supabase
+    .from("pdf_docs")
+    .select("*")
+    .eq("document_storage_id", documentStorageId);
+
+  if (pdfError) {
+    console.error("Error al obtener registros en pdf_docs:", pdfError);
+    throw new Error(
+      `Error al obtener registros en pdf_docs: ${pdfError.message}`
+    );
+  }
+
+  // Obtener registros de la tabla `qa_docs`
+  const { data: qaDocs, error: qaError } = await supabase
+    .from("qa_docs")
+    .select("*")
+    .eq("document_storage_id", documentStorageId);
+
+  if (qaError) {
+    console.error("Error al obtener registros en qa_docs:", qaError);
+    throw new Error(
+      `Error al obtener registros en qa_docs: ${qaError.message}`
+    );
+  }
+
+  // Retornar un array con los elementos de pdf_docs y qa_docs
+  return [...pdfDocs, ...qaDocs];
+}
+
+async function getDocumentsPDFforDocumentStorage(
+  account_id: string,
+  id: string
+) {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("pdf_docs")
     .select("*")
-    .eq("account_id", account_id)
-    .eq("id", id);
-
+    .eq("document_storage_id", id)
+    .eq("account_id", account_id);
   if (error) {
-    return { message: error.message };
-  }
-
-  return data[0];
-}
-
-async function newPdf_Doc({
-  account_id,
-  filename,
-  description,
-  key,
-  urlFile,
-  id_vapi_doc,
-}: {
-  account_id: string;
-  filename?: string;
-  description?: string;
-  key?: string;
-  urlFile?: string;
-  id_vapi_doc?: string;
-}) {
-  const supabase = createClient();
-
-  const { data, error } = await supabase.from("pdf_docs").insert([
-    {
-      account_id,
-      name: filename,
-      description,
-      s3_key: key,
-      url: urlFile,
-      id_vapi_doc,
-    },
-  ]);
-
-  if (error) {
-    return { message: error.message };
+    console.log(error);
   }
 
   return data;
 }
 
-async function deletePdf_Doc(
+async function uploadPdf(
+  documentStorageId: string,
   account_id: string,
-  id: string,
-  id_vapi_doc: string
+  formData: FormData,
+  documentStorageNamespace: string
 ) {
-  const supabase = createClient();
-
   try {
-    // Primero eliminamos el documento de Supabase
-    const { data, error } = await supabase
-      .from("pdf_docs")
-      .delete()
-      .eq("account_id", account_id)
-      .eq("id", id);
-
-    if (error) {
-      throw new Error(`Error deleting from Supabase: ${error.message}`);
+    // Validar archivo
+    const file = formData.get("file") as File;
+    if (!file || file.size === 0) {
+      throw new Error("Archivo vacío o inválido");
     }
 
-    // Si la eliminación en Supabase es exitosa, procedemos a eliminar el documento de VAPI
-    const vapiOptions = {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
-      },
+    // Convertir archivo a base64
+    let base64File;
+    try {
+      base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
+    } catch (error) {
+      throw new Error("Error al procesar el archivo");
+    }
+
+    // Procesar archivo con Flowise
+    //TODO: Revisar si se puede usar el mismo loaderId
+    let processFile;
+    try {
+      processFile = await flowiseService.processFile(documentStorageId, {
+        docId: null,
+        loader: {
+          name: "pdfFile",
+          config: {
+            loaderId: "pdfFile",
+            legacyBuild: "",
+            textSplitter: "",
+            metadata: "",
+            omitMetadataKeys: "",
+            pdfFile: `data:application/pdf;base64,${base64File},filename:${file.name}`,
+            usage: "perPage",
+          },
+        },
+        splitter: {
+          name: "recursiveCharacterTextSplitter",
+          config: {
+            chunkSize: 1500,
+            chunkOverlap: 750,
+            separator: "",
+          },
+        },
+        embedding: {
+          name: "openAIEmbeddings",
+          config: {
+            modelName: "text-embedding-3-small",
+            stripNewLines: "",
+            batchSize: "",
+            timeout: "",
+            basepath: "",
+            dimensions: "",
+            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+          },
+        },
+        vectorStore: {
+          name: "pinecone",
+          config: {
+            document: "",
+            embeddings: "",
+            recordManager: "",
+            pineconeIndex: "intelliaa",
+            pineconeNamespace: documentStorageNamespace,
+            fileUpload: "",
+            pineconeTextKey: "",
+            pineconeMetadataFilter: "",
+            topK: "10",
+            searchType: "similarity",
+            fetchK: "",
+            lambda: "",
+            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+          },
+        },
+        recordManager: {
+          name: "postgresRecordManager",
+          config: {
+            host: "aws-0-us-east-1.pooler.supabase.com",
+            database: "postgres",
+            port: "6543",
+            additionalConfig: "",
+            tableName: "",
+            namespace: documentStorageNamespace,
+            cleanup: "full",
+            sourceIdKey: "source",
+            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+          },
+        },
+      });
+
+      console.log("processFile", processFile);
+    } catch (error) {
+      console.error("Error al procesar el archivo con Flowise:", error);
+      throw new Error("Error al procesar el archivo con Flowise");
+    }
+
+    // Subir a Vapi
+    let vapiResult;
+    try {
+      vapiResult = await vapiService.uploadFile(file);
+    } catch (error) {
+      console.error("Error al subir archivo a Vapi:", error);
+      throw new Error("Error al subir archivo a Vapi");
+    }
+
+    // Guardar en Supabase
+    console.log("processFile", processFile);
+
+    const { data: pdfDocsSupabase, error: errorPdfDocsSupabase } =
+      await supabase
+        .from("pdf_docs")
+        .insert([
+          {
+            id: processFile.docId,
+            account_id: account_id,
+            document_storage_id: documentStorageId,
+            name: file.name,
+            id_vapi_doc: vapiResult.id,
+            url: vapiResult.url,
+          },
+        ])
+        .select();
+
+    if (errorPdfDocsSupabase) {
+      console.error("Error al guardar en base de datos:", errorPdfDocsSupabase);
+      throw new Error("Error al guardar en base de datos");
+    }
+
+    return {
+      status: "success",
+      data: pdfDocsSupabase,
     };
+  } catch (error) {
+    console.error("Error en uploadPdf:", error);
+    return {
+      status: "error",
+      message: (error as Error).message || "Error al subir el archivo",
+    };
+  }
+}
 
-    const vapiResponse = await fetch(
-      `https://api.vapi.ai/file/${id_vapi_doc}`,
-      vapiOptions
-    );
-    const vapiResult = await vapiResponse.json();
+async function deletePdf(
+  documentStorageId: string,
+  id_vapi_doc: string,
+  id: string,
+  documentStorageNamespace: string
+) {
+  try {
+    const supabase = createClient();
 
-    if (!vapiResponse.ok) {
+    // Verificar si es el último documento
+    const documents = await getDocumentCounts(documentStorageId);
+
+    if (documents.length === 1) {
+      // Si falla deleteVectorStore, continuamos con el proceso
+      try {
+        await flowiseService.deleteLoader(documentStorageId, id);
+        await flowiseService.insertVectorStore({
+          storeId: documentStorageId,
+          docId: id,
+          embeddingConfig: {
+            modelName: "text-embedding-3-small",
+            stripNewLines: "",
+            batchSize: "",
+            timeout: "",
+            basepath: "",
+            dimensions: "",
+            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+          },
+          embeddingName: "openAIEmbeddings",
+          vectorStoreConfig: {
+            document: "",
+            embeddings: "",
+            recordManager: "",
+            pineconeIndex: "intelliaa",
+            pineconeNamespace: documentStorageNamespace,
+            fileUpload: "",
+            pineconeTextKey: "",
+            pineconeMetadataFilter: "",
+            topK: "10",
+            searchType: "similarity",
+            fetchK: "",
+            lambda: "",
+            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+          },
+          vectorStoreName: "pinecone",
+          recordManagerConfig: {
+            host: "aws-0-us-east-1.pooler.supabase.com",
+            database: "postgres",
+            port: "6543",
+            additionalConfig: "",
+            tableName: "",
+            namespace: documentStorageNamespace,
+            cleanup: "full",
+            sourceIdKey: "source",
+            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+          },
+          recordManagerName: "postgresRecordManager",
+        });
+        await vapiService.deleteFile(id_vapi_doc);
+      } catch (error) {
+        console.log("Error al eliminar vector store:", error);
+      }
+      await deleteDocumentStorageById(documentStorageId);
+    }
+
+    // Eliminar el loader de Flowise
+    await flowiseService.deleteLoader(documentStorageId, id);
+    await flowiseService.insertVectorStore({
+      storeId: documentStorageId,
+      docId: null,
+      embeddingConfig: {
+        modelName: "text-embedding-3-small",
+        stripNewLines: "",
+        batchSize: "",
+        timeout: "",
+        basepath: "",
+        dimensions: "",
+        credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+      },
+      embeddingName: "openAIEmbeddings",
+      vectorStoreConfig: {
+        document: "",
+        embeddings: "",
+        recordManager: "",
+        pineconeIndex: "intelliaa",
+        pineconeNamespace: documentStorageNamespace,
+        fileUpload: "",
+        pineconeTextKey: "",
+        pineconeMetadataFilter: "",
+        topK: "10",
+        searchType: "similarity",
+        fetchK: "",
+        lambda: "",
+        credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+      },
+      vectorStoreName: "pinecone",
+      recordManagerConfig: {
+        host: "aws-0-us-east-1.pooler.supabase.com",
+        database: "postgres",
+        port: "6543",
+        additionalConfig: "",
+        tableName: "",
+        namespace: documentStorageNamespace,
+        cleanup: "full",
+        sourceIdKey: "source",
+        credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+      },
+      recordManagerName: "postgresRecordManager",
+    });
+
+    // Eliminar archivo de Vapi
+    await vapiService.deleteFile(id_vapi_doc);
+
+    // Eliminar registro de Supabase
+    const { error: supabaseError } = await supabase
+      .from("pdf_docs")
+      .delete()
+      .eq("id", id);
+
+    if (supabaseError) {
       throw new Error(
-        `Error deleting from VAPI: ${vapiResult.message || "Unknown error"}`
+        `Error al eliminar de Supabase: ${supabaseError.message}`
       );
     }
 
     return {
       status: "success",
-      message: "Document deleted successfully from Supabase and VAPI",
-      data,
+      message: "Documento eliminado correctamente",
     };
-  } catch (error: any) {
-    console.error(error);
+  } catch (error) {
+    console.error("Error en deletePdf:", error);
     return {
       status: "error",
-      message: `Error deleting document: ${error.message}`,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al eliminar el PDF",
     };
   }
 }
 
-const upsertPDF = async (
-  s3_key: string,
-  id_document: string,
-  namespace: string
-) => {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_FLOWISE}vector/upsert/${process.env.NEXT_PUBLIC_FLOWISE_CHATID_UPSERTPDF}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          overrideConfig: {
-            keyName: s3_key,
-            metadata: {
-              namespace: namespace,
-              id_document: id_document,
-            },
-          },
-        }),
-      }
-    );
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error("Error al subir el archivo");
-    }
-    return result;
-  } catch (error) {
-    console.error((error as Error).message);
-  }
-};
-
-const deleteDocuments = async (
-  id_document: string,
-  namespace: string
-): Promise<boolean> => {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("documents")
-    .delete()
-    .eq("metadata->>id_document", id_document)
-    .eq("metadata->>namespace", namespace);
-
-  if (error) {
-    console.error("Error al eliminar el documento:", error);
-    return false;
-  }
-
-  return true;
-};
-
-const newEmbedPDF = async (
-  account_id: string,
-  assistant_id: string,
-  s3_key: string,
-  id_document: string
-) => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("embedded_pdfs")
-    .insert([
-      {
-        account_id: account_id,
-        assistant_id: assistant_id,
-        pdf_doc_key: s3_key,
-        id_document: id_document,
-      },
-    ])
-    .select();
-
-  if (error) {
-    return { message: error.message };
-  }
-  return data;
-};
-
-const deleteEmbedPDF = async (
-  account_id: string,
-  assistant_id: string,
-  id_document: string
-) => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("embedded_pdfs")
-    .delete()
-    .eq("account_id", account_id)
-    .eq("assistant_id", assistant_id)
-    .eq("id_document", id_document);
-
-  if (error) {
-    return { message: error.message };
-  }
-
-  return data;
-};
+///Revsar///
 
 const searchAssistantByDocument = async (
   accountId: string,
@@ -422,15 +646,12 @@ const getAssistantsWsName = async (accountId: string, data: any[]) => {
 
 export {
   uploadPdf,
-  deletePdfS3,
-  resumenPdf,
-  upsertPDF,
-  getAllPdf_Doc,
-  getPdf_Doc,
-  newPdf_Doc,
-  deletePdf_Doc,
-  newEmbedPDF,
-  deleteEmbedPDF,
-  deleteDocuments,
   searchAssistantByDocument,
+  createDocumentStorage,
+  getDocumentStorageById,
+  deleteDocumentStorageById,
+  getAllDocumentStorage,
+  getDocumentsPDFforDocumentStorage,
+  deletePdf,
+  getDocumentCounts,
 };

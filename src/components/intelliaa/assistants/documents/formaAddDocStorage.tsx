@@ -5,28 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import { uploadPdf } from "@/lib/actions/intelliaa/documents";
+import { createDocumentStorage } from "@/lib/actions/intelliaa/documents";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 
 // Definimos la interfaz para los datos del formulario
 interface FormInputs {
+  name: string;
+  description: string;
   pdfFile: FileList;
 }
 
-export default function FormaAddDoc({
+export default function FormaAddDocStorage({
   setOpenModal,
-  documentStorageId,
-  documentStorageNamespace,
 }: {
   setOpenModal: any;
-  documentStorageId: string;
-  documentStorageNamespace: string;
 }) {
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
+  console.log(accountSlug);
   // Agregamos validación al useForm
   const {
     register,
@@ -46,33 +44,21 @@ export default function FormaAddDoc({
   }, [accountSlug]);
 
   const createDocumentStorageForm = async (data: FormInputs) => {
-    const supabase = createClient();
     try {
       setLoading(true);
       // Aquí deberías manejar el archivo PDF antes de enviarlo
       const formData = {
+        name: data.name,
+        description: data.description,
         file: data.pdfFile[0], // Primer archivo seleccionado
       };
       // Crear un objeto FormData para enviar el archivo
       const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("description", formData.description);
       formDataToSend.append("file", formData.file);
 
-      const { data: documentStorage } = await supabase
-        .from("document_storages")
-        .select("namespace")
-        .eq("id", documentStorageId)
-        .single();
-
-      if (!documentStorage) {
-        throw new Error("Document storage not found");
-      }
-
-      await uploadPdf(
-        documentStorageId,
-        account_id,
-        formDataToSend,
-        documentStorageNamespace
-      );
+      await createDocumentStorage(account_id, formDataToSend);
     } catch (error) {
       console.error(error);
     } finally {
@@ -85,6 +71,43 @@ export default function FormaAddDoc({
     <form
       className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-muted-foreground'
       onSubmit={handleSubmit(createDocumentStorageForm)}>
+      <div className='flex flex-col gap-y-2'>
+        <Label htmlFor='name'>Nombre del Document Storage</Label>
+        <Input
+          type='text'
+          id='name'
+          {...register("name", {
+            required: "El nombre es requerido",
+            minLength: {
+              value: 3,
+              message: "El nombre debe tener al menos 3 caracteres",
+            },
+          })}
+        />
+        {errors.name && (
+          <span className='text-sm text-red-500'>{errors.name.message}</span>
+        )}
+      </div>
+      <div className='flex flex-col gap-y-2'>
+        <Label htmlFor='description'>Descripción del DocumentStorage</Label>
+        <Input
+          type='text'
+          id='description'
+          {...register("description", {
+            required: "La descripción es requerida",
+            minLength: {
+              value: 10,
+              message: "La descripción debe tener al menos 10 caracteres",
+            },
+          })}
+        />
+        {errors.description && (
+          <span className='text-sm text-red-500'>
+            {errors.description.message}
+          </span>
+        )}
+      </div>
+
       <div className='flex flex-col gap-y-2'>
         <Label htmlFor='pdfFile'>Archivo PDF</Label>
         <Input

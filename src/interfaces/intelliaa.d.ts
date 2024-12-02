@@ -31,13 +31,19 @@ export interface Assistant {
   voicemailMessage: string;
 }
 
+interface DocumentStorage {
+  id: string;
+  name: string;
+  description: string;
+  namespace: string;
+}
+
 export interface Pdf_Doc {
   id: string;
   name: string;
   description?: string;
-  s3_key: string;
   url: string;
-  account_id: string;
+  document_storage_id: string;
   id_vapi_doc: string;
 }
 
@@ -86,8 +92,10 @@ export interface AssistantTemplate {
 
 export interface QAItem {
   id: string;
+  account_id: string;
+  document_storage_id: string;
   question: string;
   answer: string;
-  id_document: string;
-  namespace: string;
+  namefile: string;
+  vapiFileId: string;
 }

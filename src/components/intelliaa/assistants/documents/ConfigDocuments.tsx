@@ -11,20 +11,21 @@ import ModalAddDocument from "./ModalAddDocument";
 import DetailsDocuments from "./DetailsDocuments";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { set } from "date-fns";
+import ModalAddFile from "./ModalAddFile";
 
 export default function ConfigDocuments({
   documentsListPage,
+  documentStorageId,
   documentSelected,
   setDocumentSelected,
 }: {
   documentsListPage: Pdf_Doc[];
+  documentStorageId: string;
   documentSelected: string;
   setDocumentSelected: Function;
 }) {
   const [s3_key, setS3_key] = useState(documentsListPage[0]?.s3_key);
   const [idVapiDoc, setIdVapiDoc] = useState(documentsListPage[0]?.id_vapi_doc);
-
-  console.log(idVapiDoc);
 
   const handleSelectDocument = (id: string, s3_key: string) => {
     setDocumentSelected(id);
@@ -36,7 +37,7 @@ export default function ConfigDocuments({
       <div className='flex w-full h-full gap-4'>
         <div className='flex flex-col bg-background w-[15%] border rounded p-2'>
           <div className='flex flex-col'>
-            <ModalAddDocument />
+            <ModalAddFile documentStorageId={documentStorageId} />
           </div>
           <p className='text-left text-xl font-semibold  text-muted-foreground  my-4'>
             Documentos:{" "}

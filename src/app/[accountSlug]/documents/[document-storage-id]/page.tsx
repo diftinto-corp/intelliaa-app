@@ -1,26 +1,28 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
-import ModalAddDocument from "@/components/intelliaa/assistants/documents/ModalAddDocument";
-import { DocumentStorage, Pdf_Doc } from "../../../interfaces/intelliaa";
+import { Pdf_Doc, DocumentStorage } from "@/interfaces/intelliaa";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
-import { getAllDocumentStorage } from "@/lib/actions/intelliaa/documents";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  getDocumentsPDFforDocumentStorage,
+  getDocumentStorageById,
+} from "@/lib/actions/intelliaa/documents";
+import DocumentViewer from "@/components/intelliaa/assistants/documents/documentViewer/document-viewer";
 
 //TODO: Agregar renderizado condicional con loading
 
-export default function DocumentStoragePage() {
+export default function DocumentPage() {
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
-  const router = useRouter();
-
-  const [documents, setDocuments] = useState<DocumentStorage[]>([]);
+  const documentStorageId = pathname.split("/")[3];
+  const [documents, setDocuments] = useState<Pdf_Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [documentSelected, setDocumentSelected] = useState(documents[0]?.id);
+  const [documentUrl, setDocumentUrl] = useState(documents[0]?.url);
+  const [account_id, setAccountId] = useState("");
 
   const supabase = createClient();
 
@@ -29,10 +31,17 @@ export default function DocumentStoragePage() {
       const team_account = await getAccountBySlug(null, accountSlug);
       const account_id = team_account.account_id;
 
-      const newDocuments: any = await getAllDocumentStorage(account_id);
+      const newDocuments: any = await getDocumentsPDFforDocumentStorage(
+        account_id,
+        documentStorageId
+      );
+
       if (!documents) return;
+      setAccountId(account_id);
       setDocuments([...newDocuments]);
       setDocumentSelected(newDocuments[0]?.id);
+      setDocumentUrl(newDocuments[0]?.url);
+
       setLoading(false);
     };
 
@@ -41,17 +50,18 @@ export default function DocumentStoragePage() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("document_storages")
+      .channel("pdf_docs")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "document_storages",
+          table: "pdf_docs",
         },
         (payload: any) => {
-          setDocuments([...documents, payload.new as DocumentStorage]);
+          setDocuments([...documents, payload.new as Pdf_Doc]);
           setDocumentSelected(payload.new.id);
+          setDocumentUrl(payload.new.url);
         }
       )
       .subscribe();
@@ -63,17 +73,18 @@ export default function DocumentStoragePage() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("document_storages_delete")
+      .channel("pdf_docs_delete")
       .on(
         "postgres_changes",
         {
           event: "DELETE",
           schema: "public",
-          table: "document_storages",
+          table: "pdf_docs",
         },
         (payload: any) => {
           setDocuments(documents.filter((doc) => doc.id !== payload.old.id));
           setDocumentSelected(documents[0]?.id);
+          setDocumentUrl(documents[0]?.url);
         }
       )
       .subscribe();
@@ -105,43 +116,13 @@ export default function DocumentStoragePage() {
   }
 
   return (
-    <>
-      {documents.length > 0 ? (
-        <div className='min-h-[90vh] p-6'>
-          <div className='flex justify-between'>
-            <h3 className='text-primary text-2xl font-bold mb-6'>
-              Document storages
-            </h3>
-            <ModalAddDocument />
-          </div>
-          <div className='grid grid-cols-2 gap-6'>
-            {documents.map((doc) => (
-              <Card
-                key={doc.id}
-                className='w-[40%] flex flex-col gap-2 p-4 text-muted-foreground pt-6 bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-y-auto cursor-pointer hover:bg-[#2a2928]/80 transition-colors'
-                onClick={() => router.push(`${pathname}/${doc.id}`)}>
-                <CardHeader>
-                  <CardTitle className='text-primary'>{doc.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{doc.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className='flex flex-col justify-center min-h-[90vh] items-center p-6'>
-          <div className='flex w-[40%] flex-col justify-center items-center text-muted-foreground'>
-            <p>Aún no has creado un asistente.</p>
-            <p>
-              Haga clic en el botón a continuación para agregar un nuevo
-              asistente.
-            </p>
-            <ModalAddDocument />
-          </div>
-        </div>
-      )}
-    </>
+    <DocumentViewer
+      documentsListPage={documents}
+      account_id={account_id}
+      documentStorageId={documentStorageId}
+      documentSelected={documentSelected}
+      setDocumentSelected={setDocumentSelected}
+      accountSlug={accountSlug}
+    />
   );
 }

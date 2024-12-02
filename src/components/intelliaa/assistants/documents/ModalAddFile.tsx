@@ -13,8 +13,15 @@ import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import FormaAddDocStorage from "./formaAddDocStorage";
+import FormAddDocComponent from "./FormAddDoc";
 
-export default function ModalAddDocument() {
+export default function ModalAddFilet({
+  documentStorageId,
+  documentStorageNamespace,
+}: {
+  documentStorageId: string;
+  documentStorageNamespace: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,18 +42,22 @@ export default function ModalAddDocument() {
         }}>
         <DialogHeader>
           <DialogTitle className='font-semibold text-2xl bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
-            Agregar nuevo documento
+            Agregar nuevo archivo
           </DialogTitle>
           <DialogDescription>
             Por favor complete el siguiente formulario para agregar un nuevo
-            documento
+            archivo
           </DialogDescription>
         </DialogHeader>
         <DialogClose className='absolute right-4 top-4 rounded-sm  ring-offset-background transition-opacity  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground'>
           <X className='h-4 w-4 text-red-600' />
           <span className='sr-only'>Cerrar</span>
         </DialogClose>
-        <FormaAddDocStorage setOpenModal={setOpen} />
+        <FormAddDocComponent
+          setOpenModal={setOpen}
+          documentStorageId={documentStorageId}
+          documentStorageNamespace={documentStorageNamespace}
+        />
       </DialogContent>
     </Dialog>
   );

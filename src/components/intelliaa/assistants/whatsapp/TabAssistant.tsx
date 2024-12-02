@@ -313,11 +313,11 @@ export default function TabAssistant({
           value='settings'>
           Configuración
         </TabsTrigger>
-        <TabsTrigger
+        {/* <TabsTrigger
           className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
           value='questions_&_answares'>
           Preguntas y Respuestas
-        </TabsTrigger>
+        </TabsTrigger> */}
       </TabsList>
       <TabsContent value='settings'>
         <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh] '>
@@ -355,13 +355,13 @@ export default function TabAssistant({
           <ChatWsComponent assistant={assistant} />
         </div>
       </TabsContent>
-      <QuestionsAndAnswers
+      {/* <QuestionsAndAnswers
         qaList={qaList}
         handleDeleteQa={handleDeleteQa}
         assistant={assistant}
         setOpen={() => {}}
         loading={loading}
-      />
+      /> */}
     </Tabs>
   );
 }

@@ -217,7 +217,6 @@ export default function ChatWsComponent({
                       ? "bg-teal-900 rounded-lg rounded-br-none text-white"
                       : "bg-teal-800 rounded-lg rounded-bl-none text-white"
                   }`}>
-
                   {message.role === "apiMessage" ? (
                     <Markdown className='text-md'>{message.content}</Markdown>
                   ) : (
