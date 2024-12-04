@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, MessageSquare, X, Download, Loader2 } from "lucide-react";
+import {
+  Plus,
+  MessageSquare,
+  X,
+  Download,
+  Loader2,
+  Pencil,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,15 +20,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { QAItem } from "@/interfaces/intelliaa";
 import {
   getAllQa,
   uploadTxt,
   updateQa,
   deleteQa,
 } from "@/lib/actions/intelliaa/qa";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@/lib/supabase/client";
 import { vapiService } from "@/services/vapiService";
+import { QAItem } from "@/interfaces/intelliaa";
 
 interface QA {
   question: string;
@@ -242,88 +263,118 @@ export function QASection({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className='flex justify-between items-center'>
-          <div>
-            <CardTitle>Preguntas y Respuestas</CardTitle>
-            <CardDescription>Gestionar Q&A para {documentName}</CardDescription>
-          </div>
+    <Card className='h-[calc(100vh-200px)] flex flex-col'>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+        <div>
+          <CardTitle>Texto Complementario</CardTitle>
+          <CardDescription>Gestionar texto complementario</CardDescription>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className='space-y-4'>
-          <div className='grid gap-4'>
-            <div>
-              <Label htmlFor='question'>Pregunta</Label>
-              <Input
-                id='question'
-                value={newQA.question}
-                onChange={(e) =>
-                  setNewQA({ ...newQA, question: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor='answer'>Respuesta</Label>
-              <Textarea
-                id='answer'
-                value={newQA.answer}
-                onChange={(e) => setNewQA({ ...newQA, answer: e.target.value })}
-              />
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant='default' size='sm'>
+              <Plus className='w-4 h-4 mr-2' />
+              Agregar nuevo Texto Complementario
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className='text-primary'>
+                Agregar nuevo Texto Complementario
+              </DialogTitle>
+            </DialogHeader>
+            <div className='grid gap-4 py-4 text-muted-foreground'>
+              <div className='grid gap-2'>
+                <Label htmlFor='question'>Título</Label>
+                <Input
+                  id='question'
+                  value={newQA.question}
+                  onChange={(e) =>
+                    setNewQA({ ...newQA, question: e.target.value })
+                  }
+                />
+              </div>
+              <div className='grid gap-2'>
+                <Label htmlFor='answer'>Texto Complementario</Label>
+                <Textarea
+                  id='answer'
+                  value={newQA.answer}
+                  onChange={(e) =>
+                    setNewQA({ ...newQA, answer: e.target.value })
+                  }
+                />
+              </div>
             </div>
             <Button
-              onClick={isEditing ? handleUpdateQA : handleAddQA}
-              disabled={!newQA.question || !newQA.answer || isGenerating}>
-              {isGenerating ? (
-                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-              ) : isEditing ? (
-                <MessageSquare className='w-4 h-4 mr-2' />
-              ) : (
-                <Plus className='w-4 h-4 mr-2' />
-              )}
-              {isGenerating
-                ? "Procesando..."
-                : isEditing
-                ? "Actualizar Q&A"
-                : "Agregar Q&A"}
+              onClick={handleAddQA}
+              disabled={!newQA.question || !newQA.answer}>
+              Agregar Texto Complementario
             </Button>
-          </div>
-
-          <div className='space-y-4'>
-            {qaDocs.map((qa, index) => (
-              <Card
-                key={index}
-                className='cursor-pointer hover:bg-foreground/10'
-                onClick={() => handleQAClick(qa, index)}>
-                <CardHeader className='relative'>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='absolute right-4 top-4'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteDocQa(qa.document_storage_id, qa.vapiFileId, qa.id);
-                    }}>
-                    {loadingDeleteMap[qa.id] ? (
-                      <Loader2 className='w-4 h-4 animate-spin' />
-                    ) : (
-                      <>
-                        <X className='w-4 h-4' />
-                        <span className='sr-only'>Eliminar Q&A</span>
-                      </>
-                    )}
-                  </Button>
-                  <CardTitle className='text-base'>
-                    <MessageSquare className='w-4 h-4 inline-block mr-2' />
-                    {qa.question}
-                  </CardTitle>
-                  <CardDescription>{qa.answer}</CardDescription>
-                </CardHeader>
-              </Card>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent className='flex-grow overflow-hidden'>
+        <ScrollArea className='h-full'>
+          <Accordion type='single' collapsible className='w-full'>
+            {qaDocs.map((qa) => (
+              <AccordionItem key={qa.id} value={qa.id}>
+                <AccordionTrigger>{qa.question}</AccordionTrigger>
+                <AccordionContent>
+                  <p className='mb-4'>{qa.answer}</p>
+                  <div className='flex justify-end space-x-2'>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant='default' size='sm'>
+                          <Pencil className='w-4 h-4 mr-2' />
+                          Editar
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Editar Q&A</DialogTitle>
+                        </DialogHeader>
+                        <div className='grid gap-4 py-4'>
+                          <div className='grid gap-2'>
+                            <Label htmlFor='edit-question'>Pregunta</Label>
+                            <Input
+                              id='edit-question'
+                              value={newQA.question || qa.question}
+                              onChange={(e) =>
+                                setNewQA({
+                                  ...newQA,
+                                  question: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className='grid gap-2'>
+                            <Label htmlFor='edit-answer'>Respuesta</Label>
+                            <Textarea
+                              id='edit-answer'
+                              value={newQA.answer || qa.answer}
+                              onChange={(e) =>
+                                setNewQA({ ...newQA, answer: e.target.value })
+                              }
+                            />
+                          </div>
+                        </div>
+                        <Button onClick={handleUpdateQA}>Actualizar Q&A</Button>
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      variant='destructive'
+                      size='sm'
+                      onClick={() =>
+                        deleteDocQa(documentStorageId, qa.vapiFileId, qa.id)
+                      }>
+                      <X className='w-4 h-4 mr-2' />
+                      Eliminar
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
-        </div>
+          </Accordion>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

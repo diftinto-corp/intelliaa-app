@@ -77,12 +77,12 @@ export default function DocumentViewer({
                 <TabsTrigger
                   className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
                   value='viewer'>
-                  Visor PDF
+                  Documentos PDF
                 </TabsTrigger>
                 <TabsTrigger
                   className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
                   value='qa'>
-                  Preguntas y Respuestas
+                  Texto Complementario
                 </TabsTrigger>
               </TabsList>
               <TabsContent value='viewer'>
