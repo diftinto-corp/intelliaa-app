@@ -67,25 +67,10 @@ export default function DocumentViewer({
         <h1 className='text-2xl font-bold text-primary'>
           Gestión de Documentos
         </h1>
-        <ModalAddFile
-          documentStorageId={documentStorageId}
-          documentStorageNamespace={documentStorageNamespace}
-        />
       </div>
 
       <div className='grid md:grid-cols-12 gap-6'>
-        <div className='md:col-span-4'>
-          <DocumentList
-            account_id={account_id}
-            documents={documentsListPage}
-            selectedDoc={documentSelected}
-            onSelectDocument={setDocumentSelected}
-            documentStorageId={documentStorageId}
-            documentStorageNamespace={documentStorageNamespace}
-          />
-        </div>
-
-        <div className='md:col-span-8'>
+        <div className='md:col-span-12'>
           {selectedDocument && (
             <Tabs defaultValue='viewer'>
               <TabsList className='grid w-full grid-cols-2'>
@@ -101,7 +86,19 @@ export default function DocumentViewer({
                 </TabsTrigger>
               </TabsList>
               <TabsContent value='viewer'>
-                <PDFViewer pdfUrl={selectedDocument.url} />
+                <div className='flex w-full h-full'>
+                  <div className='md:col-span-4 h-full mr-4'>
+                    <DocumentList
+                      account_id={account_id}
+                      documents={documentsListPage}
+                      selectedDoc={documentSelected}
+                      onSelectDocument={setDocumentSelected}
+                      documentStorageId={documentStorageId}
+                      documentStorageNamespace={documentStorageNamespace}
+                    />
+                  </div>
+                  <PDFViewer pdfUrl={selectedDocument.url} />
+                </div>
               </TabsContent>
               <TabsContent value='qa'>
                 <QASection

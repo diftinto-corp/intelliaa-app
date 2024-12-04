@@ -15,6 +15,7 @@ import {
 } from "@/lib/actions/intelliaa/documents";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import ModalAddFile from "../ModalAddFile";
 interface Document {
   id: string;
   name: string;
@@ -66,6 +67,10 @@ export function DocumentList({
       <CardHeader>
         <CardTitle>Documentos</CardTitle>
         <CardDescription>Lista de documentos PDF</CardDescription>
+        <ModalAddFile
+          documentStorageId={documentStorageId}
+          documentStorageNamespace={documentStorageNamespace}
+        />
       </CardHeader>
       <CardContent>
         <div className='space-y-2'>
