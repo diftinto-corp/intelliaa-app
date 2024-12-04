@@ -21,8 +21,6 @@ import {
   deleteQa,
 } from "@/lib/actions/intelliaa/qa";
 import { createClient } from "@/lib/supabase/client";
-import { getDocumentCounts } from "@/lib/actions/intelliaa/documents";
-import { addQa } from "@/lib/actions/intelliaa/qa";
 import { vapiService } from "@/services/vapiService";
 
 interface QA {
@@ -35,6 +33,7 @@ interface QASectionProps {
   documentStorageId: string;
   documentName: string;
   filename: string;
+  documentStorageNamespace: string;
 }
 
 export function QASection({
@@ -42,6 +41,7 @@ export function QASection({
   documentStorageId,
   documentName,
   filename,
+  documentStorageNamespace,
 }: QASectionProps) {
   const [newQA, setNewQA] = useState<QA>({ question: "", answer: "" });
   const [qaDocs, setQaDocs] = useState<QAItem[]>([]);
@@ -62,6 +62,48 @@ export function QASection({
 
     GetQaDocs();
   }, [documentStorageId]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("qa_docs")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "qa_docs",
+        },
+        (payload: any) => {
+          setQaDocs([...qaDocs, payload.new as QAItem]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qaDocs]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("qa_docs_delete")
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "qa_docs",
+        },
+        (payload: any) => {
+          setQaDocs(qaDocs.filter((qa) => qa.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qaDocs]);
 
   const handleAddQA = async () => {
     try {
@@ -87,7 +129,8 @@ export function QASection({
         documentStorageId,
         newQA.question,
         newQA.answer,
-        formData
+        formData,
+        documentStorageNamespace
       );
 
       if (result.status === "error") {
@@ -121,9 +164,14 @@ export function QASection({
         console.error("No se encontró vapiFileId para el documento");
         return;
       }
+      await deleteQa(
+        documentStorageId,
+        qaToUpdate.vapiFileId,
+        qaToUpdate.id,
+        documentStorageNamespace
+      );
 
       await vapiService.deleteFile(qaToUpdate.vapiFileId);
-
       // 2. Actualizar el array de QAs
       const updatedQAs = [...qaDocs];
       updatedQAs[selectedQAIndex!] = {
@@ -131,32 +179,28 @@ export function QASection({
         question: newQA.question,
         answer: newQA.answer,
       };
-
       // 3. Generar nuevo contenido
       let content = "PREGUNTAS Y RESPUESTAS\n\n";
       updatedQAs.forEach((qa) => {
         content += `${qa.question}\n`;
         content += `${qa.answer}\n\n`;
       });
-
       // 4. Subir nuevo archivo
       const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
       const file = new File([blob], `${filename}.txt`, { type: "text/plain" });
       const formData = new FormData();
       formData.append("file", file);
-
       const result = await uploadTxt(
         account_id,
         documentStorageId,
         newQA.question,
         newQA.answer,
-        formData
+        formData,
+        documentStorageNamespace
       );
-
       if (result.status === "error") {
         throw new Error(result.message);
       }
-
       // 5. Actualizar en la base de datos
       await updateQa(
         account_id,
@@ -165,7 +209,6 @@ export function QASection({
         qaToUpdate.id,
         result.vapiFileId
       );
-
       // 6. Actualizar el estado local
       const updatedQaDocs = await getAllQa(documentStorageId);
       setQaDocs(updatedQaDocs as QAItem[]);
@@ -180,28 +223,6 @@ export function QASection({
       setIsGenerating(false);
     }
   };
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("qa_docs")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "qa_docs",
-        },
-        (payload: any) => {
-          setQaDocs([...qaDocs, payload.new as QAItem]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [qaDocs]);
-
   const deleteDocQa = async (
     documentStorageId: string,
     id_vapi_doc: string,
@@ -209,32 +230,16 @@ export function QASection({
   ) => {
     try {
       setLoadingDeleteMap((prev) => ({ ...prev, [id]: true }));
-      await deleteQa(documentStorageId, id_vapi_doc, id);
+      await deleteQa(
+        documentStorageId,
+        id_vapi_doc,
+        id,
+        documentStorageNamespace
+      );
     } finally {
       setLoadingDeleteMap((prev) => ({ ...prev, [id]: false }));
     }
   };
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("qa_docs_delete")
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "qa_docs",
-        },
-        (payload: any) => {
-          setQaDocs(qaDocs.filter((qa) => qa.id !== payload.old.id));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [qaDocs]);
 
   return (
     <Card>

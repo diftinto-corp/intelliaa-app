@@ -104,7 +104,8 @@ const getQa = async (id: string) => {
 async function deleteQa(
   documentStorageId: string,
   id_vapi_doc: string,
-  id: string
+  id: string,
+  documentStorageNamespace: string
 ) {
   try {
     const supabase = createClient();
@@ -114,22 +115,102 @@ async function deleteQa(
 
     if (documents.length === 1) {
       // Si falla deleteVectorStore, continuamos con el proceso
-      console.log("Pase por aqui");
       try {
-        await flowiseService.deleteVectorStore(documentStorageId);
+        await flowiseService.deleteLoader(documentStorageId, id);
+        await flowiseService.insertVectorStore({
+          storeId: documentStorageId,
+          docId: id,
+          embeddingConfig: {
+            modelName: "text-embedding-3-small",
+            stripNewLines: "",
+            batchSize: "",
+            timeout: "",
+            basepath: "",
+            dimensions: "",
+            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+          },
+          embeddingName: "openAIEmbeddings",
+          vectorStoreConfig: {
+            document: "",
+            embeddings: "",
+            recordManager: "",
+            pineconeIndex: "intelliaa",
+            pineconeNamespace: documentStorageNamespace,
+            fileUpload: "",
+            pineconeTextKey: "",
+            pineconeMetadataFilter: "",
+            topK: "10",
+            searchType: "similarity",
+            fetchK: "",
+            lambda: "",
+            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+          },
+          vectorStoreName: "pinecone",
+          recordManagerConfig: {
+            host: "aws-0-us-east-1.pooler.supabase.com",
+            database: "postgres",
+            port: "6543",
+            additionalConfig: "",
+            tableName: "",
+            namespace: documentStorageNamespace,
+            cleanup: "full",
+            sourceIdKey: "source",
+            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+          },
+          recordManagerName: "postgresRecordManager",
+        });
         await vapiService.deleteFile(id_vapi_doc);
       } catch (error) {
         console.log("Error al eliminar vector store:", error);
       }
       await deleteDocumentStorageById(documentStorageId);
     }
-
     // Eliminar el loader de Flowise
     await flowiseService.deleteLoader(documentStorageId, id);
-
+    await flowiseService.insertVectorStore({
+      storeId: documentStorageId,
+      docId: null,
+      embeddingConfig: {
+        modelName: "text-embedding-3-small",
+        stripNewLines: "",
+        batchSize: "",
+        timeout: "",
+        basepath: "",
+        dimensions: "",
+        credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+      },
+      embeddingName: "openAIEmbeddings",
+      vectorStoreConfig: {
+        document: "",
+        embeddings: "",
+        recordManager: "",
+        pineconeIndex: "intelliaa",
+        pineconeNamespace: documentStorageNamespace,
+        fileUpload: "",
+        pineconeTextKey: "",
+        pineconeMetadataFilter: "",
+        topK: "10",
+        searchType: "similarity",
+        fetchK: "",
+        lambda: "",
+        credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+      },
+      vectorStoreName: "pinecone",
+      recordManagerConfig: {
+        host: "aws-0-us-east-1.pooler.supabase.com",
+        database: "postgres",
+        port: "6543",
+        additionalConfig: "",
+        tableName: "",
+        namespace: documentStorageNamespace,
+        cleanup: "full",
+        sourceIdKey: "source",
+        credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+      },
+      recordManagerName: "postgresRecordManager",
+    });
     // Eliminar archivo de Vapi
     await vapiService.deleteFile(id_vapi_doc);
-
     // Eliminar registro de Supabase
     const { error: supabaseError } = await supabase
       .from("qa_docs")
@@ -141,7 +222,6 @@ async function deleteQa(
         `Error al eliminar de Supabase: ${supabaseError.message}`
       );
     }
-
     return {
       status: "success",
       message: "Documento eliminado correctamente",
@@ -201,41 +281,131 @@ const uploadTxt = async (
   documentStorageId: string,
   question: string,
   answer: string,
-  formData: FormData
+  formData: FormData,
+  documentStorageNamespace: string
 ) => {
-  const file = formData.get("file") as File;
-
-  if (file.size === 0) {
-    return { status: "error", message: "Empty file" };
-  }
-
-  const base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
-
   try {
+    const file = formData.get("file") as File;
+
+    if (file.size === 0) {
+      return { status: "error", message: "Empty file" };
+    }
+    const base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
     // Procesar archivo con Flowise
-    const processFile = await flowiseService.processFile({
-      loaderId: "textFile",
-      id: crypto.randomUUID(),
+    let processFile;
+    try {
+      processFile = await flowiseService.processFile(documentStorageId, {
+        docId: null,
+        loader: {
+          name: "textFile",
+          config: {
+            textSplitter: "",
+            metadata: "",
+            omitMetadataKeys: "",
+            txtFile: `data:text/plain;base64,${base64File},filename:${file.name}`,
+          },
+        },
+        splitter: {
+          name: "characterTextSplitter",
+          config: {
+            chunkSize: 1000,
+            chunkOverlap: 200,
+            separator: "",
+          },
+        },
+        embedding: {
+          name: "openAIEmbeddings",
+          config: {
+            modelName: "text-embedding-3-small",
+            stripNewLines: "",
+            batchSize: "",
+            timeout: "",
+            basepath: "",
+            dimensions: "",
+            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+          },
+        },
+        vectorStore: {
+          name: "pinecone",
+          config: {
+            document: "",
+            embeddings: "",
+            recordManager: "",
+            pineconeIndex: "intelliaa",
+            pineconeNamespace: documentStorageNamespace,
+            fileUpload: "",
+            pineconeTextKey: "",
+            pineconeMetadataFilter: "",
+            topK: "10",
+            searchType: "similarity",
+            fetchK: "",
+            lambda: "",
+            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+          },
+        },
+        recordManager: {
+          name: "postgresRecordManager",
+          config: {
+            host: "aws-0-us-east-1.pooler.supabase.com",
+            database: "postgres",
+            port: "6543",
+            additionalConfig: "",
+            tableName: "",
+            namespace: documentStorageNamespace,
+            cleanup: "full",
+            sourceIdKey: "source",
+            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+          },
+        },
+      });
+
+      console.log("processFile", processFile);
+    } catch (error) {
+      console.error("Error al procesar el archivo con Flowise:", error);
+      throw new Error("Error al procesar el archivo con Flowise");
+    }
+    await flowiseService.insertVectorStore({
       storeId: documentStorageId,
-      loaderName: "Text File",
-      loaderConfig: {
-        textSplitter: "",
-        metadata: "",
-        omitMetadataKeys: "",
-        txtFile: `data:text/plain;base64,${base64File},filename:${file.name}`,
+      docId: null,
+      embeddingConfig: {
+        modelName: "text-embedding-3-small",
+        stripNewLines: "",
+        batchSize: "",
+        timeout: "",
+        basepath: "",
+        dimensions: "",
+        credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
       },
-      splitterId: "characterTextSplitter",
-      splitterConfig: {
-        chunkSize: 1000,
-        chunkOverlap: 200,
-        separator: "",
+      embeddingName: "openAIEmbeddings",
+      vectorStoreConfig: {
+        document: "",
+        embeddings: "",
+        recordManager: "",
+        pineconeIndex: "intelliaa",
+        pineconeNamespace: documentStorageNamespace,
+        fileUpload: "",
+        pineconeTextKey: "",
+        pineconeMetadataFilter: "",
+        topK: "10",
+        searchType: "similarity",
+        fetchK: "",
+        lambda: "",
+        credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
       },
-      splitterName: "Character Text Splitter",
+      vectorStoreName: "pinecone",
+      recordManagerConfig: {
+        host: "aws-0-us-east-1.pooler.supabase.com",
+        database: "postgres",
+        port: "6543",
+        additionalConfig: "",
+        tableName: "",
+        namespace: documentStorageNamespace,
+        cleanup: "full",
+        sourceIdKey: "source",
+        credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+      },
+      recordManagerName: "postgresRecordManager",
     });
-
-    // Insertar en vector store
-    await flowiseService.insertVectorStore(documentStorageId);
-
     // Subir a Vapi
     let vapiResult;
     try {
@@ -244,12 +414,11 @@ const uploadTxt = async (
       console.error("Error al subir archivo a Vapi:", error);
       throw new Error("Error al subir archivo a Vapi");
     }
-
     const { data: qaDocsSupabase, error: errorQaDocsSupabase } = await supabase
       .from("qa_docs")
       .insert([
         {
-          id: processFile.file.id,
+          id: processFile.docId,
           account_id: account_id,
           question: question,
           answer: answer,

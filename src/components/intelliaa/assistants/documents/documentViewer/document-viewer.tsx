@@ -109,6 +109,7 @@ export default function DocumentViewer({
                   documentStorageId={documentStorageId}
                   documentName={selectedDocument.name}
                   filename={filename}
+                  documentStorageNamespace={documentStorageNamespace}
                 />
               </TabsContent>
             </Tabs>
