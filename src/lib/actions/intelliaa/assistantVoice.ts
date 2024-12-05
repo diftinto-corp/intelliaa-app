@@ -214,6 +214,7 @@ const updateAssistantVoiceVapi = async (
       headers,
     });
 
+    console.log(response);
     if (!response.ok) {
       console.log(`Error updating assistant in VAPI: ${response.status}`);
       throw new Error(`HTTP error! status: ${response.status}`);

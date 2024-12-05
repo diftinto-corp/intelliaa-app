@@ -1,0 +1,80 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getDocumentssByDocumentStorageId } from "@/lib/actions/intelliaa/documents";
+import { getAccountBySlug } from "@/lib/actions/accounts";
+import { usePathname } from "next/navigation";
+
+type DocumentStorage = {
+  document_storage_id: string;
+  document_storage_name: string;
+  document_ids: string[]; // IDs combinados de documentos (PDF y TXT)
+};
+
+export default function SelectorDsVoice({
+  setSelectedDocuments,
+  setIsChangeOptions,
+}: {
+  setSelectedDocuments: (documents: any) => void;
+  setIsChangeOptions: (isChangeOptions: boolean) => void;
+}) {
+  const pathname = usePathname();
+  const accountSlug = pathname.split("/")[1];
+
+  const [storages, setStorages] = useState<DocumentStorage[]>([]);
+  const [selectedStorage, setSelectedStorage] = useState<string>("");
+
+  useEffect(() => {
+    const fetchStorages = async () => {
+      try {
+        const teamAccount = await getAccountBySlug(null, accountSlug);
+        const accountId = teamAccount.account_id;
+        const fetchedStorages = await getDocumentssByDocumentStorageId(
+          accountId
+        );
+        if (fetchedStorages) {
+          setStorages(fetchedStorages);
+        }
+      } catch (error) {
+        console.error("Error fetching storages:", error);
+      }
+    };
+    fetchStorages();
+  }, [accountSlug]);
+
+  const handleChange = (value: string) => {
+    setSelectedStorage(value);
+    const storage = storages.find((s) => s.document_storage_id === value);
+    setSelectedDocuments(storage?.document_ids || []);
+    setIsChangeOptions(true);
+  };
+
+  return (
+    <Select onValueChange={handleChange}>
+      <SelectTrigger className='w-[180px]'>
+        <SelectValue placeholder='Select a document storage' />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Document storage</SelectLabel>
+          {storages.map((storage) => (
+            <SelectItem
+              key={storage.document_storage_id}
+              value={storage.document_storage_id}>
+              {storage.document_storage_name}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}

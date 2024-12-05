@@ -572,6 +572,53 @@ async function deletePdf(
   }
 }
 
+async function getDocumentssByDocumentStorageId(account_id: string) {
+  console.log("account_id", account_id);
+  try {
+    const supabase = createClient();
+
+    // Verificar que account_id no esté vacío
+    if (!account_id) {
+      console.error("El account_id está vacío");
+      return;
+    }
+
+    const { data: storages, error } = await supabase
+      .from("document_storages")
+      .select(
+        `
+         id,
+         name,
+         pdf_docs(id_vapi_doc),
+         qa_docs(vapiFileId)
+        `
+      )
+      .eq("account_id", account_id);
+
+    if (error) {
+      console.error("Error en getDocumentssByDocumentStorageId:", error);
+      return;
+    }
+
+    const formattedData = storages.map((storage) => ({
+      document_storage_id: storage.id,
+      document_storage_name: storage.name,
+      document_ids: [
+        ...(storage.pdf_docs?.map(
+          (doc: { id_vapi_doc: string }) => doc.id_vapi_doc
+        ) || []),
+        ...(storage.qa_docs?.map(
+          (doc: { vapiFileId: string }) => doc.vapiFileId
+        ) || []),
+      ],
+    }));
+
+    return formattedData;
+  } catch (error) {
+    console.error("Error en getPDFsByDocumentStorageId:", error);
+  }
+}
+
 ///Revsar///
 
 const searchAssistantByDocument = async (
@@ -649,6 +696,7 @@ export {
   searchAssistantByDocument,
   createDocumentStorage,
   getDocumentStorageById,
+  getDocumentssByDocumentStorageId,
   deleteDocumentStorageById,
   getAllDocumentStorage,
   getDocumentsPDFforDocumentStorage,

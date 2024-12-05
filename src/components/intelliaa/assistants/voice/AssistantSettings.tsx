@@ -36,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import Vapi from "@vapi-ai/web";
 import { MultiSelectVoice } from "../../common/MultiSelectVoice";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import SelectorDsVoice from "../../common/SelectorDsVoice";
 
 interface AssistantSettingsProps {
   assistant: Assistant;
@@ -120,6 +121,8 @@ export default function AssistantSettings({
   const [connected, setConnected] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [mp3Url, setMp3Url] = useState("");
+
+  console.log(selectedDocuments);
 
   useEffect(() => {
     if (voiceAssistantSelected) {
@@ -482,17 +485,9 @@ export default function AssistantSettings({
                   </TooltipProvider>
                 </span>
               </Label>
-              <MultiSelectVoice
-                options={documents}
-                onValueChange={(value) => {
-                  setSelectedDocuments(value);
-                  setIsChangeOptions(true);
-                }}
-                defaultValue={selectedDocuments}
-                placeholder='Seleccionar documentos'
-                variant='inverted'
-                animation={2}
-                maxCount={3}
+              <SelectorDsVoice
+                setSelectedDocuments={setSelectedDocuments}
+                setIsChangeOptions={setIsChangeOptions}
               />
             </div>
             <div className='flex items-center mb-4'>

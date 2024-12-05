@@ -5,10 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { Assistant } from "@/interfaces/intelliaa";
-import {
-  deleteDocuments,
-  getAllPdf_Doc,
-} from "@/lib/actions/intelliaa/documents";
+import {} from "@/lib/actions/intelliaa/documents";
 import {
   activateWs,
   updateAssistant,
@@ -120,23 +117,14 @@ export default function TabAssistant({
   const [voiceAssistantSelected, setVoiceAssistantSelected] = useState(
     assistant.voice_assistant || ""
   );
+  const [account_id, setAccountId] = useState("");
 
   const supabase = createClient();
 
   useEffect(() => {
-    const getDocuments = async () => {
+    const getAccountId = async () => {
       const team_account = await getAccountBySlug(null, accountSlug);
-      const account_id = team_account.account_id;
-      const data: any = await getAllPdf_Doc(account_id);
-      setSelectedDocuments(bdDocs);
-
-      if (data.length > 0) {
-        const newDocuments = data.map((doc: any) => ({
-          name: doc.name,
-          id_vapi_doc: doc.id_vapi_doc,
-        }));
-        setDocuments(newDocuments);
-      }
+      setAccountId(team_account.account_id);
     };
 
     const getAssistantVoice = async () => {
@@ -150,7 +138,7 @@ export default function TabAssistant({
     };
 
     getAssistantVoice();
-    getDocuments();
+    getAccountId();
   }, []);
 
   useEffect(() => {
