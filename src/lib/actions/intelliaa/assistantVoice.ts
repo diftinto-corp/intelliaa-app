@@ -37,7 +37,7 @@ const createAssistantVoiceVapi = async (
       },
       voice: {
         provider: "11labs",
-        voiceId: "2d7rEMnN7U2yC7k3Ie3g",
+        voiceId: "StgW6mMosfwXGzfaJ130",
         model: "eleven_multilingual_v2",
       },
       firstMessage: firstMessage,
@@ -87,7 +87,7 @@ const createAssistantVoiceVapi = async (
             token: tokens,
             namespace: namespace,
             voice_assistant_id: vapiData.id,
-            voice_assistant: "2d7rEMnN7U2yC7k3Ie3g",
+            voice_assistant: "StgW6mMosfwXGzfaJ130",
             detect_emotion: true,
             background_office: true,
             end_call_phrases: [
@@ -132,7 +132,8 @@ const updateAssistantVoiceVapi = async (
   fileIds: string[],
   endCallPhrases: string[],
   endCallMessage: string,
-  voicemailMessage: string
+  voicemailMessage: string,
+  documentStorageId: string
 ) => {
   let backgroundSound = "off";
 
@@ -200,6 +201,7 @@ const updateAssistantVoiceVapi = async (
         end_call_phrases: endCallPhrases,
         end_call_message: endCallMessage,
         voicemail_message: voicemailMessage,
+        document_storage_id: documentStorageId,
       })
       .eq("id", id_assistant);
 

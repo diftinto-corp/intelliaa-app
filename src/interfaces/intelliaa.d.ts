@@ -29,6 +29,7 @@ export interface Assistant {
   endCallPhrases: string[];
   endCallMessage: string;
   voicemailMessage: string;
+  document_storage_id: string;
 }
 
 interface DocumentStorage {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, SetStateAction, useState, Dispatch } from "react";
 import {
   Select,
   SelectContent,
@@ -23,15 +23,18 @@ type DocumentStorage = {
 export default function SelectorDsVoice({
   setSelectedDocuments,
   setIsChangeOptions,
+  documentStorageId,
+  setDocumentStorageId,
 }: {
   setSelectedDocuments: (documents: any) => void;
   setIsChangeOptions: (isChangeOptions: boolean) => void;
+  documentStorageId: string;
+  setDocumentStorageId: Dispatch<SetStateAction<string>>;
 }) {
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
 
   const [storages, setStorages] = useState<DocumentStorage[]>([]);
-  const [selectedStorage, setSelectedStorage] = useState<string>("");
 
   useEffect(() => {
     const fetchStorages = async () => {
@@ -43,23 +46,30 @@ export default function SelectorDsVoice({
         );
         if (fetchedStorages) {
           setStorages(fetchedStorages);
+          // Set the initial selected document storage based on documentStorageId
+          const initialStorage = fetchedStorages.find(
+            (s) => s.document_storage_id === documentStorageId
+          );
+          if (initialStorage) {
+            setSelectedDocuments(initialStorage.document_ids);
+          }
         }
       } catch (error) {
         console.error("Error fetching storages:", error);
       }
     };
     fetchStorages();
-  }, [accountSlug]);
+  }, [accountSlug, documentStorageId]);
 
   const handleChange = (value: string) => {
-    setSelectedStorage(value);
+    setDocumentStorageId(value);
     const storage = storages.find((s) => s.document_storage_id === value);
     setSelectedDocuments(storage?.document_ids || []);
     setIsChangeOptions(true);
   };
 
   return (
-    <Select onValueChange={handleChange}>
+    <Select onValueChange={handleChange} value={documentStorageId}>
       <SelectTrigger className='w-[180px]'>
         <SelectValue placeholder='Select a document storage' />
       </SelectTrigger>

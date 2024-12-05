@@ -76,6 +76,8 @@ interface AssistantSettingsProps {
   endCallPhrases: string[];
   setEndCallPhrases: Dispatch<SetStateAction<string[]>>;
   bdDocs: any[];
+  documentStorageId: string;
+  setDocumentStorageId: Dispatch<SetStateAction<string>>;
 }
 
 const api_key_vapi = process.env.NEXT_PUBLIC_VAPI_KEY || "";
@@ -116,6 +118,8 @@ export default function AssistantSettings({
   setVoicemailMessage,
   endCallPhrases,
   setEndCallPhrases,
+  documentStorageId,
+  setDocumentStorageId,
 }: AssistantSettingsProps) {
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -488,6 +492,8 @@ export default function AssistantSettings({
               <SelectorDsVoice
                 setSelectedDocuments={setSelectedDocuments}
                 setIsChangeOptions={setIsChangeOptions}
+                documentStorageId={documentStorageId}
+                setDocumentStorageId={setDocumentStorageId}
               />
             </div>
             <div className='flex items-center mb-4'>

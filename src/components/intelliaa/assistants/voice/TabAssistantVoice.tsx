@@ -109,6 +109,9 @@ export default function TabAssistant({
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>(
     assistant?.documents_vapi || []
   );
+  const [documentStorageId, setDocumentStorageId] = useState(
+    assistant?.document_storage_id || ""
+  );
   const [bdDocs, setBdDocs] = useState(assistant?.docs_keys || []);
   const [loadingAssistant, setLoadingAssistant] = useState(false);
   const [loadingActiveWs, setLoadingActiveWs] = useState(false);
@@ -172,6 +175,7 @@ export default function TabAssistant({
           "hasta pronto",
         ]
       );
+      setDocumentStorageId(assistant.document_storage_id || "");
     };
 
     fetchAssistant();
@@ -228,6 +232,7 @@ export default function TabAssistant({
           endCallPhrases: endCallPhrases,
           endCallMessage: endCallMessage,
           voicemailMessage: voicemailMessage,
+          documentStorageId: documentStorageId,
         }),
       });
 
@@ -311,6 +316,8 @@ export default function TabAssistant({
             setVoicemailMessage={setVoicemailMessage}
             endCallPhrases={endCallPhrases}
             setEndCallPhrases={setEndCallPhrases}
+            documentStorageId={documentStorageId}
+            setDocumentStorageId={setDocumentStorageId}
           />
         </div>
       </TabsContent>
