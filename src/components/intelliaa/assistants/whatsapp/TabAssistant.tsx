@@ -6,10 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { Assistant } from "@/interfaces/intelliaa";
 import {
-  deleteDocuments,
-  getAllPdf_Doc,
-} from "@/lib/actions/intelliaa/documents";
-import {
   activateWs,
   getAssistantsVoice,
   updateAssistant,
@@ -21,6 +17,7 @@ import QuestionsAndAnswers from "./QuestionsAndAnswers";
 import { deleteQa } from "@/lib/actions/intelliaa/qa";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
+import { getDocumentssByDocumentStorageId } from "@/lib/actions/intelliaa/documents";
 
 interface QAItem {
   id: string;
@@ -75,12 +72,8 @@ export default function TabAssistant({
   );
   const [isChangeOptions, setIsChangeOptions] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [documents, setDocuments] = useState<
-    { name: string; s3_key: string; id_document: string; namespace: string }[]
-  >([]);
-  const [selectedDocuments, setSelectedDocuments] = useState<
-    { name: string; s3_key: string; id_document: string; namespace: string }[]
-  >([]);
+  const [documents, setDocuments] = useState([]);
+  const [selectedDocumentStorage, setSelectedDocumentStorage] = useState("");
   const [bdDocs, setBdDocs] = useState(assistant?.docs_keys || []);
   const [loadingAssistant, setLoadingAssistant] = useState(false);
   const [loadingActiveWs, setLoadingActiveWs] = useState(false);
@@ -96,17 +89,9 @@ export default function TabAssistant({
   useEffect(() => {
     const getDocuments = async () => {
       const team_account = await getAccountBySlug(null, accountSlug);
-      const data: any = await getAllPdf_Doc(team_account.account_id);
-      setSelectedDocuments(bdDocs);
-
-      if (data.length > 0) {
-        const newDocuments = data.map((doc: any) => ({
-          name: doc?.name,
-          s3_key: doc?.s3_key,
-          namespace: assistant?.namespace,
-        }));
-        setDocuments(newDocuments);
-      }
+      const accountId = team_account.account_id;
+      const data = await getDocumentssByDocumentStorageId(accountId);
+      console.log("data", data);
     };
     const getAssistantVoice = async () => {
       const data = await getAssistantsVoice();
@@ -131,7 +116,7 @@ export default function TabAssistant({
       setLoadingActiveWs(assistant.is_deploying_ws);
       setKeywordTransfer(assistant.keyword_transfer_ws || "");
       setNumberTransfer(assistant.number_transfer_ws || "");
-      setSelectedDocuments(assistant.docs_keys || []);
+      setSelectedDocumentStorage(assistant.document_storage_id || "");
       setBdDocs(assistant.docs_keys || []);
       setIsChangeOptions(false);
       setLoading(false);
@@ -258,8 +243,8 @@ export default function TabAssistant({
 
     const team_account = await getAccountBySlug(null, accountSlug);
 
-    await deleteDocuments(document_id, namespace);
-    await deleteQa(team_account.account_id, id);
+    // await deleteDocuments(document_id, namespace);
+    // await deleteQa(team_account.account_id, id);
 
     setLoading(false);
   };
@@ -269,36 +254,21 @@ export default function TabAssistant({
     setLoadingAssistant(true);
     const team_account = await getAccountBySlug(null, accountSlug);
 
-    // Aseguramos que bdDocs tenga el tipo correcto
-    const existingDocs = new Map<string, string>(
-      bdDocs.map((doc: DocumentType) => [doc.s3_key, doc.id_document])
-    );
-
-    console.log("existingDocs", existingDocs);
-
     const data = {
       temperature: temperatureState,
       token: maxTokens,
       prompt: promptState,
-      docs_keys: selectedDocuments.map((doc: DocumentType) => ({
-        name: doc.name,
-        s3_key: doc.s3_key,
-        namespace: assistant.namespace,
-        id_document:
-          existingDocs.get(doc.s3_key) ||
-          Math.random().toString(36).substr(2, 9),
-      })),
       keyword_transfer_ws: KeywordTransfer,
       number_transfer_ws: NumberTransfer,
       namespace: assistant.namespace,
       voice_assistant: voiceAssistantSelected,
+      document_storage_id: selectedDocumentStorage,
     };
 
     const newBdDocs = await updateAssistant(
       team_account.account_id,
       assistant.id,
-      data,
-      bdDocs
+      data
     );
     setBdDocs(newBdDocs as any);
     setLoadingAssistant(false);
@@ -306,62 +276,39 @@ export default function TabAssistant({
   };
 
   return (
-    <Tabs defaultValue='settings' className='w-full '>
-      <TabsList className='grid w-full grid-cols-2'>
-        <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
-          value='settings'>
-          Configuración
-        </TabsTrigger>
-        {/* <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
-          value='questions_&_answares'>
-          Preguntas y Respuestas
-        </TabsTrigger> */}
-      </TabsList>
-      <TabsContent value='settings'>
-        <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh] '>
-          <AssistantSettings
-            assistant={assistant}
-            temperatureState={temperatureState}
-            setTemperatureState={setTemperatureState}
-            maxTokens={maxTokens}
-            setMaxTokens={setMaxTokens}
-            promptState={promptState}
-            setPromptState={setPromptState}
-            isWhatsappActivated={isWhatsappActivated}
-            setIsWhatsappActivated={setIsWhatsappActivated}
-            KeywordTransfer={KeywordTransfer}
-            setKeywordTransfer={setKeywordTransfer}
-            NumberTransfer={NumberTransfer}
-            setNumberTransfer={setNumberTransfer}
-            isChangeOptions={isChangeOptions}
-            setIsChangeOptions={setIsChangeOptions}
-            documents={documents}
-            selectedDocuments={selectedDocuments}
-            setSelectedDocuments={setSelectedDocuments}
-            bdDocs={bdDocs}
-            loadingAssistant={loadingAssistant}
-            loadingActiveWs={loadingActiveWs}
-            errorMessageNumberTransfer={errorMessageNumberTransfer}
-            setErrorMessageNumberTransfer={setErrorMessageNumberTransfer}
-            handleActivateWhatsapp={handleActivateWhatsapp}
-            handleSaveAssistant={handleSaveAssistant}
-            voiceAssistantSelected={voiceAssistantSelected}
-            setVoiceAssistantSelected={setVoiceAssistantSelected}
-            voiceAssistant={voiceAssistant}
-            setVoiceAssistant={setVoiceAssistant}
-          />
-          <ChatWsComponent assistant={assistant} />
-        </div>
-      </TabsContent>
-      {/* <QuestionsAndAnswers
-        qaList={qaList}
-        handleDeleteQa={handleDeleteQa}
+    <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh] '>
+      <AssistantSettings
         assistant={assistant}
-        setOpen={() => {}}
-        loading={loading}
-      /> */}
-    </Tabs>
+        temperatureState={temperatureState}
+        setTemperatureState={setTemperatureState}
+        maxTokens={maxTokens}
+        setMaxTokens={setMaxTokens}
+        promptState={promptState}
+        setPromptState={setPromptState}
+        isWhatsappActivated={isWhatsappActivated}
+        setIsWhatsappActivated={setIsWhatsappActivated}
+        KeywordTransfer={KeywordTransfer}
+        setKeywordTransfer={setKeywordTransfer}
+        NumberTransfer={NumberTransfer}
+        setNumberTransfer={setNumberTransfer}
+        isChangeOptions={isChangeOptions}
+        setIsChangeOptions={setIsChangeOptions}
+        documents={documents}
+        selectedDocumentStorage={selectedDocumentStorage}
+        setSelectedDocumentStorage={setSelectedDocumentStorage}
+        bdDocs={bdDocs}
+        loadingAssistant={loadingAssistant}
+        loadingActiveWs={loadingActiveWs}
+        errorMessageNumberTransfer={errorMessageNumberTransfer}
+        setErrorMessageNumberTransfer={setErrorMessageNumberTransfer}
+        handleActivateWhatsapp={handleActivateWhatsapp}
+        handleSaveAssistant={handleSaveAssistant}
+        voiceAssistantSelected={voiceAssistantSelected}
+        setVoiceAssistantSelected={setVoiceAssistantSelected}
+        voiceAssistant={voiceAssistant}
+        setVoiceAssistant={setVoiceAssistant}
+      />
+      <ChatWsComponent assistant={assistant} />
+    </div>
   );
 }

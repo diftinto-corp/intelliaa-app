@@ -618,6 +618,30 @@ async function getDocumentssByDocumentStorageId(account_id: string) {
     console.error("Error en getPDFsByDocumentStorageId:", error);
   }
 }
+async function getDocumentsByDocumentStorageIdWs(account_id: string) {
+  try {
+    const supabase = createClient();
+
+    if (!account_id) {
+      console.error("El account_id está vacío");
+      return;
+    }
+
+    const { data: storages, error } = await supabase
+      .from("document_storages")
+      .select("*")
+      .eq("account_id", account_id);
+
+    if (error) {
+      console.error("Error en getDocumentssByDocumentStorageId:", error);
+      return;
+    }
+
+    return storages;
+  } catch (error) {
+    console.error("Error en getPDFsByDocumentStorageId:", error);
+  }
+}
 
 ///Revsar///
 
@@ -697,6 +721,7 @@ export {
   createDocumentStorage,
   getDocumentStorageById,
   getDocumentssByDocumentStorageId,
+  getDocumentsByDocumentStorageIdWs,
   deleteDocumentStorageById,
   getAllDocumentStorage,
   getDocumentsPDFforDocumentStorage,

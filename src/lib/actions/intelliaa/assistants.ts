@@ -1,14 +1,6 @@
 import { Prediction } from "@/interfaces/intelliaa";
 import { createClient } from "@/lib/supabase/client";
 
-import {
-  deleteDocuments,
-  deleteEmbedPDF,
-  newEmbedPDF,
-  upsertPDF,
-} from "./documents";
-import { json } from "stream/consumers";
-
 interface DocumentType {
   name: string;
   s3_key: string;
@@ -25,6 +17,7 @@ interface AssistantData {
   number_transfer_ws?: any;
   namespace?: string;
   voice_assistant?: string;
+  document_storage_id?: string;
 }
 
 const username = process.env.NEXT_PUBLIC_USERNAME_FLOWISE;
@@ -137,8 +130,7 @@ const NewAssistant = async (
 const updateAssistant = async (
   account_id: string,
   id: string,
-  dataAssistant: AssistantData,
-  bdDocd_keys: DocumentType[]
+  dataAssistant: AssistantData
 ) => {
   const {
     temperature,
@@ -149,84 +141,12 @@ const updateAssistant = async (
     number_transfer_ws,
     namespace: currentNamespace,
     voice_assistant,
+    document_storage_id,
   } = dataAssistant;
-
-  console.log(docs_keys, bdDocd_keys);
 
   const supabase = createClient();
 
-  const upsertPDFs = async (
-    s3_key: string,
-    id_document: string,
-    namespaceDoc: string
-  ) => {
-    try {
-      await upsertPDF(s3_key, id_document, namespaceDoc);
-      await newEmbedPDF(account_id, id, s3_key, id_document);
-    } catch (error) {
-      console.error(`Error upserting PDF: ${id_document}`, error);
-    }
-  };
-
-  const deletePdfs = async (id_document: string, namespaceDoc: string) => {
-    try {
-      await deleteDocuments(id_document, namespaceDoc);
-      await deleteEmbedPDF(account_id, id, id_document);
-    } catch (error) {
-      console.error(`Error deleting PDF: ${id_document}`, error);
-    }
-  };
-
-  const syncArrays = async () => {
-    if (!docs_keys) return;
-
-    // Determinar documentos a añadir y a eliminar
-    const toAdd = docs_keys.filter(
-      (stateDoc) =>
-        stateDoc.namespace === currentNamespace &&
-        !bdDocd_keys.some(
-          (bdDoc) =>
-            bdDoc.s3_key === stateDoc.s3_key &&
-            bdDoc.id_document === stateDoc.id_document &&
-            bdDoc.namespace === stateDoc.namespace
-        )
-    );
-
-    const toDelete = bdDocd_keys.filter(
-      (dbDoc) =>
-        dbDoc.namespace === currentNamespace &&
-        !docs_keys.some(
-          (stateDoc) =>
-            stateDoc.s3_key === dbDoc.s3_key &&
-            stateDoc.id_document === dbDoc.id_document &&
-            stateDoc.namespace === dbDoc.namespace
-        )
-    );
-
-    // Primero eliminar los documentos
-    const deletePromises = toDelete.map((doc) =>
-      deletePdfs(doc.id_document, doc.namespace)
-    );
-
-    await Promise.all(deletePromises);
-
-    // Luego añadir los documentos
-    const addPromises = toAdd.map((doc) =>
-      upsertPDFs(doc.s3_key, doc.id_document, doc.namespace)
-    );
-
-    await Promise.all(addPromises);
-  };
-
   try {
-    // Verificar si hay cambios en los documentos antes de sincronizar
-    const docsChanged =
-      JSON.stringify(docs_keys) !== JSON.stringify(bdDocd_keys);
-
-    if (docsChanged) {
-      await syncArrays();
-    }
-
     // Actualizar el asistente
     const { data, error } = await supabase
       .from("assistants")
@@ -238,6 +158,7 @@ const updateAssistant = async (
         keyword_transfer_ws,
         number_transfer_ws,
         voice_assistant,
+        document_storage_id,
       })
       .eq("account_id", account_id)
       .eq("id", id);

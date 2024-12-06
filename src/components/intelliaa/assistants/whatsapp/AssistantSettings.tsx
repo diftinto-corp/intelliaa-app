@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { HelpCircle, Loader2, Play, Save, Upload } from "lucide-react";
-import { MultiSelect } from "../../common/MultiSelect";
+import SelectorDs from "../../common/SelectorDs";
 import ModalQr from "./ModalQr";
 import { ModalDeleteAssistant } from "./ModalDeleteAssistant";
 import {
@@ -51,17 +51,8 @@ interface AssistantSettingsProps {
     id_document: string;
     namespace: string;
   }[];
-  selectedDocuments: {
-    name: string;
-    s3_key: string;
-    id_document: string;
-    namespace: string;
-  }[];
-  setSelectedDocuments: Dispatch<
-    SetStateAction<
-      { name: string; s3_key: string; id_document: string; namespace: string }[]
-    >
-  >;
+  selectedDocumentStorage: string;
+  setSelectedDocumentStorage: Dispatch<SetStateAction<string>>;
   bdDocs: any[];
   loadingAssistant: boolean;
   loadingActiveWs: boolean;
@@ -92,8 +83,8 @@ export default function AssistantSettings({
   isChangeOptions,
   setIsChangeOptions,
   documents,
-  selectedDocuments,
-  setSelectedDocuments,
+  selectedDocumentStorage,
+  setSelectedDocumentStorage,
   bdDocs,
   loadingAssistant,
   loadingActiveWs,
@@ -318,20 +309,10 @@ export default function AssistantSettings({
                 </TooltipProvider>
               </span>
             </Label>
-            <MultiSelect
-              options={documents}
-              onValueChange={(value) => {
-                setSelectedDocuments(value);
-                setIsChangeOptions(true);
-              }}
-              defaultValue={selectedDocuments as any}
-              placeholder='Seleccionar documentos'
-              variant='inverted'
-              animation={2}
-              maxCount={3}
-              setIsChangeOptions={(change: any) =>
-                console.log("Options changed:", change)
-              }
+            <SelectorDs
+              setIsChangeOptions={setIsChangeOptions}
+              documentStorageId={selectedDocumentStorage}
+              setDocumentStorageId={setSelectedDocumentStorage}
             />
           </div>
           <div className='flex items-center mb-4'>
