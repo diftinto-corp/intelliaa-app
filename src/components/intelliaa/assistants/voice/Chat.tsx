@@ -89,14 +89,11 @@ export default function ChatWsComponent({
     setInput("");
     try {
       let session = getAssistantSession(assistant.id);
-
       if (!session) {
         const answer = await chatPrediction({
           question: input,
           overrideConfig: {
-            supabaseMetadataFilter: {
-              namespace: assistant.namespace,
-            },
+            selectedStore: assistant.document_storage_id,
             systemMessage: `
               ${assistant.prompt}, basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información".
               No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
@@ -121,9 +118,7 @@ export default function ChatWsComponent({
         const answer = await chatPrediction({
           question: input,
           overrideConfig: {
-            supabaseMetadataFilter: {
-              namespace: session.namespace,
-            },
+            selectedStore: assistant.document_storage_id,
             systemMessage: `${assistant.prompt}, basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información".No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
             temperature: assistant.temperature,
             maxTokens: assistant.token,

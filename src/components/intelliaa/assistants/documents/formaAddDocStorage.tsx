@@ -17,24 +17,35 @@ interface FormInputs {
   pdfFile: FileList;
 }
 
+/**
+ * Componente FormaAddDocStorage
+ *
+ * Este componente es un formulario que permite a los usuarios crear un nuevo almacenamiento de documentos.
+ * Utiliza la biblioteca react-hook-form para manejar la validación y el envío del formulario.
+ *
+ * @param {Object} props - Las propiedades del componente.
+ * @param {Function} props.setOpenModal - Función para cerrar el modal después de crear el almacenamiento de documentos.
+ */
 export default function FormaAddDocStorage({
   setOpenModal,
 }: {
   setOpenModal: any;
 }) {
+  // Obtiene la ruta actual y extrae el slug de la cuenta
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
-  console.log(accountSlug);
-  // Agregamos validación al useForm
+  // Configura el formulario con validación
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormInputs>();
+
+  // Estado para almacenar el ID de la cuenta y el estado de carga
   const [account_id, setAccount_id] = useState<string>("" as string);
   const [loading, setLoading] = useState(false);
-  console.log(account_id);
 
+  // Efecto para obtener el ID de la cuenta basado en el slug
   useEffect(() => {
     const getaccountId = async () => {
       const team_account = await getAccountBySlug(null, accountSlug);
@@ -43,21 +54,23 @@ export default function FormaAddDocStorage({
     getaccountId();
   }, [accountSlug]);
 
+  // Función para manejar el envío del formulario
   const createDocumentStorageForm = async (data: FormInputs) => {
     try {
       setLoading(true);
-      // Aquí deberías manejar el archivo PDF antes de enviarlo
+      // Prepara los datos del formulario para enviar
       const formData = {
         name: data.name,
         description: data.description,
         file: data.pdfFile[0], // Primer archivo seleccionado
       };
-      // Crear un objeto FormData para enviar el archivo
+      // Crea un objeto FormData para enviar el archivo
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("file", formData.file);
 
+      // Llama a la función para crear el almacenamiento de documentos
       await createDocumentStorage(account_id, formDataToSend);
     } catch (error) {
       console.error(error);
@@ -67,6 +80,7 @@ export default function FormaAddDocStorage({
     }
   };
 
+  // Renderiza el formulario
   return (
     <form
       className='animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-muted-foreground'

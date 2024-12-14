@@ -72,6 +72,7 @@ export interface Prediction {
   question: string;
   socketIOClientId?: string;
   overrideConfig: {
+    selectedStore?: string;
     sessionId?: string;
     systemMessage?: string;
     supabaseMetadataFilter?: supabaseMetadataFilter;

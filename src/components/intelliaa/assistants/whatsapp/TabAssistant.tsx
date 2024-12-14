@@ -91,7 +91,6 @@ export default function TabAssistant({
       const team_account = await getAccountBySlug(null, accountSlug);
       const accountId = team_account.account_id;
       const data = await getDocumentssByDocumentStorageId(accountId);
-      console.log("data", data);
     };
     const getAssistantVoice = async () => {
       const data = await getAssistantsVoice();

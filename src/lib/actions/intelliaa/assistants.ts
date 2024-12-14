@@ -199,6 +199,7 @@ const updateAssistantStatusWs = async (
 };
 
 const chatPrediction = async (data: Prediction) => {
+  console.log("Data:", data);
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_FLOWISE}prediction/${process.env.NEXT_PUBLIC_FLOWISE_CHATID_PREDICTION}`,
@@ -495,8 +496,6 @@ const getAssistantsVoice = async () => {
     console.log(`Error fetching assistants in Supabase: ${error.message}`);
     throw new Error(`Error fetching assistants in Supabase: ${error.message}`);
   }
-
-  console.log("Data:", data);
 
   return data;
 };

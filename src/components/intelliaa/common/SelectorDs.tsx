@@ -33,8 +33,6 @@ export default function SelectorDs({
 
   const [storages, setStorages] = useState<DocumentStorage[]>([]);
 
-  console.log(storages);
-
   useEffect(() => {
     const fetchStorages = async () => {
       try {
