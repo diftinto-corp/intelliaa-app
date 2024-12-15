@@ -13,7 +13,6 @@ import {
 import { activeWsService } from "@/lib/actions/intelliaa/railway";
 import ChatWsComponent from "./Chat";
 import AssistantSettings from "./AssistantSettings";
-import QuestionsAndAnswers from "./QuestionsAndAnswers";
 import { deleteQa } from "@/lib/actions/intelliaa/qa";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
