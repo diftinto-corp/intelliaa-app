@@ -6,13 +6,11 @@ import Link from "next/link";
 import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   NavSideBarComponent,
@@ -22,6 +20,8 @@ import useScreenSize from "@/lib/hooks/render-screen";
 import UserAccountBtn from "./UserAccountBtn";
 import { Label } from "@/components/ui/label";
 import AccountSelector from "@/components/basejump/account-selector";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 interface DashboardProps {
   accountSlug: any;
@@ -40,6 +40,7 @@ export default function Dashboard({
   const [accountId, setAccountId] = React.useState<string>(
     account || accountSelected?.account_id
   );
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (accountSelected) {
@@ -61,7 +62,7 @@ export default function Dashboard({
           <div className='flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'>
             <Link href='/' className='flex items-center gap-2 font-semibold'>
               <Image
-                src='/Logo-Intelliaa-Dark.svg'
+                src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
                 alt='AgentMaster'
                 width={150}
                 height={25}
@@ -138,7 +139,31 @@ export default function Dashboard({
               </div>
             </SheetContent>
           </Sheet>
-          <div className='w-full flex-1'></div>
+          <div className='w-full flex justify-end'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  className='text-muted-foreground mr-4'>
+                  <Sun className='h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
+                  <Moon className='absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
+                  <span className='sr-only'>Toggle theme</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
+                  System
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <UserAccountBtn path={accountSlug} />
         </header>
         <main className='flex md:absolute bg-foreground md:w-[80%] lg:w-[85%] min-h-[93vh] mt-14 lg:mt-[60px]  right-0 flex-col'>

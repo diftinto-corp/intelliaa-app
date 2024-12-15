@@ -151,7 +151,7 @@ export function ReportWsComponent() {
                     <TableRow
                       key={report.id}
                       onClick={() => handleRowClick(report)}
-                      className='cursor-pointer text-muted-foreground hover:bg-muted hover:text-white'>
+                      className='cursor-pointer text-muted-foreground hover:bg-muted hover:text-black'>
                       <TableCell>{report.user_number}</TableCell>
                       <TableCell>{report.assistant_name}</TableCell>
                       <TableCell>{lastChat?.question}</TableCell>

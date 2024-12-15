@@ -207,12 +207,12 @@ export default function AdvancedComponent({
 
   return (
     <TabsContent value='advanced'>
-      <div className='flex flex-col min-h-[70vh] p-4'> 
+      <div className='flex flex-col min-h-[70vh] p-4'>
         <div className='flex flex-col min-h-[70vh]'>
           <div>
             <div className='flex flex-row justify-between items-center gap-4'>
               <EmbedCodeBlock code={embedCode.trim()} />
-              <div className='flex flex-col bg-[#242322]/80 border-gray-700 text-muted-foreground shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] w-[50%] min-h-[70vh] border rounded-sm p-4'>
+              <div className='flex flex-col dark:bg-[#242322]/80 dark:border-gray-700 text-muted-foreground dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] w-[50%] min-h-[70vh] border rounded-sm p-4'>
                 <div className='border rounded-sm p-4'>
                   <div className='flex flex-col mb-4 p-1'>
                     <Label htmlFor='documents' className='mb-2'>
@@ -373,7 +373,6 @@ export default function AdvancedComponent({
             </div>
           </div>
         </div>
-        
       </div>
     </TabsContent>
   );

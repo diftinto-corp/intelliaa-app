@@ -275,7 +275,7 @@ export default function TabAssistant({
   };
 
   return (
-    <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh] '>
+    <div className='flex w-full gap-2 min-h-[75vh] max-h-[68vh] 2xl:min-h-[82vh] 2xl:max-h-[73vh] '>
       <AssistantSettings
         assistant={assistant}
         temperatureState={temperatureState}

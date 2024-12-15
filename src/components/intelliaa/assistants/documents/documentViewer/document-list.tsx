@@ -63,7 +63,7 @@ export function DocumentList({
   };
 
   return (
-    <Card>
+    <Card className='h-[80vh] overflow-y-auto'>
       <CardHeader>
         <CardTitle>Documentos</CardTitle>
         <CardDescription>Lista de documentos PDF</CardDescription>

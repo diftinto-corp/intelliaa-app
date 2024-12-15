@@ -9,12 +9,12 @@ export default function TabsReports() {
     <Tabs defaultValue='reportsws' className='w-[100%]'>
       <TabsList className='grid w-full grid-cols-2'>
         <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='reportsws'>
           Reportes Whatsapp
         </TabsTrigger>
         <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='reportsvoice'>
           Reportes de llamadas
         </TabsTrigger>

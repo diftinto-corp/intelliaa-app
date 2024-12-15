@@ -266,18 +266,18 @@ export default function TabAssistant({
     <Tabs defaultValue='settings' className='w-full '>
       <TabsList className='grid w-full grid-cols-2'>
         <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='settings'>
           Configuración
         </TabsTrigger>
         <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='advanced'>
           Incrustar asistente en tu web
         </TabsTrigger>
       </TabsList>
       <TabsContent value='settings'>
-        <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[73vh] 2xl:max-h-[73vh] '>
+        <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[77vh] 2xl:max-h-[73vh] '>
           <AssistantSettings
             assistant={assistant}
             temperatureState={temperatureState}

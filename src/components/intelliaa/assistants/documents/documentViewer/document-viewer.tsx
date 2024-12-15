@@ -15,6 +15,7 @@ import {
 } from "@/lib/actions/intelliaa/documents";
 import { useRouter } from "next/navigation";
 import { getDocumentStorageById } from "@/lib/actions/intelliaa/documents";
+import { Skeleton } from "@/components/ui/skeleton";
 export default function DocumentViewer({
   account_id,
   documentsListPage,
@@ -22,6 +23,7 @@ export default function DocumentViewer({
   documentSelected,
   setDocumentSelected,
   accountSlug,
+  loading,
 }: {
   account_id: string;
   documentsListPage: Pdf_Doc[];
@@ -29,6 +31,7 @@ export default function DocumentViewer({
   documentSelected: string;
   setDocumentSelected: (id: string) => void;
   accountSlug: string;
+  loading: boolean;
 }) {
   const router = useRouter();
   const [documentStorageNamespace, setDocumentStorageNamespace] = useState("");
@@ -68,51 +71,68 @@ export default function DocumentViewer({
           Gestión de Documentos
         </h1>
       </div>
-
-      <div className='grid md:grid-cols-12 gap-6'>
-        <div className='md:col-span-12'>
-          {selectedDocument && (
-            <Tabs defaultValue='viewer'>
-              <TabsList className='grid w-full grid-cols-2'>
-                <TabsTrigger
-                  className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
-                  value='viewer'>
-                  Documentos PDF
-                </TabsTrigger>
-                <TabsTrigger
-                  className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
-                  value='qa'>
-                  Texto Complementario
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value='viewer'>
-                <div className='flex w-full h-full'>
-                  <div className='md:col-span-4 h-full mr-4'>
-                    <DocumentList
-                      account_id={account_id}
-                      documents={documentsListPage}
-                      selectedDoc={documentSelected}
-                      onSelectDocument={setDocumentSelected}
-                      documentStorageId={documentStorageId}
-                      documentStorageNamespace={documentStorageNamespace}
-                    />
-                  </div>
-                  <PDFViewer pdfUrl={selectedDocument.url} />
-                </div>
-              </TabsContent>
-              <TabsContent value='qa'>
-                <QASection
-                  account_id={account_id}
-                  documentStorageId={documentStorageId}
-                  documentName={selectedDocument.name}
-                  filename={filename}
-                  documentStorageNamespace={documentStorageNamespace}
-                />
-              </TabsContent>
-            </Tabs>
-          )}
+      {loading ? (
+        <div className='flex flex-col h-[92vh] items-center p-6'>
+          <div className='flex w-full h-full gap-4'>
+            <Skeleton className='flex flex-col w-[15%]  rounded p-2'>
+              <Skeleton className='flex dark:bg-zinc-900 bg-zinc-100 w-full h-[50px] my-2 flex-col'></Skeleton>
+              <Skeleton className='flex dark:bg-zinc-900 bg-zinc-100 w-full h-[20px] my-2 flex-col'></Skeleton>
+              <Skeleton className='flex dark:bg-zinc-900 bg-zinc-100 w-full h-[50px] my-2  flex-col'></Skeleton>
+            </Skeleton>
+            <Skeleton className='flex flex-col w-[85%]  rounded p-2'>
+              <Skeleton className='flex dark:bg-zinc-900 bg-zinc-100 w-full h-[30px] my-2 flex-col'></Skeleton>
+              <div className='flex gap-4'>
+                <Skeleton className='flex dark:bg-zinc-900 bg-zinc-100 w-[100%] h-[80vh] my-2 flex-col'></Skeleton>
+              </div>
+            </Skeleton>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className='grid md:grid-cols-12 gap-6'>
+          <div className='md:col-span-12'>
+            {selectedDocument && (
+              <Tabs defaultValue='viewer'>
+                <TabsList className='grid w-full grid-cols-2'>
+                  <TabsTrigger
+                    className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+                    value='viewer'>
+                    Documentos PDF
+                  </TabsTrigger>
+                  <TabsTrigger
+                    className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+                    value='qa'>
+                    Texto Complementario
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value='viewer'>
+                  <div className='flex w-full h-full'>
+                    <div className='md:col-span-4 h-full mr-4'>
+                      <DocumentList
+                        account_id={account_id}
+                        documents={documentsListPage}
+                        selectedDoc={documentSelected}
+                        onSelectDocument={setDocumentSelected}
+                        documentStorageId={documentStorageId}
+                        documentStorageNamespace={documentStorageNamespace}
+                      />
+                    </div>
+                    <PDFViewer pdfUrl={selectedDocument.url} />
+                  </div>
+                </TabsContent>
+                <TabsContent value='qa'>
+                  <QASection
+                    account_id={account_id}
+                    documentStorageId={documentStorageId}
+                    documentName={selectedDocument.name}
+                    filename={filename}
+                    documentStorageNamespace={documentStorageNamespace}
+                  />
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

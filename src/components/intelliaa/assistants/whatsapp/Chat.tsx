@@ -96,8 +96,7 @@ export default function ChatWsComponent({
           overrideConfig: {
             selectedStore: assistant.document_storage_id,
             systemMessage: `
-              ${assistant.prompt}, basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información".
-              No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
+              ${assistant.prompt}. Responde preguntas en WhatsApp. Responde de manera breve, precisa y sin extenderte más de dos frases.basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información". No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
             temperature: assistant.temperature,
             maxTokens: assistant.token,
           },
@@ -120,7 +119,7 @@ export default function ChatWsComponent({
           question: input,
           overrideConfig: {
             selectedStore: assistant.document_storage_id,
-            systemMessage: `${assistant.prompt}, basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información".No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
+            systemMessage: `${assistant.prompt}. Responde preguntas en WhatsApp. Responde de manera breve, precisa y sin extenderte más de dos frases.basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información". No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
             temperature: assistant.temperature,
             maxTokens: assistant.token,
             sessionId: session.sessionId,
@@ -180,7 +179,7 @@ export default function ChatWsComponent({
   }, [messages]);
 
   return (
-    <Card className='flex flex-col text-muted-foreground bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden justify-between w-[40%]'>
+    <Card className='flex flex-col text-muted-foreground dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden justify-between w-[40%]'>
       <CardContent>
         <div className='flex items-center justify-between my-5'>
           <Label htmlFor='assistant-name' className='text-lg'>
@@ -195,7 +194,7 @@ export default function ChatWsComponent({
           </Button>
         </div>
         <div className='flex flex-col'>
-          <ScrollArea className='flex flex-col w-full min-h-[55vh] max-h-[55vh] bg-foreground rounded-lg p-4'>
+          <ScrollArea className='flex flex-col w-full min-h-[65vh] max-h-[55vh] bg-foreground rounded-lg p-4'>
             {messages?.messages?.map((message, index) => (
               <div
                 key={index}
@@ -210,8 +209,8 @@ export default function ChatWsComponent({
                   transition={{ duration: 1 }}
                   className={`flex flex-col p-4 m-4 max-w-[80%] ${
                     message.role === "userMessage"
-                      ? "bg-teal-900 rounded-lg rounded-br-none text-white"
-                      : "bg-teal-800 rounded-lg rounded-bl-none text-white"
+                      ? "bg-green-200 dark:bg-teal-900 rounded-lg rounded-br-none dark:text-white"
+                      : "bg-green-100 dark:bg-teal-800 rounded-lg rounded-bl-none dark:text-white"
                   }`}>
                   {message.role === "apiMessage" ? (
                     <Markdown className='text-md'>{message.content}</Markdown>

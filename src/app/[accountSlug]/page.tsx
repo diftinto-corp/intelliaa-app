@@ -18,7 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants";
-import { getAllPdf_Doc } from "@/lib/actions/intelliaa/documents";
+import { getAllDocumentStorage } from "@/lib/actions/intelliaa/documents";
 import { getReportsWs } from "@/lib/actions/intelliaa/reports";
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { usePathname, useRouter } from "next/navigation";
@@ -55,7 +55,7 @@ export default function HomePage() {
     const fetchDocuments = async () => {
       const accounbySlugt = await getAccountBySlug(null, path);
       const account_id = accounbySlugt.account_id;
-      const data = await getAllPdf_Doc(account_id);
+      const data = await getAllDocumentStorage(account_id);
       if (!data) {
         return;
       }
@@ -86,17 +86,17 @@ export default function HomePage() {
   return (
     <div className='flex-1 p-6'>
       <div className='bg-slate-50 dark:bg-background p-6 md:p-10 rounded-sm'>
-      <section className='p-6 md:p-10 rounded-sm'>
+        <section className='p-6 md:p-10 rounded-sm'>
           <div className=' flex flex-col'>
-
-          <h1 className='text-3xl font-bold mb-2 bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
-            ¡Bienvenido de vuelta, {personalAccount?.name}!
-          </h1>
-          <p className='text-muted-foreground dark:text-muted-foreground mb-6'>
-            Aquí hay una breve descripción general de tus asistentes de voz AI.
-          </p>
-          <div className='flex flex-row gap-4 w-full'>
-            {/* <Card>
+            <h1 className='text-3xl font-bold mb-2 text-muted-foreground'>
+              ¡Bienvenido de vuelta, {personalAccount?.name}!
+            </h1>
+            <p className='text-muted-foreground dark:text-muted-foreground mb-6'>
+              Aquí hay una breve descripción general de tus asistentes de voz
+              AI.
+            </p>
+            <div className='flex flex-row gap-4 w-full'>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className='text-muted-foreground'>
                     Active Assistants
@@ -112,10 +112,10 @@ export default function HomePage() {
                   </p>
                 </CardContent>
               </Card> */}
-            {Array.isArray(assistants) && (
-              <PieChartAssistants assistants={assistants} />
-            )}
-            {/* <Card>
+              {Array.isArray(assistants) && (
+                <PieChartAssistants assistants={assistants} />
+              )}
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className='text-muted-foreground'>
                     Conversations
@@ -131,7 +131,7 @@ export default function HomePage() {
                   </p>
                 </CardContent>
               </Card> */}
-            {/* <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className='text-muted-foreground'>
                     Training Progress
@@ -147,7 +147,7 @@ export default function HomePage() {
                   </p>
                 </CardContent>
               </Card> */}
-            {/* <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className='text-muted-foreground'>
                     Accuracy
@@ -163,54 +163,56 @@ export default function HomePage() {
                   </p>
                 </CardContent>
               </Card> */}
-            <ChartChats />
+              <ChartChats />
+            </div>
           </div>
-        </div>
-      </section>
-      <section className='p-6 md:p-10'>
-        <div className=''>
-          <div className='flex items-center justify-between mb-6'>
-            <h2 className='text-2xl font-bold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
-              Gestión de Asistente
-            </h2>
-            {/* <Button onClick={() => setIsCreateModalOpen(true)}>
+        </section>
+        <section className='p-6 md:p-10'>
+          <div className=''>
+            <div className='flex items-center justify-between mb-6'>
+              <h2 className='text-2xl font-bold text-muted-foreground'>
+                Gestión de Asistente
+              </h2>
+              {/* <Button onClick={() => setIsCreateModalOpen(true)}>
                 <PlusIcon className='mr-2 h-4 w-4' />
                 Create New Assistant
               </Button> */}
-          </div>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {Array.isArray(assistants) && assistants.length > 0 ? (
-              assistants.map((assistant, index) => (
-                <Card key={assistant.id} className='bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
-                  <CardHeader>
-                    <div className='flex items-center gap-2'>
-                      <Avatar>
-                        <AvatarFallback className=' text-primary font-semibold'>
-                          <FaWhatsapp className='text-2xl font-semibold' />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className='font-medium text-primary'>
-                          {assistant.name}
-                        </p>
-                        <p className='text-gray-500 dark:text-gray-400 text-sm'>
-                          Active
-                        </p>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {Array.isArray(assistants) && assistants.length > 0 ? (
+                assistants.map((assistant, index) => (
+                  <Card
+                    key={assistant.id}
+                    className='dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
+                    <CardHeader>
+                      <div className='flex items-center gap-2'>
+                        <Avatar>
+                          <AvatarFallback className=' text-primary font-semibold'>
+                            <FaWhatsapp className='text-2xl font-semibold' />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className='font-medium text-muted-foreground'>
+                            {assistant.name}
+                          </p>
+                          <p className='text-gray-500 dark:text-gray-400 text-sm'>
+                            Active
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    {/* <Button variant='ghost' size='icon'>
+                      {/* <Button variant='ghost' size='icon'>
                       <FlipVerticalIcon className='h-5 w-5 text-gray-500 dark:text-gray-400' />
                     </Button> */}
-                  </CardHeader>
-                  <CardContent>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <p className='text-gray-500 dark:text-gray-400 text-sm '>
-                          Documentos
-                        </p>
-                        <p>{assistant.type_assistant}</p>
-                      </div>
-                      {/* <div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div>
+                          <p className='text-gray-500 dark:text-gray-400 text-sm '>
+                            Documentos
+                          </p>
+                          <p>{assistant.type_assistant}</p>
+                        </div>
+                        {/* <div>
                         <p className='text-gray-500 dark:text-gray-400 text-sm'>
                           Accuracy
                         </p>
@@ -228,60 +230,65 @@ export default function HomePage() {
                         </p>
                         <p>English</p>
                       </div> */}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className='flex text-muted-foreground'>
-                <h3>
-                  No se encontraron asistentes. Por favor, cree un nuevo
-                  asistente para comenzar.
-                </h3>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-      <section className=' p-6 md:p-10 rounded-sm'>
-        <div className=''>
-          <div className='flex items-center justify-between mb-6'>
-            <h2 className='text-2xl font-bold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent'>
-              Documentos
-            </h2>
-            <Button onClick={handleAddDocument}>
-              <UploadIcon className='mr-2 h-4 w-4' />
-              Subir documento
-            </Button>
-          </div>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {Array.isArray(documents) && documents.length > 0 ? (
-              documents.map((document) => (
-                <Card key={document.id} className='bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
-                  <CardHeader>
-                    <div className='flex items-center gap-2'>
-                      <FileTextIcon className='h-6 w-6 text-gray-500 dark:text-gray-400' />
-                      <div>
-                        <p className='font-medium'>{document.name}</p>
-                        <p className='text' />
                       </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))
-            ) : (
-              <div className='flex text-muted-foreground'>
-                <h3>
-                  No se encontraron documentos. Por favor, suba un documento
-                  para comenzar.
-                </h3>
-              </div>
-            )}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className='flex text-muted-foreground'>
+                  <h3>
+                    No se encontraron asistentes. Por favor, cree un nuevo
+                    asistente para comenzar.
+                  </h3>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+        <section className=' p-6 md:p-10 rounded-sm'>
+          <div className=''>
+            <div className='flex items-center justify-between mb-6'>
+              <h2 className='text-2xl font-bold text-muted-foreground '>
+                Documentos
+              </h2>
+              <Button onClick={handleAddDocument}>
+                <UploadIcon className='mr-2 h-4 w-4' />
+                Subir documento
+              </Button>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {Array.isArray(documents) && documents.length > 0 ? (
+                documents.map((document) => (
+                  <Card
+                    key={document.id}
+                    className='dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden'>
+                    <CardHeader>
+                      <div className='flex items-center gap-2'>
+                        <FileTextIcon className='h-6 w-6 text-primary' />
+                        <div>
+                          <p className='text-muted-foreground font-semibold'>
+                            {document.name}
+                          </p>
+                          <p className='text-muted-foreground'>
+                            {document.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))
+              ) : (
+                <div className='flex text-muted-foreground'>
+                  <h3>
+                    No se encontraron documentos. Por favor, suba un documento
+                    para comenzar.
+                  </h3>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
-
 }

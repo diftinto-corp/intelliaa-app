@@ -199,12 +199,12 @@ export function TabsNumber() {
     <Tabs defaultValue='buy_number' className='w-full'>
       <TabsList className='grid w-full grid-cols-2'>
         <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='buy_number'>
           Comprar números
         </TabsTrigger>
         <TabsTrigger
-          className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='active_number'>
           Números activos
         </TabsTrigger>
@@ -350,7 +350,9 @@ export function TabsNumber() {
                 </TableHeader>
                 <TableBody>
                   {numbers.map((number) => (
-                    <TableRow key={number.number} className='hover:text-white'>
+                    <TableRow
+                      key={number.number}
+                      className='hover:text-black dark:hover:text-white'>
                       <TableCell className='font-medium'>
                         {number.number}
                       </TableCell>

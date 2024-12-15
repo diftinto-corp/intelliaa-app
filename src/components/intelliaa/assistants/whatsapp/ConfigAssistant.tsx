@@ -69,7 +69,7 @@ export default function ConfigAssistant({
   }, [assistantSelected, assistant?.template_id]);
 
   return (
-    <div className='flex flex-col h-[92vh] items-center p-6'>
+    <div className='flex flex-col h-[94vh] items-center p-6 pb-2'>
       <div className='flex w-full h-full gap-4'>
         <div className='flex flex-col  bg-background w-[15%] border rounded p-2'>
           <div className='flex flex-col'>
@@ -82,9 +82,9 @@ export default function ConfigAssistant({
             {assistantsListPage.map((assistant) => (
               <div
                 key={assistant.id}
-                className={`flex items-center gap-4 justify-between rounded-sm px-3 py-2 mb-2 border bg-[#242322]/80 border-gray-700 shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden hover:bg-teal-900 text-sm text-muted-foreground font-semibold hover:text-primary cursor-pointer ${
+                className={`flex items-center gap-4 justify-between rounded-sm px-3 py-2 mb-2 dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden hover:bg-green-100 dark:hover:bg-teal-900 text-sm text-muted-foreground font-semibold hover:text-primary cursor-pointer ${
                   assistantSelected?.id === assistant.id
-                    ? "bg-teal-900 text-primary"
+                    ? "bg-green-100 dark:bg-teal-900 text-primary"
                     : ""
                 }`}
                 onClick={() => setAssistantSelected(assistant.id)}>
@@ -109,12 +109,12 @@ export default function ConfigAssistant({
                   <div className='flex flex-col'>
                     <div className='flex w-full justify-between px-4'>
                       <div>
-                        <p className='text-left bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent text-xl font-semibold my-4'>
+                        <p className='text-left text-muted-foreground text-xl font-semibold my-4'>
                           {assistant?.name}
                         </p>
                       </div>
                       <div>
-                        <p className='text-left text-xl font-semibold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent my-4 '>
+                        <p className='text-left text-xl font-semibold text-muted-foreground my-4 '>
                           {templateName}
                         </p>
                       </div>
@@ -132,12 +132,12 @@ export default function ConfigAssistant({
                   <div className='flex flex-col'>
                     <div className='flex w-full justify-between px-4'>
                       <div>
-                        <p className='text-left bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent text-xl font-semibold my-4'>
+                        <p className='text-left text-muted-foreground text-xl font-semibold my-4'>
                           {assistant?.name}
                         </p>
                       </div>
                       <div>
-                        <p className='text-left text-xl font-semibold bg-gradient-to-r from-[#14b8a6] to-[#14b8a6]/40 bg-clip-text text-transparent my-4 '>
+                        <p className='text-left text-xl font-semibold text-muted-foreground my-4 '>
                           {templateName}
                         </p>
                       </div>

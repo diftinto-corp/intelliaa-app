@@ -263,7 +263,7 @@ export function QASection({
   };
 
   return (
-    <Card className='h-[calc(100vh-200px)] flex flex-col'>
+    <Card className='h-[calc(100vh-200px)] flex flex-col text-muted-foreground'>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
         <div>
           <CardTitle>Texto Complementario</CardTitle>
@@ -278,7 +278,7 @@ export function QASection({
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className='text-primary'>
+              <DialogTitle className='text-muted-foreground'>
                 Agregar nuevo Texto Complementario
               </DialogTitle>
             </DialogHeader>
@@ -328,7 +328,7 @@ export function QASection({
                           Editar
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className='text-muted-foreground'>
                         <DialogHeader>
                           <DialogTitle>Editar Q&A</DialogTitle>
                         </DialogHeader>

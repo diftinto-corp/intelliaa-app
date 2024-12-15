@@ -94,27 +94,6 @@ export default function DocumentPage() {
     };
   }, [documents]);
 
-  if (loading) {
-    return (
-      <div className='flex flex-col h-[92vh] items-center p-6'>
-        <div className='flex w-full h-full gap-4'>
-          <Skeleton className='flex flex-col w-[15%]  rounded p-2'>
-            <Skeleton className='flex bg-zinc-900 w-full h-[50px] my-2 flex-col'></Skeleton>
-            <Skeleton className='flex bg-zinc-900 w-full h-[20px] my-2 flex-col'></Skeleton>
-            <Skeleton className='flex bg-zinc-900 w-full h-[50px] my-2  flex-col'></Skeleton>
-          </Skeleton>
-          <Skeleton className='flex flex-col w-[85%]  rounded p-2'>
-            <Skeleton className='flex bg-zinc-900 w-full h-[30px] my-2 flex-col'></Skeleton>
-            <div className='flex gap-4'>
-              <Skeleton className='flex bg-zinc-900 w-[50%] h-[80vh] my-2 flex-col'></Skeleton>
-              <Skeleton className='flex bg-zinc-900 w-[50%] h-[80vh] my-2 flex-col'></Skeleton>
-            </div>
-          </Skeleton>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <DocumentViewer
       documentsListPage={documents}
@@ -123,6 +102,7 @@ export default function DocumentPage() {
       documentSelected={documentSelected}
       setDocumentSelected={setDocumentSelected}
       accountSlug={accountSlug}
+      loading={loading}
     />
   );
 }

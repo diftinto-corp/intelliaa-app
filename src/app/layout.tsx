@@ -32,7 +32,7 @@ export default function RootLayout({
       <body className='bg-background text-foreground'>
         <ThemeProvider
           attribute='class'
-          defaultTheme='dark'
+          defaultTheme='light'
           enableSystem
           disableTransitionOnChange>
           <main className='min-h-screen flex flex-col items-center'>

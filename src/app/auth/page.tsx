@@ -5,9 +5,11 @@ import { RegisterForm } from "@/components/intelliaa/auth/RegisterForm";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
+  const { theme } = useTheme();
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
@@ -19,7 +21,7 @@ export default function AuthPage() {
         <div className='flex self-start w-full'>
           <Link href='/'>
             <Image
-              src='/Logo-Intelliaa-Dark.svg'
+              src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
               alt='Image'
               width='140'
               height='60'

@@ -181,7 +181,7 @@ export default function ChatWsComponent({
   return (
     <Card className='flex flex-col justify-between w-[50%]'>
       <CardContent>
-        <div className='flex items-center justify-between my-5'>
+        <div className='flex items-center justify-between my-5 dark:bg-gray-900'>
           <Label htmlFor='assistant-name' className='text-lg'>
             Prueba tu asistente
           </Label>

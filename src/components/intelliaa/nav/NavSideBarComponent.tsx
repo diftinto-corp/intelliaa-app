@@ -35,9 +35,9 @@ function NavSideBarComponent({ path }: any) {
           href={url}
           className={
             (pathName === url
-              ? " bg-teal-900 text-primary "
+              ? "bg-green-100 dark:bg-teal-900 text-primary "
               : "text-muted-foreground") +
-            " flex items-center gap-4 rounded-sm px-3 py-2 hover:bg-teal-900 hover:text-primary mb-2"
+            " flex items-center gap-4 rounded-sm px-3 py-2 hover:bg-green-100 hover:text-primary dark:hover:bg-teal-900 dark:hover:text-primary mb-2"
           }>
           <Icon className='h-4 w-4' />
           {name}
