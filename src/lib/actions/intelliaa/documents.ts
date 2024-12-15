@@ -58,7 +58,7 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
         embedding: {
           name: "openAIEmbeddings",
           config: {
-            modelName: "text-embedding-3-small",
+            modelName: "text-embedding-ada-002",
             stripNewLines: "",
             batchSize: "",
             timeout: "",
@@ -73,7 +73,7 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
             document: "",
             embeddings: "",
             recordManager: "",
-            pineconeIndex: "intelliaa",
+            pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
             pineconeNamespace: documentStorageNamespace,
             fileUpload: "",
             pineconeTextKey: "",
@@ -337,7 +337,7 @@ async function uploadPdf(
         embedding: {
           name: "openAIEmbeddings",
           config: {
-            modelName: "text-embedding-3-small",
+            modelName: "text-embedding-ada-002",
             stripNewLines: "",
             batchSize: "",
             timeout: "",
@@ -352,7 +352,7 @@ async function uploadPdf(
             document: "",
             embeddings: "",
             recordManager: "",
-            pineconeIndex: "intelliaa",
+            pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
             pineconeNamespace: documentStorageNamespace,
             fileUpload: "",
             pineconeTextKey: "",
@@ -451,7 +451,7 @@ async function deletePdf(
           storeId: documentStorageId,
           docId: id,
           embeddingConfig: {
-            modelName: "text-embedding-3-small",
+            modelName: "text-embedding-ada-002",
             stripNewLines: "",
             batchSize: "",
             timeout: "",
@@ -464,7 +464,7 @@ async function deletePdf(
             document: "",
             embeddings: "",
             recordManager: "",
-            pineconeIndex: "intelliaa",
+            pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
             pineconeNamespace: documentStorageNamespace,
             fileUpload: "",
             pineconeTextKey: "",
@@ -502,7 +502,7 @@ async function deletePdf(
       storeId: documentStorageId,
       docId: null,
       embeddingConfig: {
-        modelName: "text-embedding-3-small",
+        modelName: "text-embedding-ada-002",
         stripNewLines: "",
         batchSize: "",
         timeout: "",
@@ -515,7 +515,7 @@ async function deletePdf(
         document: "",
         embeddings: "",
         recordManager: "",
-        pineconeIndex: "intelliaa",
+        pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
         pineconeNamespace: documentStorageNamespace,
         fileUpload: "",
         pineconeTextKey: "",
