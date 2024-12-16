@@ -63,9 +63,9 @@ export default function Dashboard({
             <Link href='/' className='flex items-center gap-2 font-semibold'>
               <Image
                 src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
-                alt='AgentMaster'
+                alt='Intelliaa'
                 width={140}
-                height={25}
+                height={60}
               />
               {/* <span className=''>Intelliaa</span> */}
             </Link>
