@@ -179,9 +179,9 @@ export default function ChatWsComponent({
   }, [messages]);
 
   return (
-    <Card className='flex flex-col text-muted-foreground dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden justify-between w-[40%]'>
+    <Card className='flex flex-col text-muted-foreground dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-hidden justify-between w-[40%] p-4'>
       <CardContent>
-        <div className='flex items-center justify-between my-5'>
+        <div className='flex items-center justify-between'>
           <Label htmlFor='assistant-name' className='text-lg'>
             Prueba tu asistente
           </Label>
