@@ -223,7 +223,7 @@ export default function ChatWsComponent({
             <div ref={messagesEndRef} />
           </ScrollArea>
           <form
-            className='flex w-full items-center space-x-2 my-5'
+            className='flex w-full items-center space-x-2 mt-5'
             onSubmit={handleSubmitClick}>
             <Input
               placeholder='Escribe tu mensaje...'
