@@ -13,7 +13,6 @@ import {
 import { activeWsService } from "@/lib/actions/intelliaa/railway";
 import ChatWsComponent from "./Chat";
 import AssistantSettings from "./AssistantSettings";
-import { deleteQa } from "@/lib/actions/intelliaa/qa";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { getDocumentssByDocumentStorageId } from "@/lib/actions/intelliaa/documents";
@@ -274,7 +273,7 @@ export default function TabAssistant({
   };
 
   return (
-    <div className='flex w-full gap-2 min-h-[75vh] max-h-[80vh] 2xl:min-h-[80vh] 2xl:max-h-[73vh] '>
+    <div className='flex w-full gap-2 min-h-[75vh] max-h-[68vh] 2xl:min-h-[80vh] 2xl:max-h-[73vh] '>
       <AssistantSettings
         assistant={assistant}
         temperatureState={temperatureState}

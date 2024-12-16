@@ -277,7 +277,7 @@ export default function TabAssistant({
         </TabsTrigger>
       </TabsList>
       <TabsContent value='settings'>
-        <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[77vh] 2xl:max-h-[73vh] '>
+        <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[74vh] 2xl:max-h-[73vh] '>
           <AssistantSettings
             assistant={assistant}
             temperatureState={temperatureState}

@@ -684,7 +684,7 @@ export default function AssistantSettings({
               <Textarea
                 name='endCallPhrases'
                 placeholder='Frases de fin de llamada'
-                className='mx-1 w-[95%] min-h-[150px]'
+                className='mx-1 w-[95%] min-h-[100px]'
                 onChange={(e) => {
                   setEndCallPhrases(e.target.value.split("\n"));
                   setIsChangeOptions(true);

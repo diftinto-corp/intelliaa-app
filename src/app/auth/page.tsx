@@ -23,7 +23,7 @@ export default function AuthPage() {
             <Image
               src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
               alt='Image'
-              width='140'
+              width='130'
               height='25'
               className=''
             />

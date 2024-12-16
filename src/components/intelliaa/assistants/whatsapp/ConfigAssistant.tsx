@@ -69,7 +69,7 @@ export default function ConfigAssistant({
   }, [assistantSelected, assistant?.template_id]);
 
   return (
-    <div className='flex flex-col h-[94vh] items-center p-6 pb-2'>
+    <div className='flex flex-col h-[92vh] items-center p-6 pb-2'>
       <div className='flex w-full h-full gap-4'>
         <div className='flex flex-col  bg-background w-[15%] border rounded p-2'>
           <div className='flex flex-col'>

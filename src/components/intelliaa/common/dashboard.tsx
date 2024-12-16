@@ -64,7 +64,7 @@ export default function Dashboard({
               <Image
                 src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
                 alt='Intelliaa'
-                width={140}
+                width={130}
                 height={25}
               />
               {/* <span className=''>Intelliaa</span> */}
