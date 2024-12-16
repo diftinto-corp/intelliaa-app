@@ -64,7 +64,7 @@ export default function Dashboard({
               <Image
                 src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
                 alt='AgentMaster'
-                width={150}
+                width={140}
                 height={25}
               />
               {/* <span className=''>Intelliaa</span> */}
