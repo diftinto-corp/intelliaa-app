@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { Inter as FontSans } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
           <main className='min-h-screen flex flex-col items-center'>
             {children}
           </main>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -162,6 +162,7 @@ async function deleteQa(
         await vapiService.deleteFile(id_vapi_doc);
       } catch (error) {
         console.log("Error al eliminar vector store:", error);
+        throw new Error("Error al eliminar vector store");
       }
       await deleteDocumentStorageById(documentStorageId);
     }

@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Plus,
-  MessageSquare,
-  X,
-  Download,
-  Loader2,
-  Pencil,
-} from "lucide-react";
+import { Plus, X, Loader2, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +21,7 @@ import {
 } from "@/lib/actions/intelliaa/qa";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -43,6 +37,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@/lib/supabase/client";
 import { vapiService } from "@/services/vapiService";
 import { QAItem } from "@/interfaces/intelliaa";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface QA {
   question: string;
@@ -64,6 +59,7 @@ export function QASection({
   filename,
   documentStorageNamespace,
 }: QASectionProps) {
+  const { toast } = useToast();
   const [newQA, setNewQA] = useState<QA>({ question: "", answer: "" });
   const [qaDocs, setQaDocs] = useState<QAItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -72,6 +68,8 @@ export function QASection({
   const [loadingDeleteMap, setLoadingDeleteMap] = useState<
     Record<string, boolean>
   >({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -128,7 +126,7 @@ export function QASection({
 
   const handleAddQA = async () => {
     try {
-      setIsGenerating(true);
+      setIsLoading(true);
 
       let content = "PREGUNTAS Y RESPUESTAS\n\n";
       const allQAs = [
@@ -161,95 +159,29 @@ export function QASection({
       setNewQA({ question: "", answer: "" });
     } catch (error) {
       console.error("Error al agregar Q&A y generar documento:", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleQAClick = (qa: QAItem, index: number) => {
-    setNewQA({ question: qa.question, answer: qa.answer });
-    setIsEditing(true);
-    setSelectedQAIndex(index);
-  };
-
-  const handleUpdateQA = async () => {
-    try {
-      setIsGenerating(true);
-
-      // 1. Eliminar el documento anterior en Vapi
-      const qaToUpdate = qaDocs[selectedQAIndex!];
-      console.log("QA a actualizar:", qaToUpdate);
-      console.log("ID Vapi a eliminar:", qaToUpdate.vapiFileId);
-
-      if (!qaToUpdate.vapiFileId) {
-        console.error("No se encontró vapiFileId para el documento");
-        return;
-      }
-      await deleteQa(
-        documentStorageId,
-        qaToUpdate.vapiFileId,
-        qaToUpdate.id,
-        documentStorageNamespace
-      );
-
-      await vapiService.deleteFile(qaToUpdate.vapiFileId);
-      // 2. Actualizar el array de QAs
-      const updatedQAs = [...qaDocs];
-      updatedQAs[selectedQAIndex!] = {
-        ...updatedQAs[selectedQAIndex!],
-        question: newQA.question,
-        answer: newQA.answer,
-      };
-      // 3. Generar nuevo contenido
-      let content = "PREGUNTAS Y RESPUESTAS\n\n";
-      updatedQAs.forEach((qa) => {
-        content += `${qa.question}\n`;
-        content += `${qa.answer}\n\n`;
+      toast({
+        title: "Error",
+        description: "Error al agregar Q&A y generar documento",
+        variant: "destructive",
       });
-      // 4. Subir nuevo archivo
-      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-      const file = new File([blob], `${filename}.txt`, { type: "text/plain" });
-      const formData = new FormData();
-      formData.append("file", file);
-      const result = await uploadTxt(
-        account_id,
-        documentStorageId,
-        newQA.question,
-        newQA.answer,
-        formData,
-        documentStorageNamespace
-      );
-      if (result.status === "error") {
-        throw new Error(result.message);
-      }
-      // 5. Actualizar en la base de datos
-      await updateQa(
-        account_id,
-        newQA.question,
-        newQA.answer,
-        qaToUpdate.id,
-        result.vapiFileId
-      );
-      // 6. Actualizar el estado local
-      const updatedQaDocs = await getAllQa(documentStorageId);
-      setQaDocs(updatedQaDocs as QAItem[]);
-
-      // 7. Limpiar el formulario
-      setNewQA({ question: "", answer: "" });
-      setIsEditing(false);
-      setSelectedQAIndex(null);
-    } catch (error) {
-      console.error("Error al actualizar Q&A:", error);
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
+      setOpen(false);
+      toast({
+        title: "Q&A agregado",
+        description: "Q&A agregado correctamente",
+        variant: "default",
+      });
     }
   };
+
   const deleteDocQa = async (
     documentStorageId: string,
     id_vapi_doc: string,
     id: string
   ) => {
     try {
+      setIsLoading(true);
       setLoadingDeleteMap((prev) => ({ ...prev, [id]: true }));
       await deleteQa(
         documentStorageId,
@@ -257,8 +189,21 @@ export function QASection({
         id,
         documentStorageNamespace
       );
+    } catch (error) {
+      console.error("Error al eliminar Q&A:", error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar Q&A",
+        variant: "destructive",
+      });
     } finally {
       setLoadingDeleteMap((prev) => ({ ...prev, [id]: false }));
+      setIsLoading(false);
+      toast({
+        title: "Q&A eliminado",
+        description: "Q&A eliminado correctamente",
+        variant: "default",
+      });
     }
   };
 
@@ -269,19 +214,29 @@ export function QASection({
           <CardTitle>Texto Complementario</CardTitle>
           <CardDescription>Gestionar texto complementario</CardDescription>
         </div>
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant='default' size='sm'>
+            <Button variant='default' size='sm' disabled={isLoading}>
               <Plus className='w-4 h-4 mr-2' />
               Agregar nuevo Texto Complementario
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent
+            onInteractOutside={(e) => {
+              e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              e.preventDefault();
+            }}>
             <DialogHeader>
               <DialogTitle className='text-muted-foreground'>
                 Agregar nuevo Texto Complementario
               </DialogTitle>
             </DialogHeader>
+            <DialogClose className='absolute right-4 top-4 rounded-sm  ring-offset-background transition-opacity  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground'>
+              <X className='h-4 w-4 text-red-500' />
+              <span className='sr-only'>Cerrar</span>
+            </DialogClose>
             <div className='grid gap-4 py-4 text-muted-foreground'>
               <div className='grid gap-2'>
                 <Label htmlFor='question'>Título</Label>
@@ -306,7 +261,12 @@ export function QASection({
             </div>
             <Button
               onClick={handleAddQA}
-              disabled={!newQA.question || !newQA.answer}>
+              disabled={!newQA.question || !newQA.answer || isLoading}>
+              {isLoading ? (
+                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+              ) : (
+                <Plus className='w-4 h-4 mr-2' />
+              )}
               Agregar Texto Complementario
             </Button>
           </DialogContent>
@@ -321,52 +281,18 @@ export function QASection({
                 <AccordionContent>
                   <p className='mb-4'>{qa.answer}</p>
                   <div className='flex justify-end space-x-2'>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant='default' size='sm'>
-                          <Pencil className='w-4 h-4 mr-2' />
-                          Editar
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className='text-muted-foreground'>
-                        <DialogHeader>
-                          <DialogTitle>Editar Q&A</DialogTitle>
-                        </DialogHeader>
-                        <div className='grid gap-4 py-4'>
-                          <div className='grid gap-2'>
-                            <Label htmlFor='edit-question'>Pregunta</Label>
-                            <Input
-                              id='edit-question'
-                              value={newQA.question || qa.question}
-                              onChange={(e) =>
-                                setNewQA({
-                                  ...newQA,
-                                  question: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-                          <div className='grid gap-2'>
-                            <Label htmlFor='edit-answer'>Respuesta</Label>
-                            <Textarea
-                              id='edit-answer'
-                              value={newQA.answer || qa.answer}
-                              onChange={(e) =>
-                                setNewQA({ ...newQA, answer: e.target.value })
-                              }
-                            />
-                          </div>
-                        </div>
-                        <Button onClick={handleUpdateQA}>Actualizar Q&A</Button>
-                      </DialogContent>
-                    </Dialog>
                     <Button
                       variant='destructive'
                       size='sm'
+                      disabled={loadingDeleteMap[qa.id]}
                       onClick={() =>
                         deleteDocQa(documentStorageId, qa.vapiFileId, qa.id)
                       }>
-                      <X className='w-4 h-4 mr-2' />
+                      {loadingDeleteMap[qa.id] ? (
+                        <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                      ) : (
+                        <X className='w-4 h-4 mr-2' />
+                      )}
                       Eliminar
                     </Button>
                   </div>

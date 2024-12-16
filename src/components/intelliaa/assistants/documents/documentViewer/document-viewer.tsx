@@ -58,8 +58,6 @@ export default function DocumentViewer({
     .toString(36)
     .substring(2, 15)}`;
 
-  const deleteQA = (index: number) => {};
-
   const selectedDocument = documentsListPage.find(
     (doc) => doc.id === documentSelected
   );

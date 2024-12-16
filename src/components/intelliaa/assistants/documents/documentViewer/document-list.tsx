@@ -9,13 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  deletePdf,
-  getDocumentCounts,
-} from "@/lib/actions/intelliaa/documents";
+import { deletePdf } from "@/lib/actions/intelliaa/documents";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import ModalAddFile from "../ModalAddFile";
+import { useToast } from "@/lib/hooks/use-toast";
+
 interface Document {
   id: string;
   name: string;
@@ -40,6 +38,7 @@ export function DocumentList({
   documentStorageId,
   documentStorageNamespace,
 }: DocumentListProps) {
+  const { toast } = useToast();
   const [loadingDeleteMap, setLoadingDeleteMap] = useState<
     Record<string, boolean>
   >({});
@@ -57,8 +56,19 @@ export function DocumentList({
         id,
         documentStorageNamespace
       );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al eliminar documento",
+        variant: "destructive",
+      });
     } finally {
       setLoadingDeleteMap((prev) => ({ ...prev, [id]: false }));
+      toast({
+        title: "Documento eliminado",
+        description: "Documento eliminado correctamente",
+        variant: "default",
+      });
     }
   };
 
