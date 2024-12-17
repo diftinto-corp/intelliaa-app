@@ -10,12 +10,23 @@ import { DocumentStorage, Pdf_Doc, QAItem } from "@/interfaces/intelliaa";
 import ModalAddFile from "../ModalAddFile";
 import { addQa } from "@/lib/actions/intelliaa/qa";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   deletePdf,
   getDocumentCounts,
 } from "@/lib/actions/intelliaa/documents";
 import { useRouter } from "next/navigation";
 import { getDocumentStorageById } from "@/lib/actions/intelliaa/documents";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Loader2Icon, Trash2Icon } from "lucide-react";
 export default function DocumentViewer({
   account_id,
   documentsListPage,
@@ -24,6 +35,9 @@ export default function DocumentViewer({
   setDocumentSelected,
   accountSlug,
   loading,
+  handleDeleteDocument,
+  isDeleting,
+  deleteError,
 }: {
   account_id: string;
   documentsListPage: Pdf_Doc[];
@@ -32,9 +46,13 @@ export default function DocumentViewer({
   setDocumentSelected: (id: string) => void;
   accountSlug: string;
   loading: boolean;
+  handleDeleteDocument: (documentId: string) => void;
+  isDeleting: boolean;
+  deleteError: string;
 }) {
   const router = useRouter();
   const [documentStorageNamespace, setDocumentStorageNamespace] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     const getIsLastDocument = async () => {
@@ -64,11 +82,6 @@ export default function DocumentViewer({
 
   return (
     <div className='w-[95%] mx-auto p-4'>
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-bold text-primary'>
-          Gestión de Documentos
-        </h1>
-      </div>
       {loading ? (
         <div className='flex flex-col h-[92vh] items-center p-6'>
           <div className='flex w-full h-full gap-4'>
@@ -86,50 +99,93 @@ export default function DocumentViewer({
           </div>
         </div>
       ) : (
-        <div className='grid md:grid-cols-12 gap-6'>
-          <div className='md:col-span-12'>
-            {selectedDocument && (
-              <Tabs defaultValue='viewer'>
-                <TabsList className='grid w-full grid-cols-2'>
-                  <TabsTrigger
-                    className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
-                    value='viewer'>
-                    Documentos PDF
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
-                    value='qa'>
-                    Texto Complementario
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value='viewer'>
-                  <div className='flex w-full h-full'>
-                    <div className='md:col-span-4 h-full mr-4'>
-                      <DocumentList
-                        account_id={account_id}
-                        documents={documentsListPage}
-                        selectedDoc={documentSelected}
-                        onSelectDocument={setDocumentSelected}
-                        documentStorageId={documentStorageId}
-                        documentStorageNamespace={documentStorageNamespace}
-                      />
-                    </div>
-                    <PDFViewer pdfUrl={selectedDocument.url} />
-                  </div>
-                </TabsContent>
-                <TabsContent value='qa'>
-                  <QASection
-                    account_id={account_id}
-                    documentStorageId={documentStorageId}
-                    documentName={selectedDocument.name}
-                    filename={filename}
-                    documentStorageNamespace={documentStorageNamespace}
-                  />
-                </TabsContent>
-              </Tabs>
-            )}
+        <>
+          <div className='flex justify-between items-center mb-6'>
+            <h1 className='text-2xl font-bold text-muted-foreground'>
+              Gestión de Documentos
+            </h1>
+            <Dialog>
+              <DialogTrigger>
+                <Button
+                  size='icon'
+                  variant='destructive'
+                  onClick={() => setShowConfirmDialog(true)}>
+                  <Trash2Icon className='h-4 w-4' />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='text-muted-foreground'>
+                <DialogHeader>
+                  <DialogTitle>Eliminar Documento</DialogTitle>
+                </DialogHeader>
+                <DialogDescription>
+                  Estás seguro de que deseas eliminar este documento?
+                  {deleteError && <p className='text-red-500'>{deleteError}</p>}
+                </DialogDescription>
+                <DialogFooter>
+                  <Button
+                    variant='destructive'
+                    onClick={() => handleDeleteDocument(documentStorageId)}
+                    disabled={isDeleting}>
+                    {isDeleting ? (
+                      <Loader2Icon className='h-4 w-4 animate-spin' />
+                    ) : (
+                      "Eliminar"
+                    )}
+                  </Button>
+                  <Button
+                    variant='outline'
+                    onClick={() => setShowConfirmDialog(false)}>
+                    Cancelar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-        </div>
+          <div className='grid md:grid-cols-12 gap-6'>
+            <div className='md:col-span-12'>
+              {selectedDocument && (
+                <Tabs defaultValue='viewer'>
+                  <TabsList className='grid w-full grid-cols-2'>
+                    <TabsTrigger
+                      className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+                      value='viewer'>
+                      Documentos PDF
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+                      value='qa'>
+                      Texto Complementario
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value='viewer'>
+                    <div className='flex w-full h-full'>
+                      <div className='md:col-span-4 h-full mr-4'>
+                        <DocumentList
+                          account_id={account_id}
+                          documents={documentsListPage}
+                          selectedDoc={documentSelected}
+                          onSelectDocument={setDocumentSelected}
+                          documentStorageId={documentStorageId}
+                          documentStorageNamespace={documentStorageNamespace}
+                        />
+                      </div>
+                      <PDFViewer pdfUrl={selectedDocument.url} />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value='qa'>
+                    <QASection
+                      account_id={account_id}
+                      documentStorageId={documentStorageId}
+                      documentName={selectedDocument.name}
+                      filename={filename}
+                      documentStorageNamespace={documentStorageNamespace}
+                    />
+                  </TabsContent>
+                </Tabs>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -7,8 +7,12 @@ import { getAccount } from "@/lib/actions/intelliaa/accounts";
 import { Assistant } from "@/interfaces/intelliaa";
 import {
   activateWs,
+  addDsAssistant,
+  deleteDsAssistant,
   getAssistantsVoice,
+  getDsAssistant,
   updateAssistant,
+  updateDsAssistant,
 } from "@/lib/actions/intelliaa/assistants";
 import { activeWsService } from "@/lib/actions/intelliaa/railway";
 import ChatWsComponent from "./Chat";
@@ -113,14 +117,18 @@ export default function TabAssistant({
       setLoadingActiveWs(assistant.is_deploying_ws);
       setKeywordTransfer(assistant.keyword_transfer_ws || "");
       setNumberTransfer(assistant.number_transfer_ws || "");
-      setSelectedDocumentStorage(assistant.document_storage_id || "");
       setBdDocs(assistant.docs_keys || []);
       setIsChangeOptions(false);
       setLoading(false);
       setVoiceAssistantSelected(assistant.voice_assistant || "");
     };
+    const fetchDsAssistant = async () => {
+      const data = await getDsAssistant(assistant.id);
+      setSelectedDocumentStorage(data[0]?.document_storage || "");
+    };
 
     fetchAssistant();
+    fetchDsAssistant();
   }, [assistant]);
 
   useEffect(() => {
@@ -231,21 +239,6 @@ export default function TabAssistant({
     setAssistant(newassistant);
   };
 
-  const handleDeleteQa = async (
-    id: string,
-    document_id: string,
-    namespace: string
-  ) => {
-    setLoading(true);
-
-    const team_account = await getAccountBySlug(null, accountSlug);
-
-    // await deleteDocuments(document_id, namespace);
-    // await deleteQa(team_account.account_id, id);
-
-    setLoading(false);
-  };
-
   const handleSaveAssistant = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingAssistant(true);
@@ -259,7 +252,6 @@ export default function TabAssistant({
       number_transfer_ws: NumberTransfer,
       namespace: assistant.namespace,
       voice_assistant: voiceAssistantSelected,
-      document_storage_id: selectedDocumentStorage,
     };
 
     const newBdDocs = await updateAssistant(
@@ -267,7 +259,31 @@ export default function TabAssistant({
       assistant.id,
       data
     );
+
+    const setDsAssistant = async () => {
+      const data = await getDsAssistant(assistant.id);
+
+      // Si no hay documentStorage seleccionado y existe un registro, lo eliminamos
+      if (selectedDocumentStorage === "" && data.length > 0) {
+        await deleteDsAssistant(assistant.id, data[0]?.document_storage);
+        return;
+      }
+
+      // Si hay datos existentes, actualizamos
+      if (data.length > 0) {
+        if (data[0].document_storage !== selectedDocumentStorage) {
+          await updateDsAssistant(assistant.id, selectedDocumentStorage);
+        }
+      } else {
+        // Si no hay datos existentes y hay un documentStorage seleccionado, lo agregamos
+        if (selectedDocumentStorage) {
+          await addDsAssistant(assistant.id, selectedDocumentStorage);
+        }
+      }
+    };
+
     setBdDocs(newBdDocs as any);
+    setDsAssistant();
     setLoadingAssistant(false);
     setIsChangeOptions(false);
   };
@@ -305,7 +321,10 @@ export default function TabAssistant({
         voiceAssistant={voiceAssistant}
         setVoiceAssistant={setVoiceAssistant}
       />
-      <ChatWsComponent assistant={assistant} />
+      <ChatWsComponent
+        assistant={assistant}
+        selectedDocumentStorage={selectedDocumentStorage}
+      />
     </div>
   );
 }

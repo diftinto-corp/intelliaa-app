@@ -13,6 +13,7 @@ import {
 import { getDocumentssByDocumentStorageId } from "@/lib/actions/intelliaa/documents";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { usePathname } from "next/navigation";
+import { Loader2Icon } from "lucide-react";
 
 type DocumentStorage = {
   document_storage_id: string;
@@ -35,9 +36,11 @@ export default function SelectorDsVoice({
   const accountSlug = pathname.split("/")[1];
 
   const [storages, setStorages] = useState<DocumentStorage[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStorages = async () => {
+      setLoading(true);
       try {
         const teamAccount = await getAccountBySlug(null, accountSlug);
         const accountId = teamAccount.account_id;
@@ -56,13 +59,19 @@ export default function SelectorDsVoice({
         }
       } catch (error) {
         console.error("Error fetching storages:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchStorages();
   }, [accountSlug, documentStorageId]);
 
   const handleChange = (value: string) => {
-    setDocumentStorageId(value);
+    if (value === "none") {
+      setDocumentStorageId("");
+    } else {
+      setDocumentStorageId(value);
+    }
     const storage = storages.find((s) => s.document_storage_id === value);
     setSelectedDocuments(storage?.document_ids || []);
     setIsChangeOptions(true);
@@ -71,11 +80,18 @@ export default function SelectorDsVoice({
   return (
     <Select onValueChange={handleChange} value={documentStorageId}>
       <SelectTrigger className='w-[180px]'>
-        <SelectValue placeholder='Select a document storage' />
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
+          <SelectValue placeholder='Select a document storage' />
+        )}
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
           <SelectLabel>Document storage</SelectLabel>
+          <SelectItem value='none'>
+            <p>Ninguno</p>
+          </SelectItem>
           {storages.map((storage) => (
             <SelectItem
               key={storage.document_storage_id}

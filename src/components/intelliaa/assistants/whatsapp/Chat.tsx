@@ -42,9 +42,13 @@ const getAssistantSession = (assistantId: string): AssistantSession | null => {
 
 export default function ChatWsComponent({
   assistant,
+  selectedDocumentStorage,
 }: {
   assistant: Assistant;
+  selectedDocumentStorage: string;
 }) {
+  console.log(selectedDocumentStorage);
+
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Messages>({ messages: [] });
   const [loading, setLoading] = useState(false);
@@ -94,7 +98,7 @@ export default function ChatWsComponent({
         const answer = await chatPrediction({
           question: input,
           overrideConfig: {
-            selectedStore: assistant.document_storage_id,
+            selectedStore: selectedDocumentStorage,
             systemMessage: `
               ${assistant.prompt}. Responde preguntas en WhatsApp. Responde de manera breve, precisa y sin extenderte más de dos frases.basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información". No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
             temperature: assistant.temperature,
@@ -118,7 +122,7 @@ export default function ChatWsComponent({
         const answer = await chatPrediction({
           question: input,
           overrideConfig: {
-            selectedStore: assistant.document_storage_id,
+            selectedStore: selectedDocumentStorage,
             systemMessage: `${assistant.prompt}. Responde preguntas en WhatsApp. Responde de manera breve, precisa y sin extenderte más de dos frases.basándote en la información proporcionada por las herramientas disponibles. Evita inventar respuestas; si desconoces la información, indica de manera literalmente: "Disculpa, pero no cuento con esa información" o "No tengo esa información". No utilices expresiones como "parece ser" o "supuestamente"; refleja seguridad en tus respuestas.`,
             temperature: assistant.temperature,
             maxTokens: assistant.token,

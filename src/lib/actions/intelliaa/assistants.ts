@@ -89,6 +89,23 @@ const GetAssistant = async (account_id: string, assistant_id: string) => {
   return data[0];
 };
 
+const getAssistantByDocumentStorage = async (document_storage_id: string) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("assistants")
+    .select("*")
+    .eq("document_storage_id", document_storage_id);
+
+  if (error) {
+    return {
+      message: error.message,
+    };
+  }
+
+  return data;
+};
+
 const NewAssistant = async (
   account_id: string,
   name: string,
@@ -114,7 +131,7 @@ const NewAssistant = async (
         temperature: temperature,
         token: tokens,
         namespace: namespace,
-        voice_assistant: "2d7rEMnN7U2yC7k3Ie3g",
+        voice_assistant: "StgW6mMosfwXGzfaJ130",
       },
     ])
     .select();
@@ -141,7 +158,6 @@ const updateAssistant = async (
     number_transfer_ws,
     namespace: currentNamespace,
     voice_assistant,
-    document_storage_id,
   } = dataAssistant;
 
   const supabase = createClient();
@@ -158,7 +174,6 @@ const updateAssistant = async (
         keyword_transfer_ws,
         number_transfer_ws,
         voice_assistant,
-        document_storage_id,
       })
       .eq("account_id", account_id)
       .eq("id", id);
@@ -516,11 +531,121 @@ const purchaseNumber = async (account_id: string) => {
   }
 };
 
+const getDsAssistant = async (assistant_id: string) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("document_storage-assistants")
+    .select("*")
+    .eq("assistant", assistant_id);
+
+  if (error) {
+    console.error(
+      "Error getting document storage from assistant:",
+      error.message
+    );
+    throw new Error(
+      `Error getting document storage from assistant: ${error.message}`
+    );
+  }
+
+  return data;
+};
+
+const addDsAssistant = async (assistant_id: string, ds_id: string) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("document_storage-assistants")
+    .insert({
+      document_storage: ds_id,
+      assistant: assistant_id,
+    })
+    .select();
+
+  if (error) {
+    console.error("Error adding document storage to assistant:", error.message);
+    throw new Error(
+      `Error adding document storage to assistant: ${error.message}`
+    );
+  }
+
+  return data;
+};
+
+const deleteDsAssistant = async (assistant_id: string, ds_id: string) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("document_storage-assistants")
+    .delete()
+    .eq("assistant", assistant_id)
+    .eq("document_storage", ds_id)
+    .select();
+
+  if (error) {
+    console.error(
+      "Error deleting document storage from assistant:",
+      error.message
+    );
+    throw new Error(
+      `Error deleting document storage from assistant: ${error.message}`
+    );
+  }
+
+  return data;
+};
+
+const deleteDsAssistantByAssistant = async (assistant_id: string) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("document_storage-assistants")
+    .delete()
+    .eq("assistant", assistant_id)
+    .select();
+
+  if (error) {
+    console.error(
+      "Error deleting document storage from assistant:",
+      error.message
+    );
+    throw new Error(
+      `Error deleting document storage from assistant: ${error.message}`
+    );
+  }
+
+  return data;
+};
+const updateDsAssistant = async (assistant_id: string, ds_id: string) => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("document_storage-assistants")
+    .update({
+      document_storage: ds_id,
+    })
+    .eq("assistant", assistant_id)
+    .select();
+
+  if (error) {
+    console.log(
+      "Error updating document storage from assistant:",
+      error.message
+    );
+    throw new Error(
+      `Error updating document storage from assistant: ${error.message}`
+    );
+  }
+
+  return data;
+};
+
 export {
   AssistantsTemplateList,
   NewAssistant,
   GetAllAssistants,
   getTemplate,
+  getAssistantByDocumentStorage,
   updateAssistant,
   updateAssistantStatusWs,
   chatPrediction,
@@ -532,4 +657,9 @@ export {
   deleteAssistant,
   getAssistantsVoice,
   purchaseNumber,
+  getDsAssistant,
+  addDsAssistant,
+  deleteDsAssistant,
+  deleteDsAssistantByAssistant,
+  updateDsAssistant,
 };

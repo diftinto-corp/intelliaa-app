@@ -129,7 +129,18 @@ export const flowiseService = {
   // Delete document store
   deleteDocumentStore: async (storeId: string) => {
     try {
-      const response = await fetch(
+      const responseVectorStore = await fetch(
+        `${process.env.NEXT_PUBLIC_FLOWISE}document-store/vectorstore/${storeId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_FLOWISE_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const responsStore = await fetch(
         `${process.env.NEXT_PUBLIC_FLOWISE}document-store/store/${storeId}`,
         {
           method: "DELETE",
@@ -139,10 +150,19 @@ export const flowiseService = {
           },
         }
       );
-      if (!response.ok) {
+
+      if (!responseVectorStore.ok) {
         // Si la respuesta no es exitosa, lanza un error con el status y el mensaje
-        const errorData = await response.json();
-        throw new Error(`Error ${response.status}: ${errorData.message}`);
+        const errorData = await responseVectorStore.json();
+        throw new Error(
+          `Error ${responseVectorStore.status}: ${errorData.message}`
+        );
+      }
+
+      if (!responsStore.ok) {
+        // Si la respuesta no es exitosa, lanza un error con el status y el mensaje
+        const errorData = await responsStore.json();
+        throw new Error(`Error ${responsStore.status}: ${errorData.message}`);
       }
 
       return {

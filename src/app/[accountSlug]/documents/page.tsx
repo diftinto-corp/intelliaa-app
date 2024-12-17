@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Package } from "lucide-react";
+import { Loader2, Package } from "lucide-react";
 import ModalAddDocument from "@/components/intelliaa/assistants/documents/ModalAddDocument";
 import { DocumentStorage, Pdf_Doc } from "../../../interfaces/intelliaa";
 import { createClient } from "@/lib/supabase/client";
@@ -9,7 +9,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { getAllDocumentStorage } from "@/lib/actions/intelliaa/documents";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
+import { deleteAllDocumentStorageById } from "@/lib/actions/intelliaa/documents";
+import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 //TODO: Agregar renderizado condicional con loading
 
@@ -17,7 +30,7 @@ export default function DocumentStoragePage() {
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
   const router = useRouter();
-
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<DocumentStorage[]>([]);
   const [loading, setLoading] = useState(true);
   const [documentSelected, setDocumentSelected] = useState(documents[0]?.id);
@@ -117,7 +130,7 @@ export default function DocumentStoragePage() {
               {documents.map((doc) => (
                 <Card
                   key={doc.id}
-                  className='w-[30%] flex flex-col p-4 text-muted-foreground pt-6 dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-y-auto cursor-pointer dark:hover:bg-teal-900 transition-colors'
+                  className='w-[30%] flex flex-col p-4 text-muted-foreground pt-6 dark:bg-[#242322]/80 dark:border-gray-700 dark:shadow-[inset_0_0_20px_rgba(20,184,166,0.2)] overflow-y-auto dark:hover:bg-teal-900 transition-colors cursor-pointer'
                   onClick={() => router.push(`${pathname}/${doc.id}`)}>
                   <CardHeader>
                     <Package className='h-6 w-6 text-primary' />

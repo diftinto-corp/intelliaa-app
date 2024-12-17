@@ -10,6 +10,10 @@ import {
   activateWs,
   updateAssistant,
   getAssistantsVoice,
+  getDsAssistant,
+  addDsAssistant,
+  deleteDsAssistant,
+  updateDsAssistant,
 } from "@/lib/actions/intelliaa/assistants";
 import { activeWsService } from "@/lib/actions/intelliaa/railway";
 import AssistantSettings from "./AssistantSettings";
@@ -109,9 +113,7 @@ export default function TabAssistant({
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>(
     assistant?.documents_vapi || []
   );
-  const [documentStorageId, setDocumentStorageId] = useState(
-    assistant?.document_storage_id || ""
-  );
+  const [documentStorageId, setDocumentStorageId] = useState("");
   const [bdDocs, setBdDocs] = useState(assistant?.docs_keys || []);
   const [loadingAssistant, setLoadingAssistant] = useState(false);
   const [loadingActiveWs, setLoadingActiveWs] = useState(false);
@@ -175,7 +177,12 @@ export default function TabAssistant({
           "hasta pronto",
         ]
       );
-      setDocumentStorageId(assistant.document_storage_id || "");
+      const fetchDsAssistant = async () => {
+        const data = await getDsAssistant(assistant.id);
+        setDocumentStorageId(data[0]?.document_storage || "");
+      };
+
+      fetchDsAssistant();
     };
 
     fetchAssistant();
@@ -209,8 +216,6 @@ export default function TabAssistant({
     e.preventDefault();
     setLoadingAssistant(true);
 
-    console.log(endCallMessage);
-
     try {
       const res = await fetch("/api/update-assistant-voice", {
         method: "POST",
@@ -242,6 +247,26 @@ export default function TabAssistant({
 
       const data = await res.json();
       console.log("Assistant created in VAPI:", data);
+
+      await getDsAssistant(assistant.id);
+
+      // Si no hay documentStorage seleccionado y existe un registro, lo eliminamos
+      if (documentStorageId === "" && data.length > 0) {
+        await deleteDsAssistant(assistant.id, data[0]?.document_storage);
+        return;
+      }
+
+      // Si hay datos existentes, actualizamos
+      if (data.length > 0) {
+        if (data[0].document_storage !== documentStorageId) {
+          await updateDsAssistant(assistant.id, documentStorageId);
+        }
+      } else {
+        // Si no hay datos existentes y hay un documentStorage seleccionado, lo agregamos
+        if (documentStorageId) {
+          await addDsAssistant(assistant.id, documentStorageId);
+        }
+      }
     } catch (error) {
       console.error("Error creating assistant voice:", error);
     } finally {

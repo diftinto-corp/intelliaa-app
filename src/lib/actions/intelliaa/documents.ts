@@ -1,9 +1,14 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { GetAssistant } from "./assistants";
+import {
+  GetAssistant,
+  getAssistantByDocumentStorage,
+  getDsAssistant,
+} from "./assistants";
 import { flowiseService } from "@/services/flowiseService";
 import { vapiService } from "@/services/vapiService";
+import { getAllQa } from "./qa";
 
 const supabase = createClient();
 
@@ -192,6 +197,81 @@ async function deleteDocumentStorageById(documentStorageId: string) {
   const supabase = createClient();
 
   try {
+    const deleteDocumentStorageFlowise =
+      await flowiseService.deleteDocumentStore(documentStorageId);
+
+    if (deleteDocumentStorageFlowise.status !== "success") {
+      throw new Error("Failed to delete document storage in Flowise");
+    }
+
+    const { error: errorDeleteDocumentsPDF } = await supabase
+      .from("pdf_docs")
+      .delete()
+      .eq("document_storage_id", documentStorageId);
+
+    if (errorDeleteDocumentsPDF) {
+      throw new Error(
+        `Error deleting PDF documents: ${errorDeleteDocumentsPDF.message}`
+      );
+    }
+
+    const { error: errorDeleteDocumentQA } = await supabase
+      .from("qa_docs")
+      .delete()
+      .eq("document_storage_id", documentStorageId);
+
+    if (errorDeleteDocumentQA) {
+      throw new Error(
+        `Error deleting QA documents: ${errorDeleteDocumentQA.message}`
+      );
+    }
+
+    const { error: errorDeleteDocumentStorage } = await supabase
+      .from("document_storages")
+      .delete()
+      .eq("id", documentStorageId);
+
+    if (errorDeleteDocumentStorage) {
+      throw new Error(
+        `Error deleting document storage: ${errorDeleteDocumentStorage.message}`
+      );
+    }
+  } catch (error) {
+    console.error("Error in deleteDocumentStorageById:", error);
+    throw error; // Re-throw the error after logging it
+  }
+}
+async function deleteAllDocumentStorageById(documentStorageId: string) {
+  const supabase = createClient();
+
+  try {
+    const { data: assistants, error } = await supabase
+      .from("document_storage-assistants")
+      .select("*")
+      .eq("document_storage", documentStorageId);
+
+    if (error) {
+      console.error("Error getting assistants:", error);
+      throw new Error("Error getting assistants");
+    }
+
+    if (assistants.length > 0) {
+      throw new Error(
+        "No se puede eliminar el document storage, ya que esta asignado a un asistente"
+      );
+    }
+
+    const allFiles = await getDocumentCounts(documentStorageId);
+
+    for (const file of allFiles) {
+      const vapiResult = await vapiService.deleteFile(
+        file.id_vapi_doc || file.vapiFileId
+      );
+      if (vapiResult.id === null) {
+        throw new Error("Failed to delete file in Vapi");
+      }
+    }
+
     const deleteDocumentStorageFlowise =
       await flowiseService.deleteDocumentStore(documentStorageId);
 
@@ -573,7 +653,6 @@ async function deletePdf(
 }
 
 async function getDocumentssByDocumentStorageId(account_id: string) {
-  console.log("account_id", account_id);
   try {
     const supabase = createClient();
 
@@ -723,6 +802,7 @@ export {
   getDocumentssByDocumentStorageId,
   getDocumentsByDocumentStorageIdWs,
   deleteDocumentStorageById,
+  deleteAllDocumentStorageById,
   getAllDocumentStorage,
   getDocumentsPDFforDocumentStorage,
   deletePdf,

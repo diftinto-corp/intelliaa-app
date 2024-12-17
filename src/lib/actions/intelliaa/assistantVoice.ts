@@ -181,12 +181,10 @@ const updateAssistantVoiceVapi = async (
     Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
   };
 
-  console.log(body, id_assistant, id_assistant_vapi);
-
   try {
     const supabase = createClient();
 
-    const { error } = await supabase
+    const { error: errorAssistant } = await supabase
       .from("assistants")
       .update({
         prompt,
@@ -201,13 +199,16 @@ const updateAssistantVoiceVapi = async (
         end_call_phrases: endCallPhrases,
         end_call_message: endCallMessage,
         voicemail_message: voicemailMessage,
-        document_storage_id: documentStorageId,
       })
       .eq("id", id_assistant);
 
-    if (error) {
-      console.log(`Error updating assistant in Supabase: ${error.message}`);
-      throw new Error(`Error creating assistant in Supabase: ${error.message}`);
+    if (errorAssistant) {
+      console.log(
+        `Error updating assistant in Supabase: ${errorAssistant.message}`
+      );
+      throw new Error(
+        `Error creating assistant in Supabase: ${errorAssistant.message}`
+      );
     }
 
     const response = await fetch(url, {

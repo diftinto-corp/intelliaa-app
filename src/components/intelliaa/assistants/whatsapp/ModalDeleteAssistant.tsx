@@ -13,7 +13,11 @@ import {
 } from "@/components/ui/dialog";
 
 import { getAccount } from "@/lib/actions/intelliaa/accounts";
-import { deleteAssistant } from "@/lib/actions/intelliaa/assistants";
+import {
+  deleteAssistant,
+  deleteDsAssistant,
+  deleteDsAssistantByAssistant,
+} from "@/lib/actions/intelliaa/assistants";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
@@ -36,6 +40,7 @@ export function ModalDeleteAssistant({
     const team_account = await getAccountBySlug(null, accountSlug);
     const account_id = team_account.account_id;
     setLoadingDelete(true);
+    await deleteDsAssistantByAssistant(id_assistant);
     await deleteAssistant(id_assistant, namespace, service_id_rw, account_id);
     setLoadingDelete(false);
     setOpen(false);
