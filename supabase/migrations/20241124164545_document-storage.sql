@@ -12,12 +12,12 @@ alter table "public"."pdf_docs" drop constraint "pdf_docs_created_by_fkey";
 
 DO $$ BEGIN
     IF EXISTS (
-        SELECT 1 
-        FROM information_schema.table_constraints 
-        WHERE constraint_name = 'pdf_docs_s3_key_key' 
-        AND table_name = 'pdf_docs'
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'pdf_docs'
+        AND column_name = 's3_key'
     ) THEN
-        alter table "public"."pdf_docs" drop constraint "pdf_docs_s3_key_key";
+        alter table "public"."pdf_docs" drop column "s3_key";
     END IF;
 END $$;
 
@@ -34,8 +34,6 @@ alter table "public"."pdf_docs" drop column "account_id";
 alter table "public"."pdf_docs" drop column "created_by";
 
 alter table "public"."pdf_docs" drop column "document_storage_id";
-
-alter table "public"."pdf_docs" drop column "s3_key";
 
 alter table "public"."pdf_docs" drop column "updated_by";
 
