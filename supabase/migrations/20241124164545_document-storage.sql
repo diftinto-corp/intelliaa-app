@@ -10,7 +10,16 @@ drop policy "All logged in users can select" on "public"."pdf_docs";
 
 alter table "public"."pdf_docs" drop constraint "pdf_docs_created_by_fkey";
 
-alter table "public"."pdf_docs" drop constraint "pdf_docs_s3_key_key";
+DO $$ BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.table_constraints 
+        WHERE constraint_name = 'pdf_docs_s3_key_key' 
+        AND table_name = 'pdf_docs'
+    ) THEN
+        alter table "public"."pdf_docs" drop constraint "pdf_docs_s3_key_key";
+    END IF;
+END $$;
 
 alter table "public"."pdf_docs" drop constraint "pdf_docs_updated_by_fkey";
 
