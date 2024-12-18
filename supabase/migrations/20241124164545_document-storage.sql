@@ -60,11 +60,19 @@ alter table "public"."pdf_docs" alter column "updated_at" set default now();
 
 alter table "public"."pdf_docs" add constraint "public_pdf_docs_document_storages_id_fkey" FOREIGN KEY (document_storages_id) REFERENCES document_storages(id) not valid;
 
--- Primero, asegurarse de que todos los registros tengan un document_storages_id válido
+-- Asegurarse de que document_storages_id no sea NULL
+UPDATE pdf_docs 
+SET document_storages_id = gen_random_uuid()
+WHERE document_storages_id IS NULL;
+
+-- Crear registros en document_storages para todos los IDs únicos
 INSERT INTO document_storages (id)
-SELECT DISTINCT pdf_docs.document_storages_id
+SELECT DISTINCT document_storages_id
 FROM pdf_docs
-WHERE pdf_docs.document_storages_id NOT IN (SELECT id FROM document_storages);
+WHERE document_storages_id NOT IN (
+    SELECT id FROM document_storages
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Ahora sí, validar la restricción
 alter table "public"."pdf_docs" validate constraint "public_pdf_docs_document_storages_id_fkey";
