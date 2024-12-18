@@ -35,6 +35,8 @@ alter table "public"."pdf_docs" drop column "created_by";
 
 alter table "public"."pdf_docs" drop column "document_storage_id";
 
+alter table "public"."pdf_docs" drop column "s3_key";
+
 alter table "public"."pdf_docs" drop column "updated_by";
 
 alter table "public"."pdf_docs" add column "document_storages_id" uuid default gen_random_uuid();
@@ -49,6 +51,37 @@ alter table "public"."pdf_docs" alter column "updated_at" set default now();
 
 alter table "public"."pdf_docs" add constraint "public_pdf_docs_document_storages_id_fkey" FOREIGN KEY (document_storages_id) REFERENCES document_storages(id) not valid;
 
+-- Verificación para la restricción
+DO $$ BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.table_constraints 
+        WHERE constraint_name = 'pdf_docs_s3_key_key' 
+        AND table_name = 'pdf_docs'
+    ) THEN
+        alter table "public"."pdf_docs" drop constraint "pdf_docs_s3_key_key";
+    END IF;
+END $$;
+
+-- Verificación para la columna
+DO $$ BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'pdf_docs'
+        AND column_name = 's3_key'
+    ) THEN
+        alter table "public"."pdf_docs" drop column "s3_key";
+    END IF;
+END $$;
+
+-- Primero, asegurarse de que todos los registros tengan un document_storages_id válido
+INSERT INTO document_storages (id)
+SELECT DISTINCT pdf_docs.document_storages_id
+FROM pdf_docs
+WHERE pdf_docs.document_storages_id NOT IN (SELECT id FROM document_storages);
+
+-- Ahora sí, validar la restricción
 alter table "public"."pdf_docs" validate constraint "public_pdf_docs_document_storages_id_fkey";
 
 
