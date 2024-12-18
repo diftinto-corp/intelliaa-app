@@ -11,29 +11,46 @@ drop policy if exists "Account members can delete" on "public"."pdf_docs";
 drop policy if exists "Account members can insert" on "public"."pdf_docs";
 drop policy if exists "All logged in users can select" on "public"."pdf_docs";
 
--- Eliminar restricciones existentes de manera segura
-DO $$ 
+-- Eliminar restricciones existentes
+ALTER TABLE IF EXISTS "public"."pdf_docs" 
+    DROP CONSTRAINT IF EXISTS "public_pdf_docs_document_storages_id_fkey";
+
+-- Verificar y corregir datos inválidos
+DO $$
 BEGIN
-    ALTER TABLE IF EXISTS "public"."pdf_docs" 
-        DROP CONSTRAINT IF EXISTS "pdf_docs_created_by_fkey",
-        DROP CONSTRAINT IF EXISTS "pdf_docs_updated_by_fkey",
-        DROP CONSTRAINT IF EXISTS "public_pdf_docs_account_id_fkey",
-        DROP CONSTRAINT IF EXISTS "public_pdf_docs_document_storage_id_fkey",
-        DROP CONSTRAINT IF EXISTS "pdf_docs_s3_key_key";
-EXCEPTION WHEN OTHERS THEN NULL;
+    -- Actualizar registros NULL con nuevos UUIDs
+    UPDATE public.pdf_docs 
+    SET document_storages_id = gen_random_uuid()
+    WHERE document_storages_id IS NULL;
+
+    -- Insertar los IDs faltantes en document_storages
+    INSERT INTO public.document_storages (id)
+    SELECT DISTINCT document_storages_id
+    FROM public.pdf_docs
+    WHERE document_storages_id NOT IN (SELECT id FROM public.document_storages)
+    AND document_storages_id IS NOT NULL;
+
+    -- Verificar que no haya registros huérfanos
+    IF EXISTS (
+        SELECT 1 
+        FROM public.pdf_docs p
+        LEFT JOIN public.document_storages d ON d.id = p.document_storages_id
+        WHERE d.id IS NULL
+    ) THEN
+        RAISE EXCEPTION 'Existen registros en pdf_docs sin correspondencia en document_storages';
+    END IF;
 END $$;
 
--- Eliminar columnas antiguas
+-- Agregar la restricción sin validar primero
 ALTER TABLE "public"."pdf_docs" 
-    DROP COLUMN IF EXISTS "account_id",
-    DROP COLUMN IF EXISTS "created_by",
-    DROP COLUMN IF EXISTS "document_storage_id",
-    DROP COLUMN IF EXISTS "updated_by",
-    DROP COLUMN IF EXISTS "s3_key";
+    ADD CONSTRAINT "public_pdf_docs_document_storages_id_fkey" 
+    FOREIGN KEY (document_storages_id) 
+    REFERENCES document_storages(id)
+    NOT VALID;
 
--- Agregar nueva columna document_storages_id
+-- Validar la restricción en un paso separado
 ALTER TABLE "public"."pdf_docs" 
-    ADD COLUMN IF NOT EXISTS "document_storages_id" uuid;
+    VALIDATE CONSTRAINT "public_pdf_docs_document_storages_id_fkey";
 
 -- Configurar columnas de timestamp
 ALTER TABLE "public"."pdf_docs" 
@@ -41,31 +58,5 @@ ALTER TABLE "public"."pdf_docs"
     ALTER COLUMN "created_at" SET NOT NULL,
     ALTER COLUMN "id" SET DEFAULT gen_random_uuid(),
     ALTER COLUMN "updated_at" SET DEFAULT now();
-
--- Generar IDs para registros existentes y crear entradas en document_storages
-WITH new_storage_ids AS (
-    UPDATE "public"."pdf_docs" 
-    SET "document_storages_id" = gen_random_uuid()
-    WHERE "document_storages_id" IS NULL
-    RETURNING document_storages_id
-)
-INSERT INTO public.document_storages (id)
-SELECT DISTINCT document_storages_id 
-FROM new_storage_ids
-ON CONFLICT (id) DO NOTHING;
-
--- Asegurarse de que todos los document_storages_id tienen una entrada correspondiente
-INSERT INTO public.document_storages (id)
-SELECT DISTINCT pdf_docs.document_storages_id
-FROM public.pdf_docs
-LEFT JOIN public.document_storages ON document_storages.id = pdf_docs.document_storages_id
-WHERE document_storages.id IS NULL
-AND pdf_docs.document_storages_id IS NOT NULL;
-
--- Agregar la restricción de clave foránea
-ALTER TABLE "public"."pdf_docs" 
-    ADD CONSTRAINT "public_pdf_docs_document_storages_id_fkey" 
-    FOREIGN KEY (document_storages_id) 
-    REFERENCES document_storages(id);
 
 
