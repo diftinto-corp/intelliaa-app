@@ -69,14 +69,7 @@ export default function AssistantComponent() {
       setAssistantSelected(data[0]);
     };
 
-    const fetchQaList = async () => {
-      const qalist = await getAllQa(assistantSelected?.id);
-      if (!qalist) return;
-      setQaList(qalist);
-    };
-
     fetchAssistants();
-    fetchQaList();
   }, [assistantSelected]);
 
   useEffect(() => {

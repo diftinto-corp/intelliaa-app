@@ -4,53 +4,76 @@ CREATE TABLE IF NOT EXISTS public.document_storages (
     created_at timestamp with time zone DEFAULT now()
 );
 
--- Eliminar triggers y políticas existentes
-drop trigger if exists "set_pdf_docs_timestamp" on "public"."pdf_docs";
-drop trigger if exists "set_pdf_docs_user_tracking" on "public"."pdf_docs";
-drop policy if exists "Account members can delete" on "public"."pdf_docs";
-drop policy if exists "Account members can insert" on "public"."pdf_docs";
-drop policy if exists "All logged in users can select" on "public"."pdf_docs";
+-- Eliminar triggers y políticas existentes de manera segura
+DO $$ 
+BEGIN
+    -- Eliminar triggers si existen
+    IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_pdf_docs_timestamp') THEN
+        DROP TRIGGER set_pdf_docs_timestamp ON public.pdf_docs;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_pdf_docs_user_tracking') THEN
+        DROP TRIGGER set_pdf_docs_user_tracking ON public.pdf_docs;
+    END IF;
+END $$;
 
--- Eliminar restricciones existentes
-ALTER TABLE IF EXISTS "public"."pdf_docs" 
-    DROP CONSTRAINT IF EXISTS "public_pdf_docs_document_storages_id_fkey";
+-- Eliminar políticas de manera segura
+DO $$
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "Account members can delete" ON public.pdf_docs';
+    EXECUTE 'DROP POLICY IF EXISTS "Account members can insert" ON public.pdf_docs';
+    EXECUTE 'DROP POLICY IF EXISTS "All logged in users can select" ON public.pdf_docs';
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Agregar la columna document_storage_id si no existe
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'pdf_docs' 
+        AND column_name = 'document_storage_id'
+    ) THEN
+        ALTER TABLE public.pdf_docs ADD COLUMN document_storage_id uuid;
+    END IF;
+END $$;
 
 -- Verificar y corregir datos inválidos
 DO $$
 BEGIN
     -- Actualizar registros NULL con nuevos UUIDs
     UPDATE public.pdf_docs 
-    SET document_storages_id = gen_random_uuid()
-    WHERE document_storages_id IS NULL;
+    SET document_storage_id = gen_random_uuid()
+    WHERE document_storage_id IS NULL;
 
     -- Insertar los IDs faltantes en document_storages
     INSERT INTO public.document_storages (id)
-    SELECT DISTINCT document_storages_id
+    SELECT DISTINCT document_storage_id
     FROM public.pdf_docs
-    WHERE document_storages_id NOT IN (SELECT id FROM public.document_storages)
-    AND document_storages_id IS NOT NULL;
+    WHERE document_storage_id NOT IN (SELECT id FROM public.document_storages)
+    AND document_storage_id IS NOT NULL;
+END $$;
 
-    -- Verificar que no haya registros huérfanos
+-- Eliminar la restricción existente si existe
+DO $$
+BEGIN
     IF EXISTS (
         SELECT 1 
-        FROM public.pdf_docs p
-        LEFT JOIN public.document_storages d ON d.id = p.document_storages_id
-        WHERE d.id IS NULL
+        FROM information_schema.table_constraints 
+        WHERE constraint_name = 'public_pdf_docs_document_storage_id_fkey'
     ) THEN
-        RAISE EXCEPTION 'Existen registros en pdf_docs sin correspondencia en document_storages';
+        ALTER TABLE "public"."pdf_docs" 
+        DROP CONSTRAINT "public_pdf_docs_document_storage_id_fkey";
     END IF;
 END $$;
 
--- Agregar la restricción sin validar primero
+-- Agregar la restricción
 ALTER TABLE "public"."pdf_docs" 
-    ADD CONSTRAINT "public_pdf_docs_document_storages_id_fkey" 
-    FOREIGN KEY (document_storages_id) 
-    REFERENCES document_storages(id)
-    NOT VALID;
-
--- Validar la restricción en un paso separado
-ALTER TABLE "public"."pdf_docs" 
-    VALIDATE CONSTRAINT "public_pdf_docs_document_storages_id_fkey";
+    ADD CONSTRAINT "public_pdf_docs_document_storage_id_fkey" 
+    FOREIGN KEY (document_storage_id) 
+    REFERENCES document_storages(id);
 
 -- Configurar columnas de timestamp
 ALTER TABLE "public"."pdf_docs" 

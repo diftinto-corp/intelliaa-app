@@ -484,7 +484,7 @@ async function uploadPdf(
         .insert([
           {
             id: processFile.docId,
-            account_id: account_id,
+            account_id,
             document_storage_id: documentStorageId,
             name: file.name,
             id_vapi_doc: vapiResult.id,
