@@ -57,13 +57,17 @@ const formatTranscription = (transcription: string) => {
       <div key={index} className='mb-6'>
         <span
           className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mb-2 ${
-            isUser ? "bg-cyan-600 text-white" : "bg-indigo-600 text-white"
+            isUser
+              ? "bg-cyan-600 text-white mr-2 mb-2 w-fit"
+              : "bg-purple-400 text-white mr-2 mb-2 w-fit"
           }`}>
           {speaker.trim()}
         </span>
         <div
           className={`p-3 rounded-lg ${
-            isUser ? "bg-[#182426] text-white" : "bg-[#182426] text-white"
+            isUser
+              ? "bg-green-200 dark:bg-teal-900 rounded-lg rounded-br-none text-muted-foreground dark:text-white"
+              : "bg-green-200 dark:bg-teal-900 rounded-lg rounded-br-none text-muted-foreground dark:text-white"
           }`}>
           <p>{message}</p>
         </div>
@@ -88,7 +92,6 @@ export default function ReportsVoice() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [callRecords, setCallRecords] = useState<CallRecord[]>([]);
-
 
   useEffect(() => {
     const getCalls = async () => {
@@ -221,7 +224,7 @@ export default function ReportsVoice() {
                   <TableRow
                     key={record.id}
                     onClick={() => handleRowClick(record)}
-                    className='cursor-pointer text-muted-foreground hover:bg-muted hover:text-white'>
+                    className='cursor-pointer text-muted-foreground hover:bg-muted dark:hover:bg-muted-foreground hover:text-white'>
                     <TableCell>
                       {new Date(record.created_at)
                         .toLocaleString("en-GB", {
@@ -255,7 +258,11 @@ export default function ReportsVoice() {
                   <Button
                     key={i + 1}
                     onClick={() => paginate(i + 1)}
-                    className={currentPage === i + 1 ? "bg-background border border-primary rounded-md text-primary" : " bg-background border border-muted-foreground rounded-md text-muted-foreground"}>
+                    className={
+                      currentPage === i + 1
+                        ? "bg-background border border-primary rounded-md text-primary"
+                        : " bg-background border border-muted-foreground rounded-md text-muted-foreground"
+                    }>
                     {i + 1}
                   </Button>
                 )
@@ -286,12 +293,12 @@ export default function ReportsVoice() {
             <TabsList className='grid w-full grid-cols-2'>
               <TabsTrigger
                 value='audio-transcript'
-                className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'>
+                className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'>
                 Audio y Transcripción
               </TabsTrigger>
               <TabsTrigger
                 value='analysis'
-                className='data-[state=active]:bg-[#182426] data-[state=active]:text-primary'>
+                className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'>
                 Análisis
               </TabsTrigger>
             </TabsList>
