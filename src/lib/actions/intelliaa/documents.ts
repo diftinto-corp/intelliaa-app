@@ -317,6 +317,17 @@ async function deleteAllDocumentStorageById(documentStorageId: string) {
   }
 }
 
+async function getDocumentStorageByAssistantId(assistantId: string) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("document_storage-assistants")
+    .select("*")
+    .eq("assistant", assistantId);
+
+  return data;
+}
+
 async function getDocumentCounts(documentStorageId: string) {
   const supabase = createClient();
 
@@ -800,6 +811,7 @@ export {
   createDocumentStorage,
   getDocumentStorageById,
   getDocumentssByDocumentStorageId,
+  getDocumentStorageByAssistantId,
   getDocumentsByDocumentStorageIdWs,
   deleteDocumentStorageById,
   deleteAllDocumentStorageById,

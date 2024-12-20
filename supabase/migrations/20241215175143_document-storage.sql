@@ -1,12 +1,3 @@
-drop trigger if exists "set_embedded_pdfs_timestamp" on "public"."embedded_pdfs";
-
-drop trigger if exists "set_embedded_pdfs_user_tracking" on "public"."embedded_pdfs";
-
-drop policy "Account members can delete" on "public"."embedded_pdfs";
-
-drop policy "Account members can insert" on "public"."embedded_pdfs";
-
-drop policy "Account members can select" on "public"."embedded_pdfs";
 
 revoke delete on table "public"."docuement_storage_assistants" from "anon";
 

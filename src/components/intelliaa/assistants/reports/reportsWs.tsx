@@ -151,11 +151,11 @@ export function ReportWsComponent() {
                     <TableRow
                       key={report.id}
                       onClick={() => handleRowClick(report)}
-                      className='cursor-pointer text-muted-foreground hover:bg-muted hover:text-black'>
+                      className='cursor-pointer text-muted-foreground hover:bg-muted hover:text-black dark:hover:bg-muted dark:hover:text-white'>
                       <TableCell>{report.user_number}</TableCell>
                       <TableCell>{report.assistant_name}</TableCell>
                       <TableCell>{lastChat?.question}</TableCell>
-                      <TableCell className='max-w-[300px]'>
+                      <TableCell className='max-w-[400px]'>
                         {lastChat?.answer}
                       </TableCell>
                       <TableCell>{report.answers}</TableCell>
@@ -188,7 +188,7 @@ export function ReportWsComponent() {
         </div>
       )}
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent side='right' className='w-[400px] sm:w-[540px]'>
+        <SheetContent side='right' className='w-[800px]'>
           <SheetHeader>
             <SheetTitle className='text-primary'>
               {selectedReport?.assistant_name}

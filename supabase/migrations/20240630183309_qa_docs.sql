@@ -118,29 +118,12 @@ to authenticated
 using ((account_id IN ( SELECT basejump.get_accounts_with_role() AS get_accounts_with_role)));
 
 
-create policy "Account members can insert"
-on "public"."pdf_docs"
-as permissive
-for insert
-to authenticated
-with check ((account_id IN ( SELECT basejump.get_accounts_with_role() AS get_accounts_with_role)));
-
-
 create policy "All logged in users can select"
 on "public"."pdf_docs"
 as permissive
 for select
 to authenticated
 using (true);
-
-
-create policy "Account members can insert"
-on "public"."qa_docs"
-as permissive
-for insert
-to authenticated
-with check ((account_id IN ( SELECT basejump.get_accounts_with_role() AS get_accounts_with_role)));
-
 
 create policy "Account members can update"
 on "public"."qa_docs"

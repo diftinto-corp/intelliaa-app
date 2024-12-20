@@ -21,18 +21,6 @@ CREATE TABLE IF NOT EXISTS public.embedded_pdfs
 );
 
 
--- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
-CREATE TRIGGER set_embedded_pdfs_timestamp
-    BEFORE INSERT OR UPDATE ON public.embedded_pdfs
-    FOR EACH ROW
-EXECUTE PROCEDURE basejump.trigger_set_timestamps();
-
--- protect the updated_by and created_by columns by setting them to be read-only and managed by a trigger
-CREATE TRIGGER set_embedded_pdfs_user_tracking
-    BEFORE INSERT OR UPDATE ON public.embedded_pdfs
-    FOR EACH ROW
-EXECUTE PROCEDURE basejump.trigger_set_user_tracking();
-
 
 -- enable RLS on the table
 ALTER TABLE public.embedded_pdfs ENABLE ROW LEVEL SECURITY;

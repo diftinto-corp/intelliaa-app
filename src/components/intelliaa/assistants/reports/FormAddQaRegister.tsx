@@ -6,10 +6,11 @@ import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { upsertQa } from "@/lib/actions/intelliaa/qa";
+import { uploadTxt, upsertQa } from "@/lib/actions/intelliaa/qa";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
+import { getDocumentStorageByAssistantId } from "@/lib/actions/intelliaa/documents";
 
 export default function FormAddQaRegisterComponent({
   register,
@@ -26,9 +27,16 @@ export default function FormAddQaRegisterComponent({
   const [answer, setAnswer] = useState(register?.answer || "");
   const [loading, setLoading] = useState(false);
   const [account_id, setAccount_id] = useState<string>("" as string);
+  const [documentStorageId, setDocumentStorageId] = useState<string>("");
+
+  console.log(question);
+  console.log(answer);
+
+  console.log(documentStorageId);
 
   useEffect(() => {
     const getAccountId = async () => {
+      console.log(assistant.id);
       const team_account = await getAccountBySlug(null, accountSlug);
       setAccount_id(team_account.account_id as string);
     };
@@ -37,6 +45,16 @@ export default function FormAddQaRegisterComponent({
   }, []);
 
   useEffect(() => {
+    const getDocumentStorageId = async () => {
+      const documentStorage = await getDocumentStorageByAssistantId(
+        assistant?.id
+      );
+      if (documentStorage && documentStorage.length > 0) {
+        setDocumentStorageId(documentStorage[0].document_storage);
+      }
+    };
+
+    getDocumentStorageId();
     setQuestion(register?.question || "");
     setAnswer(register?.answer || "");
   }, [register]);
@@ -44,34 +62,35 @@ export default function FormAddQaRegisterComponent({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const id_document = Math.random().toString(36).substring(2, 15);
     try {
-      const upsert = await upsertQa(
+      const filename = `complementary_${Math.random()
+        .toString(36)
+        .substring(2, 15)}`;
+
+      let content = "PREGUNTAS Y RESPUESTAS\n\n";
+      content += `${question}\n`;
+      content += `${answer}\n\n`;
+
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const file = new File([blob], `${filename}.txt`, { type: "text/plain" });
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const result = await uploadTxt(
+        account_id,
+        documentStorageId,
         question,
-        assistant.namespace,
-        id_document,
-        answer
+        answer,
+        formData,
+        assistant.namespace
       );
 
-      const supabase = createClient();
-      const { error } = await supabase.from("qa_docs").insert([
-        {
-          account_id,
-          assistant_id: assistant.id,
-          question,
-          answer,
-          namespace: assistant.namespace,
-          id_document,
-        },
-      ]);
-
-      if (error) {
-        console.log("Error al insertar la pregunta y respuesta:", error);
-        return {
-          message: error.message,
-        };
+      if (result.status === "error") {
+        throw new Error(result.message);
       }
 
+      setQuestion("");
+      setAnswer("");
       setLoading(false);
     } catch (error) {
       console.log(error);

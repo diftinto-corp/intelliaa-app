@@ -21,7 +21,6 @@ END $$;
 DO $$
 BEGIN
     EXECUTE 'DROP POLICY IF EXISTS "Account members can delete" ON public.pdf_docs';
-    EXECUTE 'DROP POLICY IF EXISTS "Account members can insert" ON public.pdf_docs';
     EXECUTE 'DROP POLICY IF EXISTS "All logged in users can select" ON public.pdf_docs';
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
