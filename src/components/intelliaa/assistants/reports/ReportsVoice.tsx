@@ -224,7 +224,7 @@ export default function ReportsVoice() {
                   <TableRow
                     key={record.id}
                     onClick={() => handleRowClick(record)}
-                    className='cursor-pointer text-muted-foreground hover:bg-muted dark:hover:bg-muted-foreground dark:hover:text-white'>
+                    className='cursor-pointer text-muted-foreground hover:bg-muted dark:hover:bg-muted dark:hover:text-white'>
                     <TableCell>
                       {new Date(record.created_at)
                         .toLocaleString("en-GB", {
