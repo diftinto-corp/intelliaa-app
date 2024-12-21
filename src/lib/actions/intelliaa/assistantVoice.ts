@@ -236,11 +236,20 @@ const updateAssistantVoiceVapi = async (
 const deleteAssistantVoice = async (
   assistant_id: string,
   voice_assistant_id: string,
-  accountId: string
+  accountId: string,
+  documentStorageId: string
 ) => {
   try {
     // Primero eliminamos el asistente de Supabase
     const supabase = createClient();
+
+    const { data: documentStorage, error: errorDocumentStorage } =
+      await supabase
+        .from("document_storage-assistants")
+        .delete()
+        .eq("document_storage", documentStorageId)
+        .select();
+
     const { data, error } = await supabase
       .from("assistants")
       .delete()
@@ -248,10 +257,28 @@ const deleteAssistantVoice = async (
       .eq("account_id", accountId)
       .select();
 
+    if (errorDocumentStorage) {
+      console.log(
+        `Error deleting document storage from Supabase: ${errorDocumentStorage.message}`
+      );
+      throw new Error(
+        `Error deleting document storage from Supabase: ${errorDocumentStorage.message}`
+      );
+    }
+
     if (error) {
       throw new Error(
         `Error deleting assistant from Supabase: ${error.message}`
       );
+    }
+
+    if (documentStorage.length === 0) {
+      return {
+        status: "error",
+        message: `No document storage found with id ${documentStorageId}`,
+      };
+    } else {
+      console.log("Document storage deleted from Supabase:", documentStorage);
     }
 
     if (data.length === 0) {

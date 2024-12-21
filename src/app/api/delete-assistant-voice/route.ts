@@ -9,16 +9,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Lee y parsea el cuerpo de la solicitud
     const body = await req.json();
 
-    const { id_assistant, voice_assistant_id, accountId } = body as {
-      id_assistant: string;
-      voice_assistant_id: string;
-      accountId: string;
-    };
+    const { id_assistant, voice_assistant_id, accountId, documentStorageId } =
+      body as {
+        id_assistant: string;
+        voice_assistant_id: string;
+        accountId: string;
+        documentStorageId: string;
+      };
 
     const response = await deleteAssistantVoice(
       id_assistant,
       voice_assistant_id,
-      accountId
+      accountId,
+      documentStorageId
     );
 
     // Asegurarse de que response es serializable

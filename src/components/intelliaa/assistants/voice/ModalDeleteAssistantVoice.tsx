@@ -17,13 +17,16 @@ import { deleteAssistant } from "@/lib/actions/intelliaa/assistants";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
+import { DocumentStorage } from "@/interfaces/intelliaa";
 
 export function ModalDeleteAssistantVoice({
   id_assistant,
   voice_assistant_id,
+  documentStorageId,
 }: {
   id_assistant: string;
   voice_assistant_id: string;
+  documentStorageId: string;
 }) {
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
@@ -41,6 +44,7 @@ export function ModalDeleteAssistantVoice({
           id_assistant,
           voice_assistant_id: voice_assistant_id,
           accountId: account_id,
+          documentStorageId: documentStorageId,
         }),
 
         headers: {

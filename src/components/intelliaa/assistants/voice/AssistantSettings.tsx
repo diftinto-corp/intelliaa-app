@@ -223,6 +223,7 @@ export default function AssistantSettings({
         <ModalDeleteAssistantVoice
           id_assistant={assistant.id}
           voice_assistant_id={assistant.voice_assistant_id}
+          documentStorageId={documentStorageId}
         />
       </div>
       <div className='flex py-6'>
