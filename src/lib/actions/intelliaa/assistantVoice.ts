@@ -38,7 +38,7 @@ const createAssistantVoiceVapi = async (
       voice: {
         provider: "11labs",
         voiceId: "StgW6mMosfwXGzfaJ130",
-        model: "eleven_multilingual_v2",
+        model: "eleven_flash_v2_5",
       },
       firstMessage: firstMessage,
       voicemailDetection: {
