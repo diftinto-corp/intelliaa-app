@@ -225,3 +225,129 @@ See [Basejump documentation](https://usebasejump.com/docs) for:
 - Creating protected tables with RLS
 - Testing Supabase functions
 - Billing integration with Stripe
+
+Specialized Implementation Planning Agents
+
+This project utilizes specialized Claude Code agents for comprehensive implementation planning across different technologies and domains. Each agent is designed to analyze requirements, create detailed implementation plans, and document architectural decisions without performing actual implementation.
+
+Available Specialized Agents:
+
+🚀 nextjs-planner
+When to use: For Next.js framework upgrades, App Router optimization, and React architecture planning
+
+Handles Next.js 14 to 15+ migrations
+Optimizes Server/Client component boundaries
+Plans routing and middleware configurations
+Addresses performance and bundle optimization
+Documents breaking changes and upgrade paths
+
+🎨 shadcn-ui-planner
+When to use: For UI component updates, design system evolution, and component architecture
+
+Manages shadcn/ui version upgrades
+Plans component migration and compatibility
+Optimizes theme configuration and design tokens
+Ensures accessibility compliance
+Designs responsive layouts and mobile experience
+
+🤖 vercel-ai-sdk-architect
+When to use: For AI integration, RAG implementation, and document processing workflows
+
+Designs RAG architecture to replace existing solutions
+Plans document processing pipelines with embeddings
+Implements vector search and retrieval systems
+Optimizes AI model interactions and token usage
+Creates scalable document storage and indexing
+
+📱 Eevolution-api-architect
+When to use: For WhatsApp integration, messaging workflows, and communication platform migrations
+
+Replaces Railway/Buildship with Evolution API
+Manages WhatsApp instance deployment and configuration
+Implements message routing and webhook systems
+Plans multi-tenant messaging architecture
+Designs QR code generation and session management
+
+🎙️ vapi-implementation-planner
+When to use: For voice AI integration, telephony systems, and conversational AI workflows
+
+Manages VAPI voice assistant configurations
+Plans phone number provisioning and Twilio integration
+Implements call routing and transfer rule logic
+Optimizes voice quality and latency performance
+Designs analytics and reporting for voice interactions
+
+🗄️ supabase-architect
+When to use: For database migrations, schema changes, and data architecture optimization
+
+Plans Supabase and PostgreSQL optimizations
+Designs Row Level Security (RLS) policies
+Manages database schema migrations
+Optimizes query performance and indexing
+Plans data synchronization between services
+
+🏗️ architecture-planner
+When to use: For system-wide architectural decisions, service integration, and scalability planning
+
+Designs overall system architecture for migrations
+Plans integration between different services and APIs
+Evaluates authentication system alternatives (Basejump vs Clerk)
+Optimizes multi-tenant data access patterns
+Ensures security and performance across integrations
+
+🧪 testing-strategy-planner
+When to use: For comprehensive testing strategy, automated testing, and quality assurance planning
+
+Designs testing strategies for migrations and new features
+Plans unit, integration, and end-to-end tests
+Creates mocking strategies for external services
+Implements performance and load testing scenarios
+Designs test data management and cleanup procedures
+
+✅ qa-criteria-validator
+When to use: For defining acceptance criteria, quality gates, and validation frameworks
+
+Establishes acceptance criteria using Given-When-Then format
+Creates quality gates and validation checkpoints
+Performs risk assessment and mitigation planning
+Defines performance benchmarks and SLA requirements
+Plans rollback criteria and emergency procedures
+
+
+# WORKFLOW RULES
+
+### Phase 1
+
+- At the starting point of a feature on plan mode phase you MUST ALWAYS init a `.claude/sessions/context_session_{feature_name}.md` with your first analysis
+- You MUST ask to the subagents that you considered that have to be involved about the implementation and check their opinions, try always to run them on parallel if is possible
+- After a plan mode phase you ALWAYS update the `.claude/sessions/context_session_{feature_name}.md` with the definition of the plan and the recomendations of the subagents
+
+### Phase 2
+
+- Before you do any work, MUST view files in `.claude/sessions/context_session_{feature_name}.md` file to get the full context (x being the id of the session we are operate, if file doesn't exist, then create one)
+- `.claude/sessions/context_session_{feature_name}.md` should contain most of context did, overall plan, and sub agents will continuosly add context to the file
+- After you finish the work, MUST update the `.claude/sessions/context_session_{feature_name}.md` file to make sure others can get full context of what you did
+- After you finish the each phase, MUST update the `.claude/sessions/context_session_{feature_name}.md` file to make sure others can get full context of what you did
+
+### Phase 3
+
+- After finish the final implementation MUST use qa-criteria-validator subagent to provide a report feedback an iterate over this feedback until acceptance criterias are passed
+- After qa-criteria-validator finish, you MUST review their report and implement the feedback related with the feature
+
+## Subagents
+
+You have access to 8 subagents:
+
+- shadcn-ui-architect: all task related to UI building & tweaking HAVE TO consult this agent
+- qa-criteria-validator: all final client UI/UX implementations has to be validated by this subagent to provide feedback an iterate.
+- ui-ux-analyzer: all the task related with UI review, improvements & tweaking HAVE TO consult this agent
+- pydantic-ai-architect: all task related to ai agents using pydantic-ai framework, all task related to business logic in the client side before create the UI HAVE TO consult this agent
+- business-logic-architect: all task related to business logic in the client side after HAVE TO consult this agent to get the necesary test cases definitions
+- backend-business-logic-architect: all task related to business logic in the backend side HAVE TO consult this agent
+- backend-test-architect: all task related to business logic in the backend side after HAVE TO consult this agent to get the necesary test cases definitions
+
+When you want you can consult the subagents about the implementation and request feedback, but you will be the one who does the implementation.
+
+When you consult a subagent, make sure you pass the context file, e.g. `.claude/sessions/context_session_{feature_name}.md`.
+
+Before you do the work, make sure you read the related documentation they created and the plan before you start executing.
