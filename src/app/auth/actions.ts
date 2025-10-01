@@ -14,7 +14,7 @@ interface data {
 
 
 export async function login(Data: data) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   console.log(Data);
 
@@ -47,7 +47,7 @@ export async function login(Data: data) {
 }
 
 export async function signup(Data: data) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error: errorSignup } = await supabase.auth.signUp({
     email: Data.email,
@@ -80,7 +80,7 @@ export async function signup(Data: data) {
 
 
 export async function logout() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
 
   if (error) {
@@ -91,7 +91,7 @@ export async function logout() {
 }
 
 export async function solicitarRecuperacionContrasena(email: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_URL}/change-password`, // URL donde rediriges después de hacer clic en el correo
   });
@@ -106,7 +106,7 @@ export async function solicitarRecuperacionContrasena(email: string) {
 
 export async function cambiarContrasena(token: string, newPassword: string) {
   // Establece la sesión con el token de recuperación
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: session, error: sessionError } = await supabase.auth.setSession({
     access_token: token,
     refresh_token: token,
@@ -129,7 +129,7 @@ export async function cambiarContrasena(token: string, newPassword: string) {
 }
 
 export async function handleConfirmation(fullName: string, email: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Realizar una consulta para obtener el userId usando el email en la tabla auth.users
   const { data: userData } = await supabase

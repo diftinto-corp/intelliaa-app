@@ -18,7 +18,7 @@ type Props = {
 };
 
 export default async function EditPersonalAccountName({ account }: Props) {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: personalAccount } = await supabaseClient.rpc(
     "get_personal_account"
   );

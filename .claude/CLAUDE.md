@@ -7,8 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an AI voice assistant platform (IntelliAA) built on top of Basejump (a Supabase SaaS starter). It provides multi-tenant voice and WhatsApp assistant management with document storage, voice synthesis, and call reporting capabilities.
 
 **Tech Stack:**
-- **Framework**: Next.js 14 (App Router with TypeScript)
+- **Framework**: Next.js 15.5.4 (App Router with TypeScript, Turbopack enabled)
+- **Runtime**: React 19.1.1
 - **Database**: Supabase (PostgreSQL with RLS)
+- **Supabase SSR**: v0.5.2 (async API support)
 - **AI Services**: Vapi (voice), ElevenLabs (voice synthesis), Flowise (document processing)
 - **Infrastructure**: Railway (GraphQL backend), AWS S3 (file storage), Twilio (telephony)
 - **State Management**: Apollo Client (GraphQL), SWR (data fetching)
@@ -17,10 +19,10 @@ This is an AI voice assistant platform (IntelliAA) built on top of Basejump (a S
 ## Development Commands
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (uses --legacy-peer-deps due to some packages not yet supporting React 19)
+npm install --legacy-peer-deps
 
-# Start development server (port 3000)
+# Start development server with Turbopack (port 3000)
 npm run dev
 
 # Build for production
@@ -32,6 +34,47 @@ npm start
 # Start local Supabase (requires Docker)
 supabase start
 ```
+
+## Important: Next.js 15 Breaking Changes
+
+This project was migrated from Next.js 14 to 15.5.4 with React 19. Key changes to be aware of:
+
+### 1. Async Request APIs
+- **`cookies()`** is now async in Server Components and Route Handlers
+- **`params`** in pages/layouts is now `Promise<{ ... }>`
+- **`searchParams`** in pages is now `Promise<{ ... }>`
+
+**Examples:**
+```typescript
+// Server Component - Supabase client
+export const createClient = async () => {
+  const cookieStore = await cookies(); // MUST await
+  return createServerClient(...)
+}
+
+// Page with params
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ accountSlug: string }>; // Promise type
+}) {
+  const { accountSlug } = await params; // MUST await
+  const supabase = await createClient(); // MUST await
+}
+```
+
+### 2. Client Component Restrictions
+- Cannot import server-only functions like `revalidatePath`, `cookies`, `headers` in Client Components
+- Dynamic imports with `ssr: false` are not allowed in Server Components
+- Move to Client Component with `"use client"` directive if needed
+
+### 3. Hydration Considerations
+- Theme-dependent rendering (dark/light mode) must use `mounted` state to avoid hydration mismatches
+- Empty `src` attributes cause warnings - use conditionals: `{url && <audio src={url} />}`
+
+### 4. TypeScript Strictness
+- React 19 has stricter `RefObject` types
+- `RefObject<HTMLElement>` may need `| null` to accept `useRef<HTMLElement>(null)`
 
 ## Architecture Overview
 

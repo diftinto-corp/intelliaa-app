@@ -15,7 +15,7 @@ import { redirect } from "next/navigation";
 import Avvvatars from "avvvatars-react";
 
 export default async function UserAccountButton({ path }: { path: string }) {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: personalAccount } = await supabaseClient.rpc(
     "get_personal_account"
   );
@@ -23,7 +23,7 @@ export default async function UserAccountButton({ path }: { path: string }) {
   const signOut = async () => {
     "use server";
 
-    const supabase = createClient();
+    const supabase = await createClient();
     await supabase.auth.signOut();
     return redirect("/auth");
   };

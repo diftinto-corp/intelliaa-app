@@ -5,11 +5,12 @@ import { Alert } from "@/components/ui/alert";
 const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
 export default async function TeamBillingPage({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
-  const supabaseClient = createClient();
+  const { accountSlug } = await params;
+  const supabaseClient = await createClient();
   const { data: teamAccount } = await supabaseClient.rpc(
     "get_account_by_slug",
     {

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,6 +41,11 @@ export default function Dashboard({
     account || accountSelected?.account_id
   );
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (accountSelected) {
@@ -61,12 +66,22 @@ export default function Dashboard({
         <div className='flex h-full max-h-screen flex-col gap-2'>
           <div className='flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'>
             <Link href='/' className='flex items-center gap-2 font-semibold'>
-              <Image
-                src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
-                alt='Intelliaa'
-                width={130}
-                height={25}
-              />
+              {mounted && (
+                <Image
+                  src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
+                  alt='Intelliaa'
+                  width={130}
+                  height={25}
+                />
+              )}
+              {!mounted && (
+                <Image
+                  src="/logo-dark.svg"
+                  alt='Intelliaa'
+                  width={130}
+                  height={25}
+                />
+              )}
               {/* <span className=''>Intelliaa</span> */}
             </Link>
             <Button

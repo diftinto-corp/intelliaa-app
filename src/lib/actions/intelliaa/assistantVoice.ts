@@ -10,7 +10,7 @@ const createAssistantVoiceVapi = async (
   tokens: number,
   firstMessage: string
 ) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const namespace = `${Math.random().toString(36).substring(2, 15)}`;
 
   try {
@@ -182,7 +182,7 @@ const updateAssistantVoiceVapi = async (
   };
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { error: errorAssistant } = await supabase
       .from("assistants")
@@ -241,7 +241,7 @@ const deleteAssistantVoice = async (
 ) => {
   try {
     // Primero eliminamos el asistente de Supabase
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: documentStorage, error: errorDocumentStorage } =
       await supabase
@@ -370,7 +370,7 @@ const updateNumerAssistant = async (
     const vapiData = await response.json();
     console.log("VAPI data:", vapiData);
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: updateActiveNumber, error: errorActiveNumber } =
       await supabase

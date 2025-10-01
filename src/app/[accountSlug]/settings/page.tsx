@@ -15,13 +15,14 @@ import EditTeamSlug from "@/components/basejump/edit-team-slug";
 import EditTeamName from "@/components/basejump/edit-team-name";
 
 export default async function TeamSettingsPage({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   console.log(accountSlug);
 
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: teamAccount } = await supabaseClient.rpc(
     "get_account_by_slug",
     {

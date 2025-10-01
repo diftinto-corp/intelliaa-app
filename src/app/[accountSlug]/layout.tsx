@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 
 export default async function PersonalAccountDashboard({
   children,
-  params: { accountSlug },
+  params,
 }: {
   children: React.ReactNode;
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
-  const supabaseClient = createClient();
+  const { accountSlug } = await params;
+  const supabaseClient = await createClient();
 
   const { data: session } = await supabaseClient.auth.getSession();
 

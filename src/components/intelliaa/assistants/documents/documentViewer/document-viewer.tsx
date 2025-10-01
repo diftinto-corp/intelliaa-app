@@ -105,7 +105,7 @@ export default function DocumentViewer({
               Gestión de Documentos
             </h1>
             <Dialog>
-              <DialogTrigger>
+              <DialogTrigger asChild>
                 <Button
                   size='icon'
                   variant='destructive'

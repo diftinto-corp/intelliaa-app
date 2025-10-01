@@ -10,8 +10,6 @@ import { flowiseService } from "@/services/flowiseService";
 import { vapiService } from "@/services/vapiService";
 import { getAllQa } from "./qa";
 
-const supabase = createClient();
-
 async function createDocumentStorage(account_id: string, formData: FormData) {
   const name = formData.get("name");
   const description = formData.get("description");
@@ -117,6 +115,7 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
 
     // console.log("processFile.file.id", processFile.file.id);
 
+    const supabase = await createClient();
     const {
       data: createDocumentStorageSupabase,
       error: errorCreateDocumentStorageSupabase,
@@ -167,7 +166,7 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
 }
 
 async function getAllDocumentStorage(account_id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("document_storages")
     .select("*")
@@ -181,7 +180,7 @@ async function getAllDocumentStorage(account_id: string) {
 }
 
 async function getDocumentStorageById(documentStorageId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   try {
     const { data, error } = await supabase
       .from("document_storages")
@@ -194,7 +193,7 @@ async function getDocumentStorageById(documentStorageId: string) {
 }
 
 async function deleteDocumentStorageById(documentStorageId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     const deleteDocumentStorageFlowise =
@@ -242,7 +241,7 @@ async function deleteDocumentStorageById(documentStorageId: string) {
   }
 }
 async function deleteAllDocumentStorageById(documentStorageId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     const { data: assistants, error } = await supabase
@@ -318,7 +317,7 @@ async function deleteAllDocumentStorageById(documentStorageId: string) {
 }
 
 async function getDocumentStorageByAssistantId(assistantId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("document_storage-assistants")
@@ -329,7 +328,7 @@ async function getDocumentStorageByAssistantId(assistantId: string) {
 }
 
 async function getDocumentCounts(documentStorageId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Obtener registros de la tabla `pdf_docs`
   const { data: pdfDocs, error: pdfError } = await supabase
@@ -365,7 +364,7 @@ async function getDocumentsPDFforDocumentStorage(
   account_id: string,
   id: string
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("pdf_docs")
     .select("*")
@@ -489,6 +488,7 @@ async function uploadPdf(
     // Guardar en Supabase
     console.log("processFile", processFile);
 
+    const supabase = await createClient();
     const { data: pdfDocsSupabase, error: errorPdfDocsSupabase } =
       await supabase
         .from("pdf_docs")
@@ -529,7 +529,7 @@ async function deletePdf(
   documentStorageNamespace: string
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verificar si es el último documento
     const documents = await getDocumentCounts(documentStorageId);
@@ -665,7 +665,7 @@ async function deletePdf(
 
 async function getDocumentssByDocumentStorageId(account_id: string) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verificar que account_id no esté vacío
     if (!account_id) {
@@ -710,7 +710,7 @@ async function getDocumentssByDocumentStorageId(account_id: string) {
 }
 async function getDocumentsByDocumentStorageIdWs(account_id: string) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     if (!account_id) {
       console.error("El account_id está vacío");
@@ -740,7 +740,7 @@ const searchAssistantByDocument = async (
   pdf_doc_key: string,
   documents_vapi: string
 ) => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("embedded_pdfs")
@@ -760,7 +760,7 @@ const searchAssistantByDocument = async (
 };
 
 const getAssistantsVoiceName = async (documents_vapi: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const assistantsVoiceName: string[] = [];
 
   const { data: assistantsByDocumentVapi, error } = await supabase

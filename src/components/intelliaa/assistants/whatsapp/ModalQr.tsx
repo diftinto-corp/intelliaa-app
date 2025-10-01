@@ -15,7 +15,6 @@ import { useEffect, useState } from "react";
 
 import { Assistant } from "@/interfaces/intelliaa";
 import { Scan } from "lucide-react";
-import { revalidatePath } from "next/cache";
 
 export default function ModalQr({
   setOpenModal,

@@ -1,10 +1,5 @@
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
-
-const ChangePasswordForm = dynamic(
-  () => import('@/components/intelliaa/auth/ChangePasswordForm'),
-  { ssr: false }
-);
+import ChangePasswordForm from '@/components/intelliaa/auth/ChangePasswordForm';
 
 export default function ChangePasswordPage() {
   return (

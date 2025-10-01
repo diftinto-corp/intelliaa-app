@@ -17,7 +17,7 @@ type Props = {
 };
 
 export default async function ManageTeamInvitations({ accountId }: Props) {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
 
   const { data: invitations } = await supabaseClient.rpc(
     "get_account_invitations",

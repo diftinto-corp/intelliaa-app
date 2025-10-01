@@ -7,12 +7,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default async function TeamSettingsPage({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   console.log(accountSlug);
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: teamAccount } = await supabaseClient.rpc(
     "get_account_by_slug",
     {

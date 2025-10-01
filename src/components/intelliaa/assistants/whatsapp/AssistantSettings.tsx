@@ -371,7 +371,7 @@ export default function AssistantSettings({
               className='ml-4 mt-4 p-2 rounded-full border-primary'>
               <Play className='text-primary' />
             </Button>
-            <audio ref={audioRef} src={mp3Url} />
+            {mp3Url && <audio ref={audioRef} src={mp3Url} />}
           </div>
           <div className='flex flex-col'>
             <p className='mb-4 text-lg font-semibold'>Opciones de Whatsapp</p>

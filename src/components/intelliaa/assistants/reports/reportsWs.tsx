@@ -72,10 +72,13 @@ export function ReportWsComponent() {
   useEffect(() => {
     const fetchReports = async () => {
       const team_account = await getAccountBySlug(null, accountSlug);
-      setAccount_id(team_account.account_id as string);
+      const fetchedAccountId = team_account.account_id as string;
+      setAccount_id(fetchedAccountId);
+
+      if (!fetchedAccountId) return;
 
       setLoading(true);
-      const data = await getReportsWs(account_id);
+      const data = await getReportsWs(fetchedAccountId);
 
       if (Array.isArray(data)) {
         setReports(data);
@@ -87,7 +90,7 @@ export function ReportWsComponent() {
     };
 
     fetchReports();
-  }, [accountSlug, account_id]);
+  }, [accountSlug]);
 
   const handleRowClick = (report: ReportWs) => {
     setSelectedReport(report);

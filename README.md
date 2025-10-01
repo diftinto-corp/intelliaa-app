@@ -31,8 +31,10 @@ An AI-powered voice and WhatsApp assistant platform built on [Basejump](https://
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router, TypeScript)
+- **Framework**: Next.js 15.5.4 (App Router, TypeScript, Turbopack)
+- **Runtime**: React 19.1.1
 - **Database**: Supabase (PostgreSQL with Row Level Security)
+- **Supabase SSR**: v0.5.2 (async API support)
 - **Authentication**: Supabase Auth
 - **AI Services**:
   - Vapi (voice AI)
@@ -48,6 +50,8 @@ An AI-powered voice and WhatsApp assistant platform built on [Basejump](https://
 - **UI**: Radix UI, TailwindCSS, Recharts
 - **Email**: Resend
 
+> **Note**: This project uses Next.js 15 with React 19. Some dependencies require `--legacy-peer-deps` during installation. See [CLAUDE.md](./CLAUDE.md) for migration details and breaking changes.
+
 ## Quick Start
 
 ### Prerequisites
@@ -60,8 +64,9 @@ An AI-powered voice and WhatsApp assistant platform built on [Basejump](https://
 
 1. **Install dependencies**
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
+   > Note: Uses `--legacy-peer-deps` due to some packages not yet fully supporting React 19
 
 2. **Start local Supabase**
    ```bash
@@ -113,6 +118,7 @@ An AI-powered voice and WhatsApp assistant platform built on [Basejump](https://
    ```bash
    npm run dev
    ```
+   > Starts with Turbopack enabled for faster compilation
 
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -175,9 +181,12 @@ intelliaa-app/
 
 ```bash
 # Development
-npm run dev          # Start dev server (localhost:3000)
+npm run dev          # Start dev server with Turbopack (localhost:3000)
 npm run build        # Build for production
 npm start            # Start production server
+
+# Installation (when adding new packages)
+npm install --legacy-peer-deps  # Required for React 19 compatibility
 
 # Supabase
 supabase start       # Start local Supabase (Docker)
@@ -227,10 +236,30 @@ IntelliAA uses Basejump's account-based multi-tenancy:
 
 ## Development Guidelines
 
+### Next.js 15 Patterns (Important!)
+
+**Async Server APIs:**
+```typescript
+// Server Component
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;  // MUST await params
+  const supabase = await createClient();  // MUST await Supabase client
+}
+
+// Server Action
+export async function myAction() {
+  const supabase = await createClient();  // MUST await
+}
+```
+
+**Hydration Safety:**
+- Theme-dependent content must check `mounted` state
+- Empty `src` attributes cause warnings: use `{url && <img src={url} />}`
+
 ### Supabase Client Usage
-- **Server Components**: Use `createClient()` from `@/lib/supabase/server`
+- **Server Components**: Use `await createClient()` from `@/lib/supabase/server` (async!)
 - **Client Components**: Use `createClient()` from `@/lib/supabase/client`
-- **API Routes**: Use server client
+- **API Routes**: Use `await createClient()` from server client
 - **Middleware**: Uses `@/lib/supabase/middleware`
 
 ### Path Aliases
@@ -254,11 +283,12 @@ import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants"
 ## Helpful Links
 
 - [Basejump Documentation](https://usebasejump.com/docs)
-- [Next.js 14 Docs](https://nextjs.org/docs)
+- [Next.js 15 Docs](https://nextjs.org/docs) - Updated for Next.js 15
+- [React 19 Docs](https://react.dev/blog/2024/12/05/react-19) - React 19 release notes
 - [Supabase Documentation](https://supabase.com/docs)
 - [Vapi Documentation](https://docs.vapi.ai/)
 - [Flowise Documentation](https://docs.flowiseai.com/)
 
 ## Support
 
-For development assistance, see the [CLAUDE.md](./CLAUDE.md) file which provides detailed architecture guidance for AI assistants.
+For development assistance, see the [CLAUDE.md](./.claude/CLAUDE.md) file which provides detailed architecture guidance, Next.js 15 migration notes, and important breaking changes.

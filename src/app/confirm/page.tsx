@@ -5,13 +5,13 @@ import { redirect } from "next/navigation";
 export default async function ConfirmPage({
   searchParams,
 }: {
-  searchParams: { org:string  };
+  searchParams: Promise<{ org:string  }>;
 }) {
 
+  const params = await searchParams;
+  console.log(params);
 
-  console.log(searchParams);
-
-  if (!searchParams.org) {
+  if (!params.org) {
     redirect("/");
   }
 

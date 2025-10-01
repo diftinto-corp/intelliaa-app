@@ -10,10 +10,11 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export default async function TenantFrom({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   const supabaseClient = await createClient();
 
   const { data: teamAccount } = await supabaseClient.rpc("get_accounts");
