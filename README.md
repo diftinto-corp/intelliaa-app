@@ -1,58 +1,264 @@
-# Basejump Nextjs Starter
+# IntelliAA Platform
 
-Adds a Nextjs starter app on top of [Basejump core](https://github.com/usebasejump/basejump). This is a complete interface with support for personal accounts, team accounts, invitations, managing members/permissions and subscription billing.
+An AI-powered voice and WhatsApp assistant platform built on [Basejump](https://github.com/usebasejump/basejump) and Next.js. IntelliAA enables businesses to create, deploy, and manage intelligent conversational AI assistants with voice synthesis, document-based knowledge retrieval (RAG), and comprehensive analytics.
 
-[Learn more at usebasejump.com](https://usebasejump.com). Ask questions [on X / Twitter](https://twitter.com/tiniscule)
+## Features
 
-![Image Description](./public/images/basejump-team-page.png)
+### Voice & WhatsApp Assistants
+- **AI Voice Assistants**: Create voice-enabled AI assistants powered by Vapi with ElevenLabs voice synthesis
+- **WhatsApp Bots**: Deploy conversational assistants to WhatsApp with automated responses
+- **Phone Number Management**: Purchase and manage phone numbers via Twilio integration
+- **Real-time Analytics**: Track calls, messages, and conversation metrics with detailed reports
 
-## Basejump Core Features
+### Document Intelligence
+- **Knowledge Base Management**: Upload and organize documents (PDFs, text files) for AI context
+- **RAG (Retrieval-Augmented Generation)**: Assistants access document knowledge via Flowise vector embeddings
+- **Document Processing**: Automatic text extraction, chunking, and embedding generation
+- **Multi-Assistant Sharing**: Link document stores to multiple assistants
 
-- **Personal accounts**: Every user that signs up using Supabase auth automatically gets their own personal account.
-  Billing on personal accounts can be enabled/disabled.
-- **Team accounts**: Team accounts are billable accounts that can be shared by multiple users. Team accounts can be
-  disabled if you only wish to allow personal accounts. Billing on team accounts can also be disabled.
-- **Permissions**: Permissions are handled using RLS, just like you're used to with Supabase. Basejump provides
-  convenience methods that let you restrict access to rows based on a user's account access and role within an account
-- **Billing**: Basejump provides out of the box billing support for Stripe, but you can add your own providers easily.
-  If you do, please consider contributing them so others can benefit!
-- **Testing**: Basejump is fully tested itself, but also provides a suite of testing tools that make it easier to test
-  your own Supabase functions and schema. You can check it out
-  at [database.dev/basejump/supabase_test_helpers](https://database.dev/basejump/supabase_test_helpers). You do not need
-  to be using Basejump to use the testing tools.
+### Multi-Tenant Architecture
+- **Personal Accounts**: Individual user accounts with isolated resources
+- **Team Accounts**: Collaborative workspaces with role-based permissions
+- **Member Management**: Invite team members with customizable access levels
+- **Billing Integration**: Stripe-powered subscription management (optional)
 
-## Next Frontend Features
+### Technical Capabilities
+- **Customizable AI Behavior**: Adjust temperature, token limits, and system prompts
+- **Template System**: Pre-configured assistant templates for common use cases
+- **Voice Customization**: Choose from multiple voice options and languages
+- **Transfer Rules**: Set up keyword and number-based call/message routing
+- **Secure File Storage**: AWS S3 integration for document and audio files
 
-- **Basic Dashboard**: A basic dashboard implementation restricted to authenticated users
-- **User Authentication**: Support for email/password - but add any auth provider supported by Supabase
-- **Personal accounts**: Every user that signs up using Supabase auth automatically gets their own personal account.
-  Billing on personal accounts can be enabled/disabled.
-- **Team accounts**: Team accounts are billable accounts that can be shared by multiple users. Team accounts can be
-  disabled if you only wish to allow personal accounts. Billing on team accounts can also be disabled.
-- **Billing**: Basejump provides out of the box billing support for Stripe, but you can add your own providers easily.
-  If you do, please consider contributing them so others can benefit!
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router, TypeScript)
+- **Database**: Supabase (PostgreSQL with Row Level Security)
+- **Authentication**: Supabase Auth
+- **AI Services**:
+  - Vapi (voice AI)
+  - Flowise (document processing & RAG)
+  - ElevenLabs (voice synthesis)
+  - OpenAI (language models)
+- **Infrastructure**:
+  - Railway (GraphQL backend, WhatsApp deployments)
+  - AWS S3 (file storage)
+  - Twilio (telephony)
+  - Upstash Redis (caching)
+- **State Management**: Apollo Client (GraphQL), SWR
+- **UI**: Radix UI, TailwindCSS, Recharts
+- **Email**: Resend
 
 ## Quick Start
 
-1. Run `yarn install`
-2. Run `supabase start`
-3. Create a `.env.local` copy of the `.env.example` file with the correct values for Supabase
-4. Run `yarn dev`
+### Prerequisites
+- Node.js 18+ and npm
+- Docker Desktop (for local Supabase)
+- Supabase account
+- Access to required API keys (Vapi, Flowise, Railway, etc.)
 
-When you're ready to work on billing, you'll need to set up a Stripe account and add your Stripe keys to your `supabase/functions/.env` file. There's an example file you can copy.
+### Installation
+
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Start local Supabase**
+   ```bash
+   supabase start
+   ```
+   Note the API URL and anon key from the output.
+
+3. **Configure environment variables**
+
+   Create a `.env.local` file with the following variables:
+
+   ```bash
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+   # Flowise (Document Processing)
+   NEXT_PUBLIC_FLOWISE=https://your-flowise-instance.com/api/v1/
+   NEXT_PUBLIC_FLOWISE_KEY=your_flowise_key
+   NEXT_PUBLIC_FLOWISE_CHATID_PREDICTION=your_chat_id
+   NEXT_PUBLIC_USERNAME_FLOWISE=your_username
+   NEXT_PUBLIC_PASSWORD_FLOWISE=your_password
+
+   # Railway (Backend)
+   RAILWAY_URI=your_railway_graphql_uri
+   RAILWAY_TOKEN=your_railway_token
+
+   # AWS S3 (File Storage)
+   NEXT_AWS_S3_ACCESS_KEY_ID=your_access_key
+   NEXT_AWS_S3_SECRET_ACCESS_KEY=your_secret_key
+   NEXT_AWS_S3_BUCKET_NAME=your_bucket_name
+   NEXT_AWS_S3_REGION=us-east-1
+   NEXT_AWS_S3_BUCKET_URL_FILE=https://your-bucket.s3.amazonaws.com/
+
+   # Vapi (Voice AI)
+   NEXT_PRIVATE_VAPI_KEY=your_vapi_key
+
+   # ElevenLabs (Voice Synthesis)
+   NEXT_PUBLIC_ELEVENLABS_TOKEN=your_elevenlabs_token
+
+   # Buildship (WhatsApp Deployment)
+   NEXT_PUBLIC_BUILDSHIP_URL_DEPLOY_RAILWAY=your_buildship_url
+
+   # Event Token
+   NEXT_PUBLIC_EVENT_TOKEN=your_event_token
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Database Setup
+
+The Supabase migrations in `supabase/migrations/` include:
+- Basejump core schema (accounts, permissions, billing)
+- IntelliAA custom tables (assistants, documents, reports)
+- Row Level Security policies
+
+Run migrations:
+```bash
+supabase db reset  # Resets and applies all migrations
+```
+
+### Billing Setup (Optional)
+
+To enable Stripe billing:
+1. Create a Stripe account
+2. Add Stripe keys to `supabase/functions/.env`
+3. Configure webhook endpoints
+4. See [Basejump billing docs](https://usebasejump.com/docs)
+
+## Project Structure
+
+```
+intelliaa-app/
+├── src/
+│   ├── app/                          # Next.js App Router
+│   │   ├── [accountSlug]/            # Multi-tenant routes
+│   │   │   ├── assistants/           # AI assistant management
+│   │   │   ├── documents/            # Knowledge base documents
+│   │   │   ├── numbers/              # Phone number management
+│   │   │   ├── reports/              # Analytics & reporting
+│   │   │   └── settings/             # Account settings
+│   │   ├── api/                      # API routes
+│   │   └── auth/                     # Authentication flows
+│   ├── components/
+│   │   ├── basejump/                 # Account/team management UI
+│   │   ├── intelliaa/                # IntelliAA-specific components
+│   │   └── ui/                       # Reusable UI components
+│   ├── lib/
+│   │   ├── actions/                  # Server actions
+│   │   │   ├── intelliaa/            # IntelliAA-specific actions
+│   │   │   └── ...                   # Basejump actions
+│   │   ├── supabase/                 # Supabase clients
+│   │   └── hooks/                    # React hooks
+│   ├── services/                     # External API services
+│   │   ├── vapiService.ts            # Vapi voice AI
+│   │   └── flowiseService.ts         # Flowise document processing
+│   └── types/                        # TypeScript type definitions
+├── supabase/
+│   ├── migrations/                   # Database migrations
+│   ├── functions/                    # Edge functions
+│   └── config.toml                   # Supabase configuration
+└── public/                           # Static assets
+```
+
+## Key Commands
+
+```bash
+# Development
+npm run dev          # Start dev server (localhost:3000)
+npm run build        # Build for production
+npm start            # Start production server
+
+# Supabase
+supabase start       # Start local Supabase (Docker)
+supabase stop        # Stop local Supabase
+supabase db reset    # Reset DB and run migrations
+supabase db push     # Push local migrations to remote
+supabase status      # Check running services
+supabase functions serve  # Run edge functions locally
+
+# Database
+supabase migration new <name>  # Create new migration
+supabase db diff               # Generate migration from schema changes
+```
+
+## Architecture Overview
+
+### Multi-Tenant System
+IntelliAA uses Basejump's account-based multi-tenancy:
+- Every route under `/[accountSlug]/` is scoped to an account
+- Row Level Security (RLS) enforces data isolation
+- Users can belong to multiple accounts with different roles
+
+### AI Assistant Lifecycle
+1. **Create**: New assistant with template, prompt, and settings
+2. **Configure**: Add documents, adjust parameters, select voice
+3. **Deploy**:
+   - Voice: Assign phone number via Twilio
+   - WhatsApp: Deploy to Railway, scan QR code
+4. **Monitor**: View analytics in reports section
+5. **Delete**: Cascade deletion of documents, reports, and deployments
+
+### Document Processing Flow
+1. Upload file (PDF, TXT) → AWS S3
+2. Create document store in Flowise
+3. Process with loaders/splitters → text chunks
+4. Generate embeddings → vector store
+5. Link to assistant(s) via junction table
+6. Assistant queries vectors during conversations (RAG)
+
+### External Service Integration
+- **Vapi**: Voice AI engine, file uploads
+- **Flowise**: Document processing, embeddings, vector search
+- **Railway**: WhatsApp deployment, GraphQL backend
+- **ElevenLabs**: Voice synthesis for assistants
+- **Twilio**: Phone number provisioning and telephony
+- **Buildship**: WhatsApp deployment orchestration
+
+## Development Guidelines
+
+### Supabase Client Usage
+- **Server Components**: Use `createClient()` from `@/lib/supabase/server`
+- **Client Components**: Use `createClient()` from `@/lib/supabase/client`
+- **API Routes**: Use server client
+- **Middleware**: Uses `@/lib/supabase/middleware`
+
+### Path Aliases
+Always use `@/*` imports:
+```typescript
+import { createClient } from "@/lib/supabase/client"
+import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants"
+```
+
+### Environment Variables
+- `NEXT_PUBLIC_*` → Client-side accessible
+- Others → Server-side only
+- Never commit `.env.local`
+
+### Database Conventions
+- All custom tables use RLS policies
+- Namespace pattern: Random 13-char string for assistant isolation
+- Junction tables: `table1-table2` (e.g., `document_storage-assistants`)
+- Soft deletes recommended for audit trails
 
 ## Helpful Links
 
-- [Basejump Docs](https://usebasejump.com/docs)
-- [Creating new protected tables](https://usebasejump.com/docs/example-schema)
-- [Testing your Supabase functions](https://usebasejump.com/docs/testing)
+- [Basejump Documentation](https://usebasejump.com/docs)
+- [Next.js 14 Docs](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Vapi Documentation](https://docs.vapi.ai/)
+- [Flowise Documentation](https://docs.flowiseai.com/)
 
-## Contributing
+## Support
 
-Yes please! Please submit a PR with your changes to [the basejump-next github repo](https://github.com/usebasejump/basejump-next).
-
-You can contribute in the following places:
-- [Basejump core](https://github.com/usebasejump/basejump)
-- [Basejump Nextjs](https://github.com/usebasejump/basejump-next)
-- [Basejump edge functions / billing functions](https://github.com/usebasejump/basejump-deno-packages)
-- [Supabase Test Helpers](https://github.com/usebasejump/supabase-test-helpers)
+For development assistance, see the [CLAUDE.md](./CLAUDE.md) file which provides detailed architecture guidance for AI assistants.
