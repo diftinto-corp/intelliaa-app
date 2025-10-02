@@ -16,7 +16,7 @@
 
 import { openai } from '@ai-sdk/openai';
 import { embedMany } from 'ai';
-import PDFParser from 'pdf-parse/lib/pdf-parse.js';
+import { pdf as parsePDF } from 'pdf-parse';
 import type {
   EmbeddingServiceConfig,
   EmbeddingResult,
@@ -232,9 +232,9 @@ async function chunkDocument(
   }
 
   // Parse PDF
-  let pdfData: PDFParser.Result;
+  let pdfData: { text: string; pages?: any[]; info?: any };
   try {
-    pdfData = await PDFParser(fileBuffer);
+    pdfData = await parsePDF(fileBuffer);
   } catch (error) {
     throw new EmbeddingParseError(
       'Failed to parse PDF file',
@@ -249,7 +249,7 @@ async function chunkDocument(
   const text = pdfData.text?.trim();
   if (!text || text.length === 0) {
     throw new EmbeddingParseError('PDF contains no extractable text', {
-      pages: pdfData.numpages,
+      pages: pdfData.pages?.length ?? 0,
     });
   }
 
