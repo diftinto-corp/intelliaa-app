@@ -6,6 +6,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.42",
     "@apollo/client": "^3.10.8",
     "@aws-sdk/client-s3": "^3.600.0",
     "@aws-sdk/client-sso-oidc": "^3.614.0",
@@ -42,6 +43,7 @@
     "@usebasejump/shared": "^0.0.3",
     "@vapi-ai/web": "^2.1.0",
     "@vercel/node": "^5.3.24",
+    "ai": "^5.0.59",
     "autoprefixer": "10.4.17",
     "avvvatars-react": "^0.4.2",
     "class-variance-authority": "^0.7.0",
@@ -58,6 +60,7 @@
     "next": "15.5.4",
     "next-themes": "^0.3.0",
     "openai": "^4.56.1",
+    "pdf-parse": "^2.1.1",
     "postcss": "8.4.33",
     "react": "19.1.1",
     "react-dom": "19.1.1",
@@ -81,9 +84,15 @@
     "@types/node": "^22.10.5",
     "@types/react": "19.1.17",
     "@types/react-dom": "19.1.11",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "encoding": "^0.1.13",
     "framer-motion": "^11.3.17",
+    "jsdom": "^27.0.0",
     "pnpm": "^9.5.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4",
     "wrangler": "^3.65.0"
   },
   "overrides": {
