@@ -9,6 +9,10 @@ import {
 import { flowiseService } from "@/services/flowiseService";
 import { vapiService } from "@/services/vapiService";
 import { getAllQa } from "./qa";
+import { shouldUseVercelEmbeddings } from "@/lib/featureFlags";
+import { generateEmbeddings, validatePDF } from "@/services/embeddingService";
+import { trackEmbeddingUsage } from "./embeddings";
+import type { EmbeddingService } from "@/types/embeddings";
 
 async function createDocumentStorage(account_id: string, formData: FormData) {
   const name = formData.get("name");
@@ -19,102 +23,106 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
     return { status: "error", message: "Empty file" };
   }
 
+  // Check feature flag to determine which embedding service to use
+  const useVercelEmbeddings = await shouldUseVercelEmbeddings(account_id);
+  const embeddingService: EmbeddingService = useVercelEmbeddings ? 'vercel' : 'flowise';
+
+  console.log(`[INTEL-001] Using ${embeddingService} embedding service for account ${account_id}`);
+
   const base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   try {
-    // Crear documento en Flowise
-
     const documentStorageNamespace = `${name
       ?.toString()
       .replace(/\s+/g, "-")}-${Math.random().toString(36).substring(2, 8)}`;
 
+    // Create document storage in Flowise (still needed for metadata storage)
     const documentStorage = await flowiseService.createDocumentStore(
       name as string,
       description as string
     );
 
-    // Procesar archivo
     let processFile;
-    try {
-      processFile = await flowiseService.processFile(documentStorage.id, {
-        docId: null,
-        loader: {
-          name: "pdfFile",
-          config: {
-            loaderId: "pdfFile",
-            legacyBuild: "",
-            textSplitter: "",
-            metadata: "",
-            omitMetadataKeys: "",
-            pdfFile: `data:application/pdf;base64,${base64File},filename:${file.name}`,
-            usage: "perPage",
-          },
-        },
-        splitter: {
-          name: "recursiveCharacterTextSplitter",
-          config: {
-            chunkSize: 1500,
-            chunkOverlap: 750,
-            separator: "",
-          },
-        },
-        embedding: {
-          name: "openAIEmbeddings",
-          config: {
-            modelName: "text-embedding-ada-002",
-            stripNewLines: "",
-            batchSize: "",
-            timeout: "",
-            basepath: "",
-            dimensions: "",
-            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
-          },
-        },
-        vectorStore: {
-          name: "pinecone",
-          config: {
-            document: "",
-            embeddings: "",
-            recordManager: "",
-            pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
-            pineconeNamespace: documentStorageNamespace,
-            fileUpload: "",
-            pineconeTextKey: "",
-            pineconeMetadataFilter: "",
-            topK: "1",
-            searchType: "similarity",
-            fetchK: "",
-            lambda: "",
-            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
-          },
-        },
-        recordManager: {
-          name: "postgresRecordManager",
-          config: {
-            host: "aws-0-us-east-1.pooler.supabase.com",
-            database: "postgres",
-            port: "6543",
-            additionalConfig: "",
-            tableName: "",
-            namespace: documentStorageNamespace,
-            cleanup: "full",
-            sourceIdKey: "source",
-            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
-          },
-        },
-      });
+    let embeddingMetadata: any = null;
 
-      console.log("processFile", processFile);
-    } catch (error) {
-      console.error("Error al procesar el archivo con Flowise:", error);
-      throw new Error("Error al procesar el archivo con Flowise");
+    // Branch: Use Vercel AI SDK or Flowise based on feature flag
+    if (useVercelEmbeddings) {
+      // **NEW PATH: Vercel AI SDK Embeddings (INTEL-001)**
+      try {
+        console.log('[INTEL-001] Validating PDF file...');
+        validatePDF(fileBuffer);
+
+        console.log('[INTEL-001] Generating embeddings with Vercel AI SDK...');
+        const embeddingResult = await generateEmbeddings(fileBuffer, {
+          model: 'text-embedding-ada-002',
+          chunkSize: 1500,
+          chunkOverlap: 750,
+          metadata: {
+            documentStorageId: documentStorage.id,
+            namespace: documentStorageNamespace,
+            accountId: account_id,
+          },
+        });
+
+        console.log(`[INTEL-001] Generated ${embeddingResult.results.length} embeddings`);
+        console.log(`[INTEL-001] Cost: $${embeddingResult.usage.estimatedCost.toFixed(6)}`);
+        console.log(`[INTEL-001] Processing time: ${embeddingResult.usage.processingTime}ms`);
+
+        // Track usage for monitoring and billing
+        await trackEmbeddingUsage(
+          account_id,
+          null, // documentId will be set after insert
+          embeddingResult.usage,
+          'vercel'
+        );
+
+        // Store metadata for later reference
+        embeddingMetadata = {
+          service: 'vercel',
+          model: embeddingResult.usage.model,
+          chunkCount: embeddingResult.usage.chunkCount,
+          totalTokens: embeddingResult.usage.totalTokens,
+          estimatedCost: embeddingResult.usage.estimatedCost,
+          processingTime: embeddingResult.usage.processingTime,
+        };
+
+        // Create a mock processFile object to maintain compatibility
+        // TODO (INTEL-003): Store embeddings in Pinecone instead of Flowise
+        processFile = {
+          docId: `vercel-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          status: 'success',
+          embeddings: embeddingResult.results,
+        };
+
+        console.log('[INTEL-001] Vercel embeddings generated successfully');
+      } catch (error) {
+        console.error('[INTEL-001] Error generating embeddings with Vercel AI SDK:', error);
+        // Fallback to Flowise if Vercel fails
+        console.log('[INTEL-001] Falling back to Flowise...');
+        processFile = await processFileWithFlowise(
+          documentStorage.id,
+          base64File,
+          file.name,
+          documentStorageNamespace
+        );
+        embeddingMetadata = { service: 'flowise', fallback: true };
+      }
+    } else {
+      // **LEGACY PATH: Flowise Embeddings**
+      processFile = await processFileWithFlowise(
+        documentStorage.id,
+        base64File,
+        file.name,
+        documentStorageNamespace
+      );
+      embeddingMetadata = { service: 'flowise' };
     }
 
-    //Subir a Vapi
+    // Upload to Vapi (still needed for voice assistant integration)
     const vapiResult = await vapiService.uploadFile(file);
 
-    // console.log("processFile.file.id", processFile.file.id);
-
+    // Save to Supabase
     const supabase = await createClient();
     const {
       data: createDocumentStorageSupabase,
@@ -134,6 +142,7 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
 
     if (errorCreateDocumentStorageSupabase) {
       console.error(errorCreateDocumentStorageSupabase);
+      throw new Error("Error creating document storage in Supabase");
     }
 
     const { data: pdfDocsSupabase, error: errorPdfDocsSupabase } =
@@ -147,22 +156,106 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
             name: file.name,
             id_vapi_doc: vapiResult.id,
             url: vapiResult.url,
+            embedding_service: embeddingMetadata?.service || 'flowise',
+            chunk_count: embeddingMetadata?.chunkCount,
+            embedding_metadata: embeddingMetadata,
           },
         ])
         .select();
 
     if (errorPdfDocsSupabase) {
       console.error(errorPdfDocsSupabase);
+      throw new Error("Error saving PDF document to Supabase");
     }
+
+    console.log(`[INTEL-001] Document storage created successfully using ${embeddingService}`);
 
     return {
       createDocumentStorageSupabase,
       pdfDocsSupabase,
     };
   } catch (error) {
-    console.error(error);
+    console.error('[INTEL-001] Error in createDocumentStorage:', error);
     throw new Error("Error al crear el documento");
   }
+}
+
+/**
+ * Helper function to process file with Flowise (legacy path)
+ */
+async function processFileWithFlowise(
+  documentStorageId: string,
+  base64File: string,
+  fileName: string,
+  namespace: string
+) {
+  return await flowiseService.processFile(documentStorageId, {
+    docId: null,
+    loader: {
+      name: "pdfFile",
+      config: {
+        loaderId: "pdfFile",
+        legacyBuild: "",
+        textSplitter: "",
+        metadata: "",
+        omitMetadataKeys: "",
+        pdfFile: `data:application/pdf;base64,${base64File},filename:${fileName}`,
+        usage: "perPage",
+      },
+    },
+    splitter: {
+      name: "recursiveCharacterTextSplitter",
+      config: {
+        chunkSize: 1500,
+        chunkOverlap: 750,
+        separator: "",
+      },
+    },
+    embedding: {
+      name: "openAIEmbeddings",
+      config: {
+        modelName: "text-embedding-ada-002",
+        stripNewLines: "",
+        batchSize: "",
+        timeout: "",
+        basepath: "",
+        dimensions: "",
+        credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
+      },
+    },
+    vectorStore: {
+      name: "pinecone",
+      config: {
+        document: "",
+        embeddings: "",
+        recordManager: "",
+        pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
+        pineconeNamespace: namespace,
+        fileUpload: "",
+        pineconeTextKey: "",
+        pineconeMetadataFilter: "",
+        topK: "1",
+        searchType: "similarity",
+        fetchK: "",
+        lambda: "",
+        credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
+      },
+    },
+    recordManager: {
+      name: "postgresRecordManager",
+      config: {
+        host: "aws-0-us-east-1.pooler.supabase.com",
+        database: "postgres",
+        port: "6543",
+        additionalConfig: "",
+        tableName: "",
+        namespace: namespace,
+        cleanup: "full",
+        sourceIdKey: "source",
+        credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
+      },
+    },
+  });
 }
 
 async function getAllDocumentStorage(account_id: string) {
@@ -390,90 +483,89 @@ async function uploadPdf(
       throw new Error("Archivo vacío o inválido");
     }
 
-    // Convertir archivo a base64
-    let base64File;
-    try {
-      base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
-    } catch (error) {
-      throw new Error("Error al procesar el archivo");
-    }
+    // Check feature flag to determine which embedding service to use
+    const useVercelEmbeddings = await shouldUseVercelEmbeddings(account_id);
+    const embeddingServiceType: EmbeddingService = useVercelEmbeddings ? 'vercel' : 'flowise';
 
-    // Procesar archivo con Flowise
-    //TODO: Revisar si se puede usar el mismo loaderId
+    console.log(`[INTEL-001] uploadPdf: Using ${embeddingServiceType} embedding service for account ${account_id}`);
+
+    const base64File = Buffer.from(await file.arrayBuffer()).toString("base64");
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+
     let processFile;
-    try {
-      processFile = await flowiseService.processFile(documentStorageId, {
-        docId: null,
-        loader: {
-          name: "pdfFile",
-          config: {
-            loaderId: "pdfFile",
-            legacyBuild: "",
-            textSplitter: "",
-            metadata: "",
-            omitMetadataKeys: "",
-            pdfFile: `data:application/pdf;base64,${base64File},filename:${file.name}`,
-            usage: "perPage",
-          },
-        },
-        splitter: {
-          name: "recursiveCharacterTextSplitter",
-          config: {
-            chunkSize: 1500,
-            chunkOverlap: 750,
-            separator: "",
-          },
-        },
-        embedding: {
-          name: "openAIEmbeddings",
-          config: {
-            modelName: "text-embedding-ada-002",
-            stripNewLines: "",
-            batchSize: "",
-            timeout: "",
-            basepath: "",
-            dimensions: "",
-            credential: process.env.NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE,
-          },
-        },
-        vectorStore: {
-          name: "pinecone",
-          config: {
-            document: "",
-            embeddings: "",
-            recordManager: "",
-            pineconeIndex: process.env.NEXT_PUBLIC_PINECONE_INDEX,
-            pineconeNamespace: documentStorageNamespace,
-            fileUpload: "",
-            pineconeTextKey: "",
-            pineconeMetadataFilter: "",
-            topK: "1",
-            searchType: "similarity",
-            fetchK: "",
-            lambda: "",
-            credential: process.env.NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE,
-          },
-        },
-        recordManager: {
-          name: "postgresRecordManager",
-          config: {
-            host: "aws-0-us-east-1.pooler.supabase.com",
-            database: "postgres",
-            port: "6543",
-            additionalConfig: "",
-            tableName: "",
-            namespace: documentStorageNamespace,
-            cleanup: "full",
-            sourceIdKey: "source",
-            credential: process.env.NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE,
-          },
-        },
-      });
+    let embeddingMetadata: any = null;
 
-      console.log("processFile", processFile);
-    } catch (error) {
-      console.error("Error al procesar el archivo con Flowise:", error);
-      throw new Error("Error al procesar el archivo con Flowise");
+    // Branch: Use Vercel AI SDK or Flowise based on feature flag
+    if (useVercelEmbeddings) {
+      // **NEW PATH: Vercel AI SDK Embeddings (INTEL-001)**
+      try {
+        console.log('[INTEL-001] Validating PDF file...');
+        validatePDF(fileBuffer);
+
+        console.log('[INTEL-001] Generating embeddings with Vercel AI SDK...');
+        const embeddingResult = await generateEmbeddings(fileBuffer, {
+          model: 'text-embedding-ada-002',
+          chunkSize: 1500,
+          chunkOverlap: 750,
+          metadata: {
+            documentStorageId,
+            namespace: documentStorageNamespace,
+            accountId: account_id,
+          },
+        });
+
+        console.log(`[INTEL-001] Generated ${embeddingResult.results.length} embeddings`);
+        console.log(`[INTEL-001] Cost: $${embeddingResult.usage.estimatedCost.toFixed(6)}`);
+        console.log(`[INTEL-001] Processing time: ${embeddingResult.usage.processingTime}ms`);
+
+        // Track usage for monitoring and billing
+        await trackEmbeddingUsage(
+          account_id,
+          null, // documentId will be set after insert
+          embeddingResult.usage,
+          'vercel'
+        );
+
+        // Store metadata
+        embeddingMetadata = {
+          service: 'vercel',
+          model: embeddingResult.usage.model,
+          chunkCount: embeddingResult.usage.chunkCount,
+          totalTokens: embeddingResult.usage.totalTokens,
+          estimatedCost: embeddingResult.usage.estimatedCost,
+          processingTime: embeddingResult.usage.processingTime,
+        };
+
+        // Create mock processFile object
+        // TODO (INTEL-003): Store embeddings in Pinecone
+        processFile = {
+          docId: `vercel-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          status: 'success',
+          embeddings: embeddingResult.results,
+        };
+
+        console.log('[INTEL-001] Vercel embeddings generated successfully');
+      } catch (error) {
+        console.error('[INTEL-001] Error generating embeddings with Vercel AI SDK:', error);
+        // Fallback to Flowise if Vercel fails
+        console.log('[INTEL-001] Falling back to Flowise...');
+        processFile = await processFileWithFlowise(
+          documentStorageId,
+          base64File,
+          file.name,
+          documentStorageNamespace
+        );
+        embeddingMetadata = { service: 'flowise', fallback: true };
+      }
+    } else {
+      // **LEGACY PATH: Flowise Embeddings**
+      processFile = await processFileWithFlowise(
+        documentStorageId,
+        base64File,
+        file.name,
+        documentStorageNamespace
+      );
+      embeddingMetadata = { service: 'flowise' };
     }
 
     // Subir a Vapi
@@ -486,8 +578,6 @@ async function uploadPdf(
     }
 
     // Guardar en Supabase
-    console.log("processFile", processFile);
-
     const supabase = await createClient();
     const { data: pdfDocsSupabase, error: errorPdfDocsSupabase } =
       await supabase
@@ -500,6 +590,9 @@ async function uploadPdf(
             name: file.name,
             id_vapi_doc: vapiResult.id,
             url: vapiResult.url,
+            embedding_service: embeddingMetadata?.service || 'flowise',
+            chunk_count: embeddingMetadata?.chunkCount,
+            embedding_metadata: embeddingMetadata,
           },
         ])
         .select();
@@ -509,12 +602,14 @@ async function uploadPdf(
       throw new Error("Error al guardar en base de datos");
     }
 
+    console.log(`[INTEL-001] PDF uploaded successfully using ${embeddingServiceType}`);
+
     return {
       status: "success",
       data: pdfDocsSupabase,
     };
   } catch (error) {
-    console.error("Error en uploadPdf:", error);
+    console.error("[INTEL-001] Error en uploadPdf:", error);
     return {
       status: "error",
       message: (error as Error).message || "Error al subir el archivo",
