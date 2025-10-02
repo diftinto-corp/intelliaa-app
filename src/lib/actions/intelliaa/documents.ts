@@ -13,6 +13,113 @@ import { shouldUseVercelEmbeddings } from "@/lib/featureFlags";
 import { generateEmbeddings, validatePDF } from "@/services/embeddingService";
 import { trackEmbeddingUsage } from "./embeddings";
 import type { EmbeddingService } from "@/types/embeddings";
+import {
+  createVapiKnowledgeBase,
+  listVapiKnowledgeBases,
+  addFilesToVapiKB,
+} from "./vapiKnowledgeBase";
+
+/**
+ * Check if VAPI Knowledge Base feature is enabled
+ * INTEL-002: Feature flag for gradual rollout
+ */
+function shouldUseVapiKB(): boolean {
+  return process.env.NEXT_PUBLIC_USE_VAPI_KB === 'true';
+}
+
+/**
+ * Helper: Get or create VAPI KB for a document storage
+ * INTEL-002: Creates KB if doesn't exist, otherwise returns existing
+ */
+async function getOrCreateVapiKB(
+  accountId: string,
+  documentStorageId: string,
+  documentStorageName: string
+) {
+  if (!shouldUseVapiKB()) {
+    console.log('[INTEL-002] VAPI KB feature disabled, skipping KB creation');
+    return null;
+  }
+
+  try {
+    // Check if KB already exists for this document storage
+    const existingKBs = await listVapiKnowledgeBases({
+      accountId,
+      status: 'active',
+    });
+
+    if (!existingKBs.success) {
+      console.error('[INTEL-002] Failed to list existing KBs:', existingKBs.error);
+      return null;
+    }
+
+    // Find KB by name pattern (document storage name)
+    const existingKB = existingKBs.data?.find(
+      kb => kb.name === `KB: ${documentStorageName}`
+    );
+
+    if (existingKB) {
+      console.log(`[INTEL-002] Found existing VAPI KB: ${existingKB.id}`);
+      return existingKB;
+    }
+
+    // Create new KB
+    console.log(`[INTEL-002] Creating new VAPI KB for document storage: ${documentStorageName}`);
+    const newKB = await createVapiKnowledgeBase({
+      accountId,
+      name: `KB: ${documentStorageName}`,
+      description: `Knowledge base for document storage: ${documentStorageName}`,
+      provider: 'google',
+      fileIds: [], // Will add files after upload
+    });
+
+    if (!newKB.success) {
+      console.error('[INTEL-002] Failed to create VAPI KB:', newKB.error);
+      return null;
+    }
+
+    console.log(`[INTEL-002] Created VAPI KB: ${newKB.data?.id}`);
+    return newKB.data;
+  } catch (error) {
+    console.error('[INTEL-002] Error in getOrCreateVapiKB:', error);
+    return null;
+  }
+}
+
+/**
+ * Helper: Add VAPI file to KB after successful upload
+ * INTEL-002: Links uploaded file to knowledge base
+ */
+async function linkFileToVapiKB(
+  accountId: string,
+  documentStorageId: string,
+  documentStorageName: string,
+  vapiFileId: string
+) {
+  if (!shouldUseVapiKB()) {
+    return;
+  }
+
+  try {
+    const kb = await getOrCreateVapiKB(accountId, documentStorageId, documentStorageName);
+    if (!kb) {
+      console.log('[INTEL-002] No KB available, skipping file link');
+      return;
+    }
+
+    console.log(`[INTEL-002] Adding file ${vapiFileId} to KB ${kb.id}`);
+    const result = await addFilesToVapiKB(kb.id, [vapiFileId]);
+
+    if (!result.success) {
+      console.error('[INTEL-002] Failed to add file to KB:', result.error);
+      return;
+    }
+
+    console.log(`[INTEL-002] Successfully added file to KB. Total files: ${result.data?.file_count}`);
+  } catch (error) {
+    console.error('[INTEL-002] Error linking file to VAPI KB:', error);
+  }
+}
 
 async function createDocumentStorage(account_id: string, formData: FormData) {
   const name = formData.get("name");
@@ -121,6 +228,14 @@ async function createDocumentStorage(account_id: string, formData: FormData) {
 
     // Upload to Vapi (still needed for voice assistant integration)
     const vapiResult = await vapiService.uploadFile(file);
+
+    // INTEL-002: Link file to VAPI Knowledge Base (if feature enabled)
+    await linkFileToVapiKB(
+      account_id,
+      documentStorage.id,
+      documentStorage.name,
+      vapiResult.id
+    );
 
     // Save to Supabase
     const supabase = await createClient();
@@ -483,6 +598,10 @@ async function uploadPdf(
       throw new Error("Archivo vacío o inválido");
     }
 
+    // INTEL-002: Get document storage info for VAPI KB
+    const documentStorageInfo = await getDocumentStorageById(documentStorageId);
+    const documentStorageName = documentStorageInfo?.[0]?.name || 'Unknown';
+
     // Check feature flag to determine which embedding service to use
     const useVercelEmbeddings = await shouldUseVercelEmbeddings(account_id);
     const embeddingServiceType: EmbeddingService = useVercelEmbeddings ? 'vercel' : 'flowise';
@@ -576,6 +695,14 @@ async function uploadPdf(
       console.error("Error al subir archivo a Vapi:", error);
       throw new Error("Error al subir archivo a Vapi");
     }
+
+    // INTEL-002: Link file to VAPI Knowledge Base (if feature enabled)
+    await linkFileToVapiKB(
+      account_id,
+      documentStorageId,
+      documentStorageName,
+      vapiResult.id
+    );
 
     // Guardar en Supabase
     const supabase = await createClient();

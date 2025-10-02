@@ -1,4 +1,63 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  listVapiKnowledgeBases,
+  getQueryToolForKB,
+} from "./vapiKnowledgeBase";
+
+/**
+ * Check if VAPI Knowledge Base feature is enabled
+ * INTEL-002: Feature flag for gradual rollout
+ */
+function shouldUseVapiKB(): boolean {
+  return process.env.NEXT_PUBLIC_USE_VAPI_KB === 'true';
+}
+
+/**
+ * Get query tools for assistant based on VAPI KBs
+ * INTEL-002: Builds tools array for VAPI assistant configuration
+ */
+async function getVapiKBToolsForAssistant(
+  accountId: string,
+  documentStorageName?: string
+): Promise<any[]> {
+  if (!shouldUseVapiKB()) {
+    return [];
+  }
+
+  try {
+    // List all active KBs for this account
+    const kbsResult = await listVapiKnowledgeBases({
+      accountId,
+      status: 'active',
+    });
+
+    if (!kbsResult.success || !kbsResult.data || kbsResult.data.length === 0) {
+      console.log('[INTEL-002] No VAPI KBs found for assistant');
+      return [];
+    }
+
+    // Filter by document storage name if provided
+    let relevantKBs = kbsResult.data;
+    if (documentStorageName) {
+      relevantKBs = kbsResult.data.filter(
+        kb => kb.name === `KB: ${documentStorageName}`
+      );
+    }
+
+    // Build tools array
+    const tools = await Promise.all(
+      relevantKBs.map(async (kb) => {
+        const toolResult = await getQueryToolForKB(kb.id);
+        return toolResult.success ? toolResult.data : null;
+      })
+    );
+
+    return tools.filter(tool => tool !== null);
+  } catch (error) {
+    console.error('[INTEL-002] Error getting VAPI KB tools:', error);
+    return [];
+  }
+}
 
 const createAssistantVoiceVapi = async (
   account_id: string,
@@ -141,8 +200,24 @@ const updateAssistantVoiceVapi = async (
     backgroundSound = "office";
   }
 
+  // INTEL-002: Get VAPI KB tools if feature is enabled
+  const supabase = await createClient();
+  const { data: assistantData } = await supabase
+    .from("assistants")
+    .select("account_id")
+    .eq("id", id_assistant)
+    .single();
+
+  const vapiKBTools = assistantData
+    ? await getVapiKBToolsForAssistant(assistantData.account_id)
+    : [];
+
+  const useVapiKB = shouldUseVapiKB() && vapiKBTools.length > 0;
+
+  console.log(`[INTEL-002] VAPI KB feature enabled: ${useVapiKB}, tools count: ${vapiKBTools.length}`);
+
   const url = `https://api.vapi.ai/assistant/${id_assistant_vapi}`;
-  const body = {
+  const body: any = {
     model: {
       messages: [
         {
@@ -155,11 +230,6 @@ const updateAssistantVoiceVapi = async (
       temperature: temperature,
       maxTokens: maxTokens,
       emotionRecognitionEnabled: detectEmotion,
-      knowledgeBase: {
-        provider: "canonical",
-        topK: 5,
-        fileIds: fileIds,
-      },
     },
     voice: {
       provider: "11labs",
@@ -176,14 +246,25 @@ const updateAssistantVoiceVapi = async (
     endCallMessage: endCallMessage,
     // voicemailMessage: voicemailMessage,
   };
+
+  // INTEL-002: Use VAPI KB tools if available, otherwise use legacy knowledgeBase
+  if (useVapiKB) {
+    console.log('[INTEL-002] Using VAPI KB tools configuration');
+    body.tools = vapiKBTools;
+  } else {
+    console.log('[INTEL-002] Using legacy knowledgeBase configuration');
+    body.model.knowledgeBase = {
+      provider: "canonical",
+      topK: 5,
+      fileIds: fileIds,
+    };
+  }
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
   };
 
   try {
-    const supabase = await createClient();
-
     const { error: errorAssistant } = await supabase
       .from("assistants")
       .update({
