@@ -1,0 +1,5 @@
+# Ignore all PDF fixtures to keep repository size small
+*.pdf
+
+# Keep the README
+!README.md
