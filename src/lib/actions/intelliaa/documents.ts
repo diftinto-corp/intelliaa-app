@@ -46,6 +46,10 @@ import {
   updateRollbackStateWithVapiKB,
   type RollbackState,
 } from "./documentStorageRollback";
+import {
+  acquireUploadLock,
+  releaseUploadLock,
+} from "./uploadLock";
 
 /**
  * Check if VAPI Knowledge Base feature is enabled
@@ -1054,6 +1058,411 @@ const getAssistantsWsName = async (accountId: string, data: any[]) => {
 
   return assistantsWsName;
 };
+
+/**
+ * INTEL-005: Upload PDF to Existing Document Storage
+ *
+ * Adds a new PDF file to an existing document storage, embedding vectors
+ * in the same namespace and updating the VAPI knowledge base.
+ *
+ * Flow:
+ * 1. Validation (file, document storage exists, duplicate name check)
+ * 2. Embedding Generation (INTEL-001: Vercel AI SDK)
+ * 3. Vector Storage (INTEL-003: Pinecone - same namespace)
+ * 4. VAPI File Upload
+ * 5. VAPI KB Update (INTEL-002 - add to existing KB)
+ * 6. Database Insert (pdf_docs table only)
+ *
+ * Error Handling:
+ * - Comprehensive rollback on any failure
+ * - User-friendly error messages
+ * - Cleanup of external resources
+ *
+ * Security:
+ * - Multi-tenant isolation via RLS
+ * - Account access validation
+ * - File validation (max 50MB, PDF only)
+ *
+ * @param formData - FormData containing file, documentStorageId, accountId
+ * @returns DocumentStorageResponse with success/error details
+ */
+export async function uploadPdfToExistingStorage(
+  formData: FormData
+): Promise<DocumentStorageResponse> {
+  // Initialize rollback state
+  let rollbackState: RollbackState | null = null;
+  let lockProcessId: string | null = null;
+
+  // Setup AbortController for 5-minute timeout
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => {
+    abortController.abort();
+  }, 5 * 60 * 1000); // 5 minutes
+
+  try {
+    // =========================================================================
+    // PHASE 1: Extract and Validate Input
+    // =========================================================================
+
+    const file = formData.get('file') as File;
+    const documentStorageId = formData.get('documentStorageId') as string;
+    const accountId = formData.get('accountId') as string;
+
+    // Validate required fields
+    if (!file || !documentStorageId || !accountId) {
+      throw new FileValidationError('Faltan campos requeridos: archivo, almacenamiento o cuenta');
+    }
+
+    // =========================================================================
+    // PHASE 1.5: Acquire Upload Lock (Prevent Concurrent Uploads)
+    // =========================================================================
+
+    try {
+      lockProcessId = await acquireUploadLock(documentStorageId, accountId);
+      console.log('[INTEL-005] Upload lock acquired', { lockProcessId, documentStorageId });
+    } catch (error) {
+      throw new DatabaseError(
+        error instanceof Error ? error.message : 'Error al adquirir bloqueo de subida',
+        error instanceof Error ? error.stack : undefined
+      );
+    }
+
+    // Initialize rollback state
+    rollbackState = createRollbackState(accountId, file.name);
+
+    // Convert file to buffer for validation and processing
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Validate file (max 50MB, PDF only, not empty)
+    const fileValidation = validateFileBuffer(buffer, file.name);
+    if (!fileValidation.valid) {
+      throw new FileValidationError(fileValidation.error!);
+    }
+
+    // =========================================================================
+    // PHASE 2: Fetch Document Storage and Validate
+    // =========================================================================
+
+    const supabase = await createClient();
+
+    const { data: documentStorageData, error: fetchError } = await supabase
+      .from('document_storages')
+      .select('id, namespace, account_id, name, vapi_knowledge_base_id')
+      .eq('id', documentStorageId)
+      .eq('account_id', accountId)
+      .single();
+
+    if (fetchError || !documentStorageData) {
+      throw new DatabaseError(
+        'Almacenamiento de documentos no encontrado o sin acceso',
+        fetchError?.message
+      );
+    }
+
+    const { namespace, name: documentStorageName, vapi_knowledge_base_id } = documentStorageData;
+
+    // Check for duplicate file names
+    const { data: existingFiles } = await supabase
+      .from('pdf_docs')
+      .select('name')
+      .eq('document_storage_id', documentStorageId);
+
+    const fileNames = existingFiles?.map(f => f.name) || [];
+    let finalFileName = file.name;
+
+    if (fileNames.includes(file.name)) {
+      // Append timestamp to avoid duplicates
+      const timestamp = Date.now();
+      const nameParts = file.name.split('.');
+      const extension = nameParts.pop();
+      const baseName = nameParts.join('.');
+      finalFileName = `${baseName}-${timestamp}.${extension}`;
+
+      console.log(`[INTEL-005] Duplicate file name detected, renamed to: ${finalFileName}`);
+    }
+
+    console.log('[INTEL-005] Starting PDF upload to existing storage', {
+      accountId,
+      documentStorageId,
+      namespace,
+      fileSize: buffer.length,
+      fileName: finalFileName,
+    });
+
+    // =========================================================================
+    // PHASE 3: Generate Embeddings (INTEL-001)
+    // =========================================================================
+
+    let embeddingResult: GenerateEmbeddingsResponse;
+    try {
+      embeddingResult = await generateEmbeddings(buffer, {
+        abortSignal: abortController.signal,
+        metadata: {
+          documentId: `${namespace}-${Date.now()}`, // Unique ID for this PDF
+          accountId,
+          namespace,
+          documentStorageId,
+        },
+      });
+
+      console.log('[INTEL-005] Embeddings generated', {
+        chunkCount: embeddingResult.results.length,
+        totalTokens: embeddingResult.usage.totalTokens,
+        estimatedCost: embeddingResult.usage.estimatedCost,
+      });
+    } catch (error) {
+      if (abortController.signal.aborted) {
+        throw new TimeoutError(ProcessingStep.EMBEDDING, 'Embedding generation timeout');
+      }
+      throw new EmbeddingError(
+        'Error al generar embeddings del documento',
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    // =========================================================================
+    // PHASE 4: Store Vectors in Pinecone (INTEL-003) - SAME NAMESPACE
+    // =========================================================================
+
+    const uniquePdfId = `${namespace}-pdf-${Date.now()}`;
+
+    try {
+      // Transform embedding results to Pinecone vector format
+      const vectors = embeddingResult.results.map((result: EmbeddingResult, index: number) => ({
+        id: `${uniquePdfId}-chunk-${index}`,
+        values: result.embedding,
+        metadata: {
+          text: result.text,
+          documentId: uniquePdfId,
+          fileName: finalFileName,
+          ...result.metadata,
+        },
+      }));
+
+      // Upsert to EXISTING namespace (key difference from createDocumentStorageWithPDF)
+      await upsertVectors(namespace, vectors);
+
+      // Update rollback state
+      rollbackState = updateRollbackStateWithPinecone(rollbackState, namespace);
+
+      console.log('[INTEL-005] Vectors stored in Pinecone (existing namespace)', {
+        namespace,
+        vectorCount: vectors.length,
+      });
+    } catch (error) {
+      if (abortController.signal.aborted) {
+        throw new TimeoutError(ProcessingStep.PINECONE, 'Pinecone storage timeout');
+      }
+
+      // Execute rollback before throwing
+      if (rollbackState) {
+        await executeRollback(rollbackState);
+      }
+
+      throw new PineconeError(
+        'Error al almacenar vectores en Pinecone',
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    // =========================================================================
+    // PHASE 5: Upload File to VAPI
+    // =========================================================================
+
+    let vapiFileId: string;
+    let vapiFileUrl: string;
+
+    try {
+      // Convert buffer back to File for VAPI upload
+      const vapiFile = new File([buffer], finalFileName, { type: 'application/pdf' });
+      const vapiUploadResult = await vapiService.uploadFile(vapiFile);
+
+      vapiFileId = vapiUploadResult.id;
+      vapiFileUrl = vapiUploadResult.url;
+
+      // Update rollback state
+      rollbackState = updateRollbackStateWithVapiFile(rollbackState, vapiFileId);
+
+      console.log('[INTEL-005] File uploaded to VAPI', {
+        vapiFileId,
+        vapiFileUrl,
+      });
+    } catch (error) {
+      if (abortController.signal.aborted) {
+        throw new TimeoutError(ProcessingStep.VAPI_UPLOAD, 'VAPI upload timeout');
+      }
+
+      // Execute rollback before throwing
+      if (rollbackState) {
+        await executeRollback(rollbackState);
+      }
+
+      throw new VapiUploadError(
+        'Error al subir archivo a VAPI',
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    // =========================================================================
+    // PHASE 6: Update VAPI Knowledge Base (INTEL-002)
+    // =========================================================================
+
+    try {
+      if (vapi_knowledge_base_id && shouldUseVapiKB()) {
+        // Add file to existing KB
+        console.log(`[INTEL-005] Adding file to existing VAPI KB: ${vapi_knowledge_base_id}`);
+        const result = await addFilesToVapiKB(vapi_knowledge_base_id, [vapiFileId]);
+
+        if (!result.success) {
+          console.warn('[INTEL-005] Failed to add file to VAPI KB, continuing...', result.error);
+        } else {
+          console.log(`[INTEL-005] File added to KB. Total files: ${result.data?.file_count}`);
+        }
+      } else {
+        console.log('[INTEL-005] No VAPI KB configured or feature disabled, skipping KB update');
+      }
+    } catch (error) {
+      // VAPI KB update is optional - log warning but continue
+      console.warn('[INTEL-005] Error updating VAPI KB, continuing without KB update', error);
+    }
+
+    // =========================================================================
+    // PHASE 7: Create Database Record (pdf_docs table only)
+    // =========================================================================
+
+    const pdfDocId = crypto.randomUUID();
+
+    try {
+      const { data, error } = await supabase
+        .from('pdf_docs')
+        .insert({
+          id: pdfDocId,
+          account_id: accountId,
+          document_storage_id: documentStorageId,
+          name: finalFileName,
+          id_vapi_doc: vapiFileId,
+          url: vapiFileUrl,
+          embedding_service: 'vercel' as const,
+          chunk_count: embeddingResult.results.length,
+          embedding_metadata: {
+            model: embeddingResult.usage.model,
+            totalTokens: embeddingResult.usage.totalTokens,
+            estimatedCost: embeddingResult.usage.estimatedCost,
+            processingTime: embeddingResult.usage.processingTime,
+          },
+        })
+        .select()
+        .single();
+
+      if (error) {
+        // Handle PostgreSQL errors
+        if (error.code === '23505') {
+          throw new DatabaseError(
+            'Error de identificador duplicado. Por favor, inténtalo nuevamente.',
+            `Duplicate PDF doc ID: ${pdfDocId}`
+          );
+        }
+
+        if (error.code === '42501') {
+          throw new DatabaseError(
+            'No tienes permiso para agregar documentos a este almacenamiento.',
+            error.message
+          );
+        }
+
+        throw new DatabaseError(
+          'Error al guardar en la base de datos',
+          error.message
+        );
+      }
+
+      if (!data) {
+        throw new DatabaseError('No se recibió confirmación de la base de datos');
+      }
+
+      console.log('[INTEL-005] Database record created', {
+        pdfDocId: data.id,
+        fileName: finalFileName,
+      });
+
+      // =========================================================================
+      // PHASE 8: Track Embedding Usage (Analytics)
+      // =========================================================================
+
+      try {
+        await trackEmbeddingUsage(
+          accountId,
+          pdfDocId,
+          embeddingResult.usage,
+          'vercel' as EmbeddingService
+        );
+      } catch (error) {
+        // Non-critical - just log
+        console.error('[INTEL-005] Failed to track embedding usage:', error);
+      }
+
+      // =========================================================================
+      // SUCCESS - Clear timeout and release lock
+      // =========================================================================
+
+      clearTimeout(timeoutId);
+
+      // Release upload lock
+      if (lockProcessId) {
+        await releaseUploadLock(documentStorageId, lockProcessId);
+        console.log('[INTEL-005] Upload lock released', { lockProcessId });
+      }
+
+      console.log('[INTEL-005] PDF uploaded successfully to existing storage', {
+        pdfDocId,
+        documentStorageId,
+        namespace,
+        fileSize: buffer.length,
+        chunkCount: embeddingResult.results.length,
+        fileName: finalFileName,
+      });
+
+      const wasRenamed = finalFileName !== file.name;
+
+      return toSuccessResponse(documentStorageId, pdfDocId, {
+        fileName: finalFileName,
+        wasRenamed,
+      });
+
+    } catch (error) {
+      // Execute rollback before throwing
+      if (rollbackState) {
+        const rollbackResult = await executeRollback(rollbackState);
+        console.log('[INTEL-005] Rollback executed', rollbackResult);
+      }
+
+      throw error;
+    }
+
+  } catch (error) {
+    // Clear timeout
+    clearTimeout(timeoutId);
+
+    // Release upload lock on error
+    if (lockProcessId && documentStorageId) {
+      await releaseUploadLock(documentStorageId, lockProcessId);
+      console.log('[INTEL-005] Upload lock released (error)', { lockProcessId });
+    }
+
+    // Log error with context
+    if (rollbackState) {
+      logError(error, {
+        operation: 'uploadPdfToExistingStorage',
+        accountId: rollbackState.accountId,
+        fileName: rollbackState.fileName,
+      });
+    }
+
+    // Convert to user-friendly error response
+    return toErrorResponse(error);
+  }
+}
 
 /**
  * INTEL-004: Create Document Storage with Initial PDF

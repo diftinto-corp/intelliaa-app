@@ -8,7 +8,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "generate:test-pdfs": "npx tsx scripts/generate-test-pdfs.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.42",
@@ -101,7 +102,9 @@
     "encoding": "^0.1.13",
     "framer-motion": "^11.3.17",
     "jsdom": "^27.0.0",
+    "pdf-lib": "^1.17.1",
     "pnpm": "^9.5.0",
+    "tsx": "^4.20.6",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4",
     "wrangler": "^3.65.0"

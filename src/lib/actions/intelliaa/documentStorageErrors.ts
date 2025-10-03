@@ -188,6 +188,10 @@ export interface SuccessResponse {
   success: true;
   storageId: string;
   pdfDocId: string;
+  data?: {
+    fileName?: string;
+    wasRenamed?: boolean;
+  };
 }
 
 export type DocumentStorageResponse = SuccessResponse | ErrorResponse;
@@ -317,12 +321,14 @@ export function toErrorResponse(error: unknown): ErrorResponse {
  */
 export function toSuccessResponse(
   storageId: string,
-  pdfDocId: string
+  pdfDocId: string,
+  data?: { fileName?: string; wasRenamed?: boolean }
 ): SuccessResponse {
   return {
     success: true,
     storageId,
     pdfDocId,
+    data,
   };
 }
 
