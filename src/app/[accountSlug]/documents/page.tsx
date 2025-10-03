@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Package } from "lucide-react";
-import ModalAddDocument from "@/components/intelliaa/assistants/documents/ModalAddDocument";
+import { CreateDocumentStorageModal } from "@/components/intelliaa/documents/creation";
 import { DocumentStorage, Pdf_Doc } from "../../../interfaces/intelliaa";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +34,7 @@ export default function DocumentStoragePage() {
   const [documents, setDocuments] = useState<DocumentStorage[]>([]);
   const [loading, setLoading] = useState(true);
   const [documentSelected, setDocumentSelected] = useState(documents[0]?.id);
+  const [accountId, setAccountId] = useState<string>("");
 
   const supabase = createClient();
 
@@ -41,6 +42,7 @@ export default function DocumentStoragePage() {
     const fetchDocuments = async () => {
       const team_account = await getAccountBySlug(null, accountSlug);
       const account_id = team_account.account_id;
+      setAccountId(account_id);
 
       const newDocuments: any = await getAllDocumentStorage(account_id);
       if (!documents) return;
@@ -111,7 +113,7 @@ export default function DocumentStoragePage() {
               </p>
             </div>
 
-            <ModalAddDocument />
+            <CreateDocumentStorageModal accountId={accountId} variant="button" />
           </div>
           {loading ? (
             <div className='flex flex-wrap gap-6 mt-6'>
@@ -148,13 +150,16 @@ export default function DocumentStoragePage() {
         </div>
       ) : (
         <div className='flex flex-col justify-center min-h-[90vh] items-center p-6'>
-          <div className='flex w-[40%] flex-col justify-center items-center text-muted-foreground'>
-            <p>Aún no has creado un asistente.</p>
-            <p>
-              Haga clic en el botón a continuación para agregar un nuevo
-              asistente.
-            </p>
-            <ModalAddDocument />
+          <div className='flex w-[40%] flex-col justify-center items-center text-muted-foreground gap-4'>
+            <Package className='h-16 w-16 text-muted-foreground/50' />
+            <div className='text-center'>
+              <h3 className='text-lg font-semibold mb-2'>No hay documentos almacenados</h3>
+              <p className='text-sm text-muted-foreground mb-4'>
+                Comienza creando tu primer almacenamiento de documentos.
+                Sube un PDF y estará disponible para tus asistentes de IA.
+              </p>
+            </div>
+            <CreateDocumentStorageModal accountId={accountId} variant="empty-state" />
           </div>
         </div>
       )}
