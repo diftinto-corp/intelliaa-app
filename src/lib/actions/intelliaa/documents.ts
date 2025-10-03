@@ -1092,6 +1092,7 @@ export async function uploadPdfToExistingStorage(
   // Initialize rollback state
   let rollbackState: RollbackState | null = null;
   let lockProcessId: string | null = null;
+  let documentStorageId: string | null = null;
 
   // Setup AbortController for 5-minute timeout
   const abortController = new AbortController();
@@ -1105,7 +1106,7 @@ export async function uploadPdfToExistingStorage(
     // =========================================================================
 
     const file = formData.get('file') as File;
-    const documentStorageId = formData.get('documentStorageId') as string;
+    documentStorageId = formData.get('documentStorageId') as string;
     const accountId = formData.get('accountId') as string;
 
     // Validate required fields
@@ -1821,6 +1822,315 @@ export async function createDocumentStorageWithPDF(
   }
 }
 
+/**
+ * INTEL-006: Delete PDF Document Response
+ */
+export interface DeletePdfResponse {
+  status: 'success' | 'error';
+  message?: string;
+  storageDeleted?: boolean;
+  warnings?: string[];
+}
+
+/**
+ * INTEL-006: Delete PDF Document from Storage
+ *
+ * Comprehensive deletion that removes:
+ * 1. Vectors from Pinecone (by metadata filter)
+ * 2. File from VAPI Knowledge Base (if feature enabled)
+ * 3. File from VAPI
+ * 4. Database record from pdf_docs
+ * 5. If last document: triggers full storage deletion
+ *
+ * Flow:
+ * 1. Acquire deletion lock (prevent concurrent deletions)
+ * 2. Validate access and fetch document info
+ * 3. Check if last document → trigger storage deletion
+ * 4. Delete Pinecone vectors (non-critical, graceful degradation)
+ * 5. Remove from VAPI KB (non-critical)
+ * 6. Delete VAPI file (non-critical)
+ * 7. Delete database record (CRITICAL - transaction boundary)
+ * 8. Release lock and return response
+ *
+ * Error Handling:
+ * - External service failures (Pinecone, VAPI) → logged as warnings
+ * - Database failures → CRITICAL error, attempt rollback
+ * - Concurrent deletion → prevented by mutex lock
+ *
+ * @param documentStorageId - Document storage ID
+ * @param pdfDocId - PDF document ID to delete
+ * @param accountId - Account ID for validation
+ * @returns DeletePdfResponse with status and warnings
+ */
+async function deletePdfDocument(
+  documentStorageId: string,
+  pdfDocId: string,
+  accountId: string
+): Promise<DeletePdfResponse> {
+  const warnings: string[] = [];
+  let lockProcessId: string | null = null;
+
+  try {
+    // =========================================================================
+    // PHASE 1: Acquire Deletion Lock
+    // =========================================================================
+
+    try {
+      lockProcessId = await acquireUploadLock(
+        `pdf-delete-${pdfDocId}`,
+        accountId
+      );
+      console.log('[INTEL-006] Deletion lock acquired', {
+        lockProcessId,
+        pdfDocId,
+      });
+    } catch (error) {
+      return {
+        status: 'error',
+        message:
+          'Otro proceso está eliminando este documento. Por favor, espera unos segundos e intenta nuevamente.',
+      };
+    }
+
+    // =========================================================================
+    // PHASE 2: Validate Access and Fetch Document Info
+    // =========================================================================
+
+    const supabase = await createClient();
+
+    // Fetch document with validation
+    const { data: pdfDoc, error: fetchError } = await supabase
+      .from('pdf_docs')
+      .select('id, name, id_vapi_doc, document_storage_id, account_id')
+      .eq('id', pdfDocId)
+      .eq('account_id', accountId)
+      .eq('document_storage_id', documentStorageId)
+      .single();
+
+    if (fetchError || !pdfDoc) {
+      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      return {
+        status: 'error',
+        message: 'Documento no encontrado o sin acceso',
+      };
+    }
+
+    const { id_vapi_doc: vapiFileId, name: fileName } = pdfDoc;
+
+    // Fetch document storage info
+    const { data: storageData, error: storageError } = await supabase
+      .from('document_storages')
+      .select('id, namespace, vapi_knowledge_base_id, name')
+      .eq('id', documentStorageId)
+      .eq('account_id', accountId)
+      .single();
+
+    if (storageError || !storageData) {
+      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      return {
+        status: 'error',
+        message: 'Almacenamiento no encontrado',
+      };
+    }
+
+    const {
+      namespace,
+      vapi_knowledge_base_id: vapiKbId,
+      name: storageName,
+    } = storageData;
+
+    console.log('[INTEL-006] Starting PDF deletion', {
+      pdfDocId,
+      fileName,
+      documentStorageId,
+      namespace,
+      vapiKbId,
+    });
+
+    // =========================================================================
+    // PHASE 3: Check if Last Document
+    // =========================================================================
+
+    const documents = await getDocumentCounts(documentStorageId);
+    const isLastDocument = documents.length === 1;
+
+    if (isLastDocument) {
+      console.log(
+        '[INTEL-006] Last document detected, triggering full storage deletion'
+      );
+
+      // Release lock before storage deletion (it will handle its own locking)
+      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+
+      // Trigger full storage deletion
+      try {
+        await deleteAllDocumentStorageById(documentStorageId);
+
+        return {
+          status: 'success',
+          message: `Documento "${fileName}" eliminado. El almacenamiento "${storageName}" también fue eliminado porque era el último documento.`,
+          storageDeleted: true,
+        };
+      } catch (error) {
+        console.error('[INTEL-006] Failed to delete storage:', error);
+        return {
+          status: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Error al eliminar el almacenamiento',
+        };
+      }
+    }
+
+    // =========================================================================
+    // PHASE 4: Delete Pinecone Vectors (Non-Critical)
+    // =========================================================================
+
+    try {
+      const { deleteVectorsByMetadata } = await import('@/services/pineconeService');
+
+      const deletedCount = await deleteVectorsByMetadata(namespace, {
+        documentId: pdfDocId,
+      });
+
+      console.log('[INTEL-006] Deleted Pinecone vectors', {
+        namespace,
+        deletedCount,
+      });
+    } catch (error) {
+      const warningMsg = `No se pudieron eliminar los vectores de Pinecone: ${
+        error instanceof Error ? error.message : 'Error desconocido'
+      }`;
+      warnings.push(warningMsg);
+      console.warn('[INTEL-006] Pinecone deletion failed (non-critical)', error);
+    }
+
+    // =========================================================================
+    // PHASE 5: Remove from VAPI Knowledge Base (Non-Critical)
+    // =========================================================================
+
+    if (vapiKbId && vapiFileId && shouldUseVapiKB()) {
+      try {
+        const { removeFilesFromVapiKB } = await import(
+          './vapiKnowledgeBase'
+        );
+
+        const result = await removeFilesFromVapiKB(vapiKbId, [
+          vapiFileId,
+        ]);
+
+        if (!result.success) {
+          warnings.push(
+            `No se pudo actualizar el Knowledge Base: ${result.error?.message || 'Error desconocido'}`
+          );
+        } else {
+          console.log('[INTEL-006] Removed file from VAPI KB', {
+            vapiKbId,
+            vapiFileId,
+          });
+        }
+      } catch (error) {
+        warnings.push(
+          `Error al actualizar VAPI Knowledge Base: ${
+            error instanceof Error ? error.message : 'Error desconocido'
+          }`
+        );
+        console.warn('[INTEL-006] VAPI KB update failed (non-critical)', error);
+      }
+    }
+
+    // =========================================================================
+    // PHASE 6: Delete VAPI File (Non-Critical)
+    // =========================================================================
+
+    if (vapiFileId) {
+      try {
+        await vapiService.deleteFile(vapiFileId);
+        console.log('[INTEL-006] Deleted VAPI file', { vapiFileId });
+      } catch (error) {
+        warnings.push(
+          `No se pudo eliminar el archivo de VAPI: ${
+            error instanceof Error ? error.message : 'Error desconocido'
+          }`
+        );
+        console.warn('[INTEL-006] VAPI file deletion failed (non-critical)', error);
+      }
+    }
+
+    // =========================================================================
+    // PHASE 7: Delete Database Record (CRITICAL)
+    // =========================================================================
+
+    const { error: deleteError } = await supabase
+      .from('pdf_docs')
+      .delete()
+      .eq('id', pdfDocId);
+
+    if (deleteError) {
+      // CRITICAL ERROR - Database deletion failed
+      console.error('[INTEL-006] Database deletion failed:', deleteError);
+
+      // Attempt best-effort rollback (re-add to VAPI KB if removed)
+      if (vapiKbId && vapiFileId && shouldUseVapiKB()) {
+        try {
+          const { addFilesToVapiKB } = await import('./vapiKnowledgeBase');
+          await addFilesToVapiKB(vapiKbId, [vapiFileId]);
+          console.log('[INTEL-006] Rollback: Re-added file to VAPI KB');
+        } catch (rollbackError) {
+          console.error('[INTEL-006] Rollback failed:', rollbackError);
+        }
+      }
+
+      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+
+      return {
+        status: 'error',
+        message: `Error al eliminar de la base de datos: ${deleteError.message}`,
+      };
+    }
+
+    // =========================================================================
+    // SUCCESS - Release Lock and Return
+    // =========================================================================
+
+    await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+
+    console.log('[INTEL-006] PDF document deleted successfully', {
+      pdfDocId,
+      fileName,
+      warnings: warnings.length,
+    });
+
+    const successMessage =
+      warnings.length > 0
+        ? `Documento "${fileName}" eliminado con advertencias`
+        : `Documento "${fileName}" eliminado correctamente`;
+
+    return {
+      status: 'success',
+      message: successMessage,
+      storageDeleted: false,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    };
+  } catch (error) {
+    // Release lock on unexpected errors
+    if (lockProcessId) {
+      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+    }
+
+    console.error('[INTEL-006] Unexpected error in deletePdfDocument:', error);
+
+    return {
+      status: 'error',
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Error inesperado al eliminar el documento',
+    };
+  }
+}
+
 export {
   uploadPdf,
   searchAssistantByDocument,
@@ -1835,4 +2145,5 @@ export {
   getDocumentsPDFforDocumentStorage,
   deletePdf,
   getDocumentCounts,
+  deletePdfDocument,
 };
