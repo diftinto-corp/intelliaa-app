@@ -167,6 +167,7 @@ export default function DocumentViewer({
                           onSelectDocument={setDocumentSelected}
                           documentStorageId={documentStorageId}
                           documentStorageNamespace={documentStorageNamespace}
+                          accountSlug={accountSlug}
                         />
                       </div>
                       <PDFViewer pdfUrl={selectedDocument.url} />
