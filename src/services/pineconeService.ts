@@ -801,6 +801,137 @@ export async function deleteVectorsByIds(
 }
 
 /**
+ * INTEL-006: Query vector IDs by metadata filter
+ *
+ * Finds all vector IDs matching a metadata filter within a namespace.
+ * This is useful for identifying vectors to delete when removing a document.
+ *
+ * @param namespace - Namespace to search within
+ * @param filter - Metadata filter conditions (e.g., { documentId: 'doc-123' })
+ * @param options - Query options (defaults: topK=10000 to get all matches)
+ * @returns Array of vector IDs matching the filter
+ *
+ * @throws {PineconeValidationError} If namespace or filter is invalid
+ * @throws {PineconeConnectionError} If connection fails
+ *
+ * @example
+ * ```typescript
+ * // Find all vectors for a specific document
+ * const vectorIds = await queryVectorIdsByMetadata('assistant-abc123', {
+ *   documentId: 'unique-pdf-doc-123'
+ * });
+ *
+ * // Then delete them
+ * if (vectorIds.length > 0) {
+ *   await deleteVectorsByIds('assistant-abc123', vectorIds);
+ * }
+ * ```
+ */
+export async function queryVectorIdsByMetadata(
+  namespace: string,
+  filter: Record<string, any>,
+  options: { topK?: number } = {}
+): Promise<string[]> {
+  validateNamespace(namespace);
+
+  if (!filter || typeof filter !== 'object' || Object.keys(filter).length === 0) {
+    throw new PineconeValidationError('Filter is required and must be a non-empty object');
+  }
+
+  const { topK = 10000 } = options;
+
+  try {
+    const index = await getIndex();
+    const namespaceIndex = index.namespace(namespace);
+
+    // We need a dummy vector for the query (Pinecone requires it)
+    // Use a zero vector - we only care about metadata filtering, not similarity
+    const stats = await index.describeIndexStats();
+    const dimension = stats.dimension || 1536;
+    const dummyVector = new Array(dimension).fill(0);
+
+    const queryResponse = await withRetry(
+      async () => {
+        return await namespaceIndex.query({
+          vector: dummyVector,
+          topK,
+          includeValues: false,
+          includeMetadata: false, // We only need IDs
+          filter,
+        });
+      },
+      DEFAULT_CONFIG.maxRetries,
+      'Query vector IDs by metadata'
+    );
+
+    const vectorIds = (queryResponse.matches || []).map((match) => match.id);
+
+    console.log(
+      `[PineconeService] Found ${vectorIds.length} vector IDs in namespace ${namespace} matching filter:`,
+      filter
+    );
+
+    return vectorIds;
+  } catch (error: any) {
+    if (error.status === 401 || error.status === 403) {
+      throw new PineconeConfigError('Invalid Pinecone API key or access denied');
+    }
+
+    if (error.status === 404) {
+      throw new PineconeConfigError('Pinecone index not found');
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * INTEL-006: Delete vectors by metadata filter
+ *
+ * Convenience function that combines querying by metadata and deleting the matching vectors.
+ * This is the recommended way to delete document-related vectors.
+ *
+ * @param namespace - Namespace containing the vectors
+ * @param filter - Metadata filter conditions (e.g., { documentId: 'doc-123' })
+ * @returns Number of vectors deleted
+ *
+ * @throws {PineconeValidationError} If namespace or filter is invalid
+ * @throws {PineconeConnectionError} If connection fails
+ *
+ * @example
+ * ```typescript
+ * // Delete all vectors for a specific PDF document
+ * const deletedCount = await deleteVectorsByMetadata('assistant-abc123', {
+ *   documentId: 'unique-pdf-doc-123'
+ * });
+ *
+ * console.log(`Deleted ${deletedCount} vectors`);
+ * ```
+ */
+export async function deleteVectorsByMetadata(
+  namespace: string,
+  filter: Record<string, any>
+): Promise<number> {
+  validateNamespace(namespace);
+
+  // Find all matching vector IDs
+  const vectorIds = await queryVectorIdsByMetadata(namespace, filter);
+
+  if (vectorIds.length === 0) {
+    console.log(
+      `[PineconeService] No vectors found in namespace ${namespace} matching filter:`,
+      filter
+    );
+    return 0;
+  }
+
+  // Delete them
+  await deleteVectorsByIds(namespace, vectorIds);
+
+  return vectorIds.length;
+}
+
+/**
  * Get statistics for a namespace
  *
  * @param namespace - Namespace to get stats for
