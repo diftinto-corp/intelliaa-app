@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS public.upload_locks (
 
     -- Constraints
     PRIMARY KEY (storage_id),
-    FOREIGN KEY (storage_id) REFERENCES public.document_storages(id) ON DELETE CASCADE,
-    FOREIGN KEY (locked_by) REFERENCES public.accounts(id) ON DELETE CASCADE
+    FOREIGN KEY (storage_id) REFERENCES public.document_storages(id) ON DELETE CASCADE
+    -- Note: locked_by references account_id but no FK constraint to avoid basejump schema coupling
 );
 
 -- Index for fast lookups

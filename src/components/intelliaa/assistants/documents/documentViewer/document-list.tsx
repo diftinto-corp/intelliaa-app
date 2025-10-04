@@ -116,6 +116,9 @@ export function DocumentList({
         setTimeout(() => {
           router.push(`/${accountSlug}/documents`);
         }, 1000);
+      } else {
+        // Refresh the page to update the document list
+        router.refresh();
       }
 
     } catch (error) {
@@ -182,28 +185,30 @@ export function DocumentList({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar documento?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Estás a punto de eliminar el documento:{" "}
-                <strong className="text-foreground">{documentToDelete?.name}</strong>
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  Estás a punto de eliminar el documento:{" "}
+                  <strong className="text-foreground">{documentToDelete?.name}</strong>
+                </p>
 
-              {isLastDocument && (
-                <div className="flex items-start gap-2 p-3 mt-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-semibold text-destructive">Advertencia:</p>
-                    <p className="text-muted-foreground mt-1">
-                      Este es el último documento del almacenamiento. Al eliminarlo,
-                      el almacenamiento completo también será eliminado.
-                    </p>
+                {isLastDocument && (
+                  <div className="flex items-start gap-2 p-3 mt-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-destructive">Advertencia:</p>
+                      <p className="text-muted-foreground mt-1">
+                        Este es el último documento del almacenamiento. Al eliminarlo,
+                        el almacenamiento completo también será eliminado.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <p className="mt-2 text-sm">
-                Esta acción no se puede deshacer.
-              </p>
+                <p className="mt-2 text-sm">
+                  Esta acción no se puede deshacer.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

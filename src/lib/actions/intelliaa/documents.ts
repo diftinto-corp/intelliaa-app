@@ -1149,7 +1149,7 @@ export async function uploadPdfToExistingStorage(
 
     const { data: documentStorageData, error: fetchError } = await supabase
       .from('document_storages')
-      .select('id, namespace, account_id, name, vapi_knowledge_base_id')
+      .select('id, namespace, account_id, name')
       .eq('id', documentStorageId)
       .eq('account_id', accountId)
       .single();
@@ -1161,7 +1161,7 @@ export async function uploadPdfToExistingStorage(
       );
     }
 
-    const { namespace, name: documentStorageName, vapi_knowledge_base_id } = documentStorageData;
+    const { namespace, name: documentStorageName } = documentStorageData;
 
     // Check for duplicate file names
     const { data: existingFiles } = await supabase
@@ -1309,24 +1309,10 @@ export async function uploadPdfToExistingStorage(
     // PHASE 6: Update VAPI Knowledge Base (INTEL-002)
     // =========================================================================
 
-    try {
-      if (vapi_knowledge_base_id && shouldUseVapiKB()) {
-        // Add file to existing KB
-        console.log(`[INTEL-005] Adding file to existing VAPI KB: ${vapi_knowledge_base_id}`);
-        const result = await addFilesToVapiKB(vapi_knowledge_base_id, [vapiFileId]);
-
-        if (!result.success) {
-          console.warn('[INTEL-005] Failed to add file to VAPI KB, continuing...', result.error);
-        } else {
-          console.log(`[INTEL-005] File added to KB. Total files: ${result.data?.file_count}`);
-        }
-      } else {
-        console.log('[INTEL-005] No VAPI KB configured or feature disabled, skipping KB update');
-      }
-    } catch (error) {
-      // VAPI KB update is optional - log warning but continue
-      console.warn('[INTEL-005] Error updating VAPI KB, continuing without KB update', error);
-    }
+    // Note: VAPI Knowledge Bases are managed at the assistant level, not document storage level
+    // Files are uploaded to VAPI individually and associated with assistants through their KBs
+    // This integration is handled when documents are assigned to assistants
+    console.log('[INTEL-005] VAPI file uploaded successfully, KB association managed at assistant level');
 
     // =========================================================================
     // PHASE 7: Create Database Record (pdf_docs table only)
@@ -1867,6 +1853,12 @@ async function deletePdfDocument(
   pdfDocId: string,
   accountId: string
 ): Promise<DeletePdfResponse> {
+  console.log('[INTEL-006] deletePdfDocument called', {
+    documentStorageId,
+    pdfDocId,
+    accountId
+  });
+
   const warnings: string[] = [];
   let lockProcessId: string | null = null;
 
@@ -1876,19 +1868,22 @@ async function deletePdfDocument(
     // =========================================================================
 
     try {
+      // Use documentStorageId for lock (must be UUID)
       lockProcessId = await acquireUploadLock(
-        `pdf-delete-${pdfDocId}`,
+        documentStorageId,
         accountId
       );
       console.log('[INTEL-006] Deletion lock acquired', {
         lockProcessId,
         pdfDocId,
+        documentStorageId,
       });
     } catch (error) {
+      console.error('[INTEL-006] Failed to acquire lock:', error);
       return {
         status: 'error',
         message:
-          'Otro proceso está eliminando este documento. Por favor, espera unos segundos e intenta nuevamente.',
+          'Otro proceso está operando en este almacenamiento. Por favor, espera unos segundos e intenta nuevamente.',
       };
     }
 
@@ -1908,7 +1903,7 @@ async function deletePdfDocument(
       .single();
 
     if (fetchError || !pdfDoc) {
-      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      await releaseUploadLock(documentStorageId, lockProcessId);
       return {
         status: 'error',
         message: 'Documento no encontrado o sin acceso',
@@ -1920,13 +1915,13 @@ async function deletePdfDocument(
     // Fetch document storage info
     const { data: storageData, error: storageError } = await supabase
       .from('document_storages')
-      .select('id, namespace, vapi_knowledge_base_id, name')
+      .select('id, namespace, name')
       .eq('id', documentStorageId)
       .eq('account_id', accountId)
       .single();
 
     if (storageError || !storageData) {
-      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      await releaseUploadLock(documentStorageId, lockProcessId);
       return {
         status: 'error',
         message: 'Almacenamiento no encontrado',
@@ -1935,7 +1930,6 @@ async function deletePdfDocument(
 
     const {
       namespace,
-      vapi_knowledge_base_id: vapiKbId,
       name: storageName,
     } = storageData;
 
@@ -1944,7 +1938,6 @@ async function deletePdfDocument(
       fileName,
       documentStorageId,
       namespace,
-      vapiKbId,
     });
 
     // =========================================================================
@@ -1960,16 +1953,27 @@ async function deletePdfDocument(
       );
 
       // Release lock before storage deletion (it will handle its own locking)
-      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      await releaseUploadLock(documentStorageId, lockProcessId);
 
-      // Trigger full storage deletion
+      // Use INTEL-007 comprehensive storage deletion
       try {
-        await deleteAllDocumentStorageById(documentStorageId);
+        const result = await deleteDocumentStorageWithValidation(
+          documentStorageId,
+          accountId
+        );
+
+        if (!result.success) {
+          return {
+            status: 'error',
+            message: result.error?.message || 'Error al eliminar el almacenamiento',
+          };
+        }
 
         return {
           status: 'success',
           message: `Documento "${fileName}" eliminado. El almacenamiento "${storageName}" también fue eliminado porque era el último documento.`,
           storageDeleted: true,
+          warnings: result.warnings,
         };
       } catch (error) {
         console.error('[INTEL-006] Failed to delete storage:', error);
@@ -2010,35 +2014,9 @@ async function deletePdfDocument(
     // PHASE 5: Remove from VAPI Knowledge Base (Non-Critical)
     // =========================================================================
 
-    if (vapiKbId && vapiFileId && shouldUseVapiKB()) {
-      try {
-        const { removeFilesFromVapiKB } = await import(
-          './vapiKnowledgeBase'
-        );
-
-        const result = await removeFilesFromVapiKB(vapiKbId, [
-          vapiFileId,
-        ]);
-
-        if (!result.success) {
-          warnings.push(
-            `No se pudo actualizar el Knowledge Base: ${result.error?.message || 'Error desconocido'}`
-          );
-        } else {
-          console.log('[INTEL-006] Removed file from VAPI KB', {
-            vapiKbId,
-            vapiFileId,
-          });
-        }
-      } catch (error) {
-        warnings.push(
-          `Error al actualizar VAPI Knowledge Base: ${
-            error instanceof Error ? error.message : 'Error desconocido'
-          }`
-        );
-        console.warn('[INTEL-006] VAPI KB update failed (non-critical)', error);
-      }
-    }
+    // Note: VAPI Knowledge Bases are managed at the assistant level
+    // When deleting individual files from storage, KB updates are handled
+    // separately when documents are unassigned from assistants
 
     // =========================================================================
     // PHASE 6: Delete VAPI File (Non-Critical)
@@ -2062,6 +2040,11 @@ async function deletePdfDocument(
     // PHASE 7: Delete Database Record (CRITICAL)
     // =========================================================================
 
+    console.log('[INTEL-006] Attempting database deletion', {
+      pdfDocId,
+      table: 'pdf_docs'
+    });
+
     const { error: deleteError } = await supabase
       .from('pdf_docs')
       .delete()
@@ -2071,18 +2054,7 @@ async function deletePdfDocument(
       // CRITICAL ERROR - Database deletion failed
       console.error('[INTEL-006] Database deletion failed:', deleteError);
 
-      // Attempt best-effort rollback (re-add to VAPI KB if removed)
-      if (vapiKbId && vapiFileId && shouldUseVapiKB()) {
-        try {
-          const { addFilesToVapiKB } = await import('./vapiKnowledgeBase');
-          await addFilesToVapiKB(vapiKbId, [vapiFileId]);
-          console.log('[INTEL-006] Rollback: Re-added file to VAPI KB');
-        } catch (rollbackError) {
-          console.error('[INTEL-006] Rollback failed:', rollbackError);
-        }
-      }
-
-      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      await releaseUploadLock(documentStorageId, lockProcessId);
 
       return {
         status: 'error',
@@ -2090,11 +2062,13 @@ async function deletePdfDocument(
       };
     }
 
+    console.log('[INTEL-006] Database deletion successful', { pdfDocId });
+
     // =========================================================================
     // SUCCESS - Release Lock and Return
     // =========================================================================
 
-    await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+    await releaseUploadLock(documentStorageId, lockProcessId);
 
     console.log('[INTEL-006] PDF document deleted successfully', {
       pdfDocId,
@@ -2116,7 +2090,7 @@ async function deletePdfDocument(
   } catch (error) {
     // Release lock on unexpected errors
     if (lockProcessId) {
-      await releaseUploadLock(`pdf-delete-${pdfDocId}`, lockProcessId);
+      await releaseUploadLock(documentStorageId, lockProcessId);
     }
 
     console.error('[INTEL-006] Unexpected error in deletePdfDocument:', error);
@@ -2128,6 +2102,378 @@ async function deletePdfDocument(
           ? error.message
           : 'Error inesperado al eliminar el documento',
     };
+  }
+}
+
+/**
+ * INTEL-007: Delete Document Storage Response Types
+ */
+export interface DeleteDocumentStorageResponse {
+  success: boolean;
+  deleted?: {
+    document_storage_id: string;
+    storage_name: string;
+    namespace: string;
+    pdf_docs_count: number;
+    qa_docs_count: number;
+    deletedVectors: boolean;
+    deletedFileCount: number;
+  };
+  warnings?: string[];
+  error?: {
+    code:
+      | 'NOT_FOUND'
+      | 'ASSIGNED_TO_ASSISTANTS'
+      | 'LOCK_ACQUISITION_FAILED'
+      | 'DATABASE_ERROR'
+      | 'UNEXPECTED_ERROR';
+    message: string;
+    details?: any;
+    assignedAssistants?: Array<{
+      assistant_id: string;
+      assistant_name: string;
+    }>;
+  };
+}
+
+interface DatabaseDeletionResult {
+  success: boolean;
+  error_code?: string;
+  message?: string;
+  detail?: string;
+  assigned_assistants?: Array<{
+    assistant_id: string;
+    assistant_name: string;
+  }>;
+  deleted?: {
+    document_storage_id: string;
+    storage_name: string;
+    namespace: string;
+    pdf_docs_count: number;
+    qa_docs_count: number;
+  };
+}
+
+/**
+ * INTEL-007: Custom Error Classes
+ */
+class ValidationError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+class DocumentDatabaseError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'DocumentDatabaseError';
+  }
+}
+
+/**
+ * INTEL-007: Delete Document Storage with Comprehensive Validation
+ *
+ * Deletion Flow:
+ * 1. Acquire upload lock (prevent concurrent operations)
+ * 2. Fetch metadata (namespace, vapi_kb_id, file IDs)
+ * 3. Delete external services (Pinecone, VAPI KB, VAPI files) - graceful degradation
+ * 4. Execute database cascade deletion via PostgreSQL function
+ * 5. Release lock and return response
+ *
+ * @param documentStorageId - Document storage UUID
+ * @param accountId - Account UUID for validation
+ * @returns Promise<DeleteDocumentStorageResponse>
+ */
+export async function deleteDocumentStorageWithValidation(
+  documentStorageId: string,
+  accountId: string
+): Promise<DeleteDocumentStorageResponse> {
+  let lockProcessId: string | null = null;
+  const warnings: string[] = [];
+
+  try {
+    // =========================================================================
+    // PHASE 1: Acquire Lock & Fetch Metadata
+    // =========================================================================
+
+    // Acquire upload lock (prevent concurrent upload/delete)
+    // First, clean up any stale locks for this specific storage
+    const { cleanupStaleLocks } = await import('./uploadLock');
+    await cleanupStaleLocks();
+
+    try {
+      lockProcessId = await acquireUploadLock(documentStorageId, accountId);
+      console.log(`[INTEL-007] Lock acquired: ${lockProcessId}`);
+    } catch (error) {
+      console.error('[INTEL-007] Lock acquisition failed:', {
+        error,
+        documentStorageId,
+        accountId
+      });
+
+      return {
+        success: false,
+        error: {
+          code: 'LOCK_ACQUISITION_FAILED',
+          message: 'Otro proceso está operando en este almacenamiento. Por favor, espera e intenta nuevamente.',
+          details: error instanceof Error ? error.message : String(error)
+        },
+      };
+    }
+
+    // Fetch metadata for external service cleanup
+    const supabase = await createClient();
+    const { data: storageData, error: fetchError } = await supabase
+      .from('document_storages')
+      .select(`
+        id,
+        name,
+        namespace,
+        pdf_docs(id_vapi_doc),
+        qa_docs(vapiFileId)
+      `)
+      .eq('id', documentStorageId)
+      .eq('account_id', accountId)
+      .single();
+
+    if (fetchError || !storageData) {
+      console.error('[INTEL-007] Storage fetch failed', {
+        documentStorageId,
+        accountId,
+        error: fetchError
+      });
+      throw new ValidationError(
+        'NOT_FOUND',
+        'Almacenamiento no encontrado o sin acceso'
+      );
+    }
+
+    // Extract deletion targets
+    const {
+      namespace,
+      name,
+      pdf_docs = [],
+      qa_docs = []
+    } = storageData;
+
+    const vapiFileIds = [
+      ...pdf_docs.map((d: any) => d.id_vapi_doc).filter(Boolean),
+      ...qa_docs.map((d: any) => d.vapiFileId).filter(Boolean)
+    ];
+
+    console.log('[INTEL-007] Deletion targets identified', {
+      documentStorageId,
+      namespace,
+      fileCount: vapiFileIds.length
+    });
+
+    // =========================================================================
+    // PHASE 2: Delete External Services (Graceful Degradation)
+    // =========================================================================
+
+    let deletedVectors = false;
+
+    // Delete Pinecone namespace (NON-CRITICAL)
+    if (namespace) {
+      try {
+        const { deleteNamespace } = await import('@/services/pineconeService');
+        await deleteNamespace(namespace);
+        deletedVectors = true;
+        console.log(`[INTEL-007] Deleted Pinecone namespace: ${namespace}`);
+      } catch (error) {
+        const message = `No se pudieron eliminar los vectores de Pinecone: ${
+          error instanceof Error ? error.message : 'Error desconocido'
+        }`;
+        warnings.push(message);
+        console.warn('[INTEL-007] Pinecone deletion failed (non-critical)', {
+          namespace,
+          error
+        });
+      }
+    }
+
+    // Note: VAPI Knowledge Bases are associated with assistants, not document storages
+    // They are managed separately and should not be deleted when removing a storage
+
+    // Delete VAPI files in parallel batches (NON-CRITICAL)
+    let deletedFileCount = 0;
+    if (vapiFileIds.length > 0) {
+      const batchSize = 10;
+      const batches = [];
+
+      for (let i = 0; i < vapiFileIds.length; i += batchSize) {
+        batches.push(vapiFileIds.slice(i, i + batchSize));
+      }
+
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const batch of batches) {
+        const results = await Promise.allSettled(
+          batch.map((fileId: string) => vapiService.deleteFile(fileId))
+        );
+
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            successCount++;
+          } else {
+            failureCount++;
+            console.warn(`[INTEL-007] VAPI file delete failed: ${batch[index]}`, {
+              reason: result.reason
+            });
+          }
+        });
+      }
+
+      deletedFileCount = successCount;
+
+      console.log('[INTEL-007] VAPI file deletion completed', {
+        total: vapiFileIds.length,
+        success: successCount,
+        failed: failureCount
+      });
+
+      if (failureCount > 0) {
+        warnings.push(
+          `No se pudieron eliminar ${failureCount} de ${vapiFileIds.length} archivos en VAPI`
+        );
+      }
+    }
+
+    // =========================================================================
+    // PHASE 3: Execute Database Cascade Deletion (CRITICAL)
+    // =========================================================================
+
+    const { data, error } = await supabase.rpc(
+      'delete_document_storage_cascade',
+      {
+        p_document_storage_id: documentStorageId,
+        p_account_id: accountId
+      }
+    );
+
+    if (error) {
+      console.error('[INTEL-007] Database function call failed', { error });
+      throw new DocumentDatabaseError(
+        'DATABASE_ERROR',
+        `Error al ejecutar la eliminación: ${error.message}`,
+        error
+      );
+    }
+
+    // Parse function result (JSONB)
+    const result = data as DatabaseDeletionResult;
+
+    if (!result.success) {
+      // Handle validation errors from PostgreSQL function
+      if (result.error_code === 'ASSIGNED_TO_ASSISTANTS') {
+        const assistantNames = result.assigned_assistants
+          ?.map((a) => a.assistant_name)
+          .join(', ') || 'asistentes desconocidos';
+
+        throw new ValidationError(
+          'ASSIGNED_TO_ASSISTANTS',
+          `No se puede eliminar. Asignado a: ${assistantNames}`,
+          { assignedAssistants: result.assigned_assistants }
+        );
+      }
+
+      // Other database errors
+      throw new DocumentDatabaseError(
+        result.error_code || 'DATABASE_ERROR',
+        result.message || 'Error en la base de datos',
+        result.detail
+      );
+    }
+
+    console.log('[INTEL-007] Database cascade deletion successful', {
+      documentStorageId,
+      deleted: result.deleted
+    });
+
+    // =========================================================================
+    // SUCCESS
+    // =========================================================================
+
+    return {
+      success: true,
+      deleted: {
+        document_storage_id: documentStorageId,
+        storage_name: result.deleted!.storage_name,
+        namespace: result.deleted!.namespace,
+        pdf_docs_count: result.deleted!.pdf_docs_count,
+        qa_docs_count: result.deleted!.qa_docs_count,
+        deletedVectors,
+        deletedFileCount
+      },
+      warnings: warnings.length > 0 ? warnings : undefined
+    };
+
+  } catch (error) {
+    console.error('[INTEL-007] Deletion operation failed', {
+      documentStorageId,
+      error
+    });
+
+    // Map specific errors to user-friendly responses
+    if (error instanceof ValidationError) {
+      return {
+        success: false,
+        error: {
+          code: error.code as any,
+          message: error.message,
+          details: error.details,
+          assignedAssistants: error.details?.assignedAssistants
+        }
+      };
+    }
+
+    if (error instanceof DocumentDatabaseError) {
+      return {
+        success: false,
+        error: {
+          code: error.code as any,
+          message: error.message,
+          details: error.details
+        }
+      };
+    }
+
+    // Generic error
+    return {
+      success: false,
+      error: {
+        code: 'UNEXPECTED_ERROR',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Error inesperado al eliminar el almacenamiento'
+      }
+    };
+
+  } finally {
+    // Release lock (ALWAYS runs)
+    if (lockProcessId) {
+      try {
+        await releaseUploadLock(documentStorageId, lockProcessId);
+        console.log(`[INTEL-007] Lock released: ${lockProcessId}`);
+      } catch (lockError) {
+        // Log but don't throw - lock will auto-expire after 10 min
+        console.error('[INTEL-007] Lock release failed (non-critical)', {
+          lockProcessId,
+          lockError
+        });
+      }
+    }
   }
 }
 
@@ -2146,4 +2492,5 @@ export {
   deletePdf,
   getDocumentCounts,
   deletePdfDocument,
+  deleteDocumentStorageWithValidation,
 };

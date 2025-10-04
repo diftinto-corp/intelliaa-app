@@ -10,15 +10,6 @@ import { DocumentStorage, Pdf_Doc, QAItem } from "@/interfaces/intelliaa";
 import ModalAddFile from "../ModalAddFile";
 import { addQa } from "@/lib/actions/intelliaa/qa";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   deletePdf,
   getDocumentCounts,
 } from "@/lib/actions/intelliaa/documents";
@@ -27,6 +18,8 @@ import { getDocumentStorageById } from "@/lib/actions/intelliaa/documents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon, Trash2Icon } from "lucide-react";
+import { DeleteDocumentStorageDialog } from "@/components/intelliaa/documents/delete-document-storage-dialog";
+import type { DeleteDocumentStorageResponse } from "@/lib/actions/intelliaa/documents";
 export default function DocumentViewer({
   account_id,
   documentsListPage,
@@ -35,9 +28,9 @@ export default function DocumentViewer({
   setDocumentSelected,
   accountSlug,
   loading,
-  handleDeleteDocument,
-  isDeleting,
-  deleteError,
+  documentStorage,
+  qaCount,
+  onDeleteStorage,
 }: {
   account_id: string;
   documentsListPage: Pdf_Doc[];
@@ -46,13 +39,12 @@ export default function DocumentViewer({
   setDocumentSelected: (id: string) => void;
   accountSlug: string;
   loading: boolean;
-  handleDeleteDocument: (documentId: string) => void;
-  isDeleting: boolean;
-  deleteError: string;
+  documentStorage: any;
+  qaCount: number;
+  onDeleteStorage: () => Promise<DeleteDocumentStorageResponse>;
 }) {
   const router = useRouter();
   const [documentStorageNamespace, setDocumentStorageNamespace] = useState("");
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     const getIsLastDocument = async () => {
@@ -104,42 +96,16 @@ export default function DocumentViewer({
             <h1 className='text-2xl font-bold text-muted-foreground'>
               Gestión de Documentos
             </h1>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  size='icon'
-                  variant='destructive'
-                  onClick={() => setShowConfirmDialog(true)}>
-                  <Trash2Icon className='h-4 w-4' />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='text-muted-foreground'>
-                <DialogHeader>
-                  <DialogTitle>Eliminar Documento</DialogTitle>
-                </DialogHeader>
-                <DialogDescription>
-                  Estás seguro de que deseas eliminar este documento?
-                  {deleteError && <p className='text-red-500'>{deleteError}</p>}
-                </DialogDescription>
-                <DialogFooter>
-                  <Button
-                    variant='destructive'
-                    onClick={() => handleDeleteDocument(documentStorageId)}
-                    disabled={isDeleting}>
-                    {isDeleting ? (
-                      <Loader2Icon className='h-4 w-4 animate-spin' />
-                    ) : (
-                      "Eliminar"
-                    )}
-                  </Button>
-                  <Button
-                    variant='outline'
-                    onClick={() => setShowConfirmDialog(false)}>
-                    Cancelar
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            {documentStorage && (
+              <DeleteDocumentStorageDialog
+                documentStorageId={documentStorageId}
+                storageName={documentStorage.name || 'Sin nombre'}
+                pdfCount={documentsListPage.length}
+                qaCount={qaCount}
+                onDelete={onDeleteStorage}
+                redirectPath={`/${accountSlug}/documents`}
+              />
+            )}
           </div>
           <div className='grid md:grid-cols-12 gap-6'>
             <div className='md:col-span-12'>
