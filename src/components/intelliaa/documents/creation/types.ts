@@ -167,12 +167,14 @@ export interface ProcessingProgressProps {
 
 export interface CreateDocumentStorageFormProps {
   accountId: string;
+  accountSlug: string;
   onSuccess: (storageId: string) => void;
   onCancel: () => void;
 }
 
 export interface CreateDocumentStorageModalProps {
   accountId: string;
+  accountSlug: string;
   onSuccess?: (storageId: string) => void;
   trigger?: React.ReactNode;
   variant?: 'button' | 'empty-state';

@@ -548,3 +548,45 @@ For complete implementation details, TypeScript code examples, and architecture 
 *UI implementation planning completed: 2025-10-03*
 *Next step: Implementation phase (Phase 2)*
 
+## Routing Bug Fix (Post-Implementation)
+
+**Issue Identified**: After creating a document storage via CreateDocumentStorageModal, the redirect URL is missing the accountSlug parameter.
+
+**Current Behavior (WRONG)**:
+- Redirects to: `/documents/d60e9d40-100b-45fd-90cb-b652973e1b0b`
+- Should redirect to: `/intelliaa/documents/d60e9d40-100b-45fd-90cb-b652973e1b0b`
+
+**Root Cause**:
+Line 126 in [CreateDocumentStorageForm.tsx](src/components/intelliaa/documents/creation/CreateDocumentStorageForm.tsx#L126):
+```typescript
+router.push(`/documents/${response.storageId}`); // Missing accountSlug!
+```
+
+**Files to Update**:
+1. ✅ Modal component types: Add `accountSlug` to props
+2. ✅ Modal component: Pass accountSlug to form
+3. ✅ Form component types: Add `accountSlug` to props
+4. ✅ Form component: Use accountSlug in redirect
+5. ✅ Page component: Pass accountSlug to modal
+
+**Fix Implementation COMPLETED**:
+
+1. **types.ts** - Added `accountSlug: string` to both interfaces:
+   - `CreateDocumentStorageFormProps`
+   - `CreateDocumentStorageModalProps`
+
+2. **CreateDocumentStorageModal.tsx**:
+   - Destructured `accountSlug` from props
+   - Passed `accountSlug` to `CreateDocumentStorageForm`
+
+3. **CreateDocumentStorageForm.tsx**:
+   - Destructured `accountSlug` from props
+   - Updated redirect: `router.push(\`/${accountSlug}/documents/${response.storageId}\`)`
+
+4. **page.tsx** - Updated both modal usages:
+   - Button variant: Added `accountSlug={accountSlug}`
+   - Empty-state variant: Added `accountSlug={accountSlug}`
+
+**Result**: Document storage creation now correctly redirects to `/${accountSlug}/documents/[id]` instead of `/documents/[id]`
+
+**TypeScript Status**: ✅ No errors introduced by this fix

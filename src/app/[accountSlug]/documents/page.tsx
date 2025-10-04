@@ -113,7 +113,11 @@ export default function DocumentStoragePage() {
               </p>
             </div>
 
-            <CreateDocumentStorageModal accountId={accountId} variant="button" />
+            <CreateDocumentStorageModal
+              accountId={accountId}
+              accountSlug={accountSlug}
+              variant="button"
+            />
           </div>
           {loading ? (
             <div className='flex flex-wrap gap-6 mt-6'>
@@ -159,7 +163,11 @@ export default function DocumentStoragePage() {
                 Sube un PDF y estará disponible para tus asistentes de IA.
               </p>
             </div>
-            <CreateDocumentStorageModal accountId={accountId} variant="empty-state" />
+            <CreateDocumentStorageModal
+              accountId={accountId}
+              accountSlug={accountSlug}
+              variant="empty-state"
+            />
           </div>
         </div>
       )}

@@ -31,6 +31,7 @@ import type {
 
 export function CreateDocumentStorageForm({
   accountId,
+  accountSlug,
   onSuccess,
   onCancel,
 }: CreateDocumentStorageFormProps) {
@@ -123,7 +124,7 @@ export function CreateDocumentStorageForm({
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           // Redirect to detail page
-          router.push(`/documents/${response.storageId}`);
+          router.push(`/${accountSlug}/documents/${response.storageId}`);
 
           // Call success callback
           onSuccess(response.storageId);

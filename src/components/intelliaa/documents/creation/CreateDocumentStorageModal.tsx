@@ -26,6 +26,7 @@ import type { CreateDocumentStorageModalProps } from "./types";
 
 export function CreateDocumentStorageModal({
   accountId,
+  accountSlug,
   onSuccess,
   trigger,
   variant = "button",
@@ -85,6 +86,7 @@ export function CreateDocumentStorageModal({
 
         <CreateDocumentStorageForm
           accountId={accountId}
+          accountSlug={accountSlug}
           onSuccess={handleSuccess}
           onCancel={handleCancel}
         />
