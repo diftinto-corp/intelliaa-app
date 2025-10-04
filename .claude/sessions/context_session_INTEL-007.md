@@ -2341,3 +2341,106 @@ The feature is fully functional and ready for user testing. All acceptance crite
 **Implementation Date:** 2025-10-04
 **QA Score:** 98/100
 **Status:** PRODUCTION READY ✅
+
+---
+
+## Post-Deployment Bug Fixes (2025-10-04)
+
+### Critical Issues Discovered and Fixed
+
+#### 1. Architecture Misunderstanding - VAPI Knowledge Base
+**Problem:** Code assumed `vapi_knowledge_base_id` existed in `document_storages` table
+- ❌ Invalid SQL: `SELECT vapi_knowledge_base_id FROM document_storages`
+- ❌ Error: "column document_storages.vapi_knowledge_base_id does not exist"
+
+**Root Cause:** Knowledge Bases are associated with `assistant_id` in separate `vapi_knowledge_bases` table, NOT with document storages
+
+**Fix Applied:**
+- Removed all references to `vapi_knowledge_base_id` from document storage queries
+- Updated upload flow to remove KB update logic (managed at assistant level)
+- Updated deletion flow to remove KB deletion logic
+- Added comments explaining correct architecture
+
+**Files Modified:**
+- `src/lib/actions/intelliaa/documents.ts` (lines 1152, 1164, 1313-1329, 1909, 1924, 1997-2025, 2059-2067)
+
+#### 2. Upload Lock UUID Validation Error
+**Problem:** Lock acquisition failing with UUID validation error
+- ❌ Error: `invalid input syntax for type uuid: "pdf-delete-{uuid}"`
+- ❌ Cause: Using prefixed string instead of raw UUID for `storage_id` column
+
+**Root Cause:** `upload_locks.storage_id` is UUID type but code used `pdf-delete-{id}` format
+
+**Fix Applied:**
+- Changed lock ID from `pdf-delete-${pdfDocId}` to `documentStorageId` (valid UUID)
+- Updated all 6 `releaseUploadLock` calls to use `documentStorageId`
+- Lock now prevents concurrent operations at storage level (correct behavior)
+
+**Files Modified:**
+- `src/lib/actions/intelliaa/documents.ts` (lines 1872, 1906, 1924, 1956, 2046, 2060, 2082)
+
+#### 3. UI Not Updating After PDF Deletion
+**Problem:** PDFs deleted from database but UI still shows them
+- ✅ Database deletion successful
+- ❌ No UI refresh triggered
+
+**Root Cause:** Missing `router.refresh()` call after successful deletion
+
+**Fix Applied:**
+- Added `router.refresh()` after successful PDF deletion
+- Only applies when NOT deleting storage (storage deletion redirects)
+
+**Files Modified:**
+- `src/components/intelliaa/assistants/documents/documentViewer/document-list.tsx` (lines 119-122)
+
+#### 4. Last Document Deletion Using Obsolete Function
+**Problem:** Deleting last PDF triggered obsolete Flowise-dependent function
+- ❌ Error: `SyntaxError: Unexpected end of JSON input`
+- ❌ Function: `deleteAllDocumentStorageById` (uses deprecated Flowise service)
+
+**Root Cause:** Old deletion logic not updated after Flowise → Pinecone migration
+
+**Fix Applied:**
+- Replaced `deleteAllDocumentStorageById` with `deleteDocumentStorageWithValidation` (INTEL-007)
+- Ensures comprehensive cleanup with graceful degradation
+- Proper lock management and error handling
+
+**Files Modified:**
+- `src/lib/actions/intelliaa/documents.ts` (lines 1958-1987)
+
+### Verification Results
+
+**Upload PDF to Existing Storage:**
+- ✅ File uploads successfully
+- ✅ No KB-related errors
+- ✅ Lock mechanism works correctly
+
+**Delete Individual PDF:**
+- ✅ Pinecone vectors deleted
+- ✅ VAPI file deleted
+- ✅ Database record removed
+- ✅ UI updates automatically
+- ✅ Lock prevents concurrent operations
+
+**Delete Last PDF (Storage Deletion):**
+- ✅ Triggers INTEL-007 deletion flow
+- ✅ Validates assignments
+- ✅ Cleans up all services
+- ✅ Redirects to storage list
+- ✅ Shows warnings if any service fails
+
+**Delete Document Storage:**
+- ✅ Assignment validation works
+- ✅ Pinecone namespace deleted
+- ✅ VAPI files deleted
+- ✅ Database cascade deletion executed
+- ✅ Lock mechanism prevents races
+
+### Final Commit
+```
+eb26139 fix(INTEL-007): Fix document storage and PDF deletion with architecture corrections
+```
+
+**Implementation Complete:** 2025-10-04 ✅
+**All Issues Resolved:** Yes ✅
+**Production Ready:** Yes ✅
