@@ -24,6 +24,7 @@ import { updateAssistantVoiceVapi } from "@/lib/actions/intelliaa/assistantVoice
 import { set } from "date-fns";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
+import { AssignStorageSection } from "@/components/assistants/AssignStorageSection";
 
 interface QAItem {
   id: string;
@@ -289,11 +290,16 @@ export default function TabAssistant({
 
   return (
     <Tabs defaultValue='settings' className='w-full '>
-      <TabsList className='grid w-full grid-cols-2'>
+      <TabsList className='grid w-full grid-cols-3'>
         <TabsTrigger
           className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
           value='settings'>
           Configuración
+        </TabsTrigger>
+        <TabsTrigger
+          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+          value='storages'>
+          Almacenamientos
         </TabsTrigger>
         <TabsTrigger
           className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
@@ -343,6 +349,15 @@ export default function TabAssistant({
             setEndCallPhrases={setEndCallPhrases}
             documentStorageId={documentStorageId}
             setDocumentStorageId={setDocumentStorageId}
+          />
+        </div>
+      </TabsContent>
+      <TabsContent value='storages'>
+        <div className='p-6'>
+          <AssignStorageSection
+            assistantId={assistant.id}
+            accountId={account_id}
+            accountSlug={accountSlug}
           />
         </div>
       </TabsContent>
