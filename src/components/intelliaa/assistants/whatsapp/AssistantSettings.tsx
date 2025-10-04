@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AssignStorageSectionWhatsApp } from "@/components/assistants/AssignStorageSectionWhatsApp";
 
 interface AssistantSettingsProps {
   assistant: Assistant;
@@ -64,6 +65,7 @@ interface AssistantSettingsProps {
   setVoiceAssistantSelected: Dispatch<SetStateAction<string>>;
   voiceAssistant: any[];
   setVoiceAssistant: Dispatch<SetStateAction<any[]>>;
+  accountSlug: string;
 }
 
 export default function AssistantSettings({
@@ -96,6 +98,7 @@ export default function AssistantSettings({
   setVoiceAssistantSelected,
   voiceAssistant,
   setVoiceAssistant,
+  accountSlug,
 }: AssistantSettingsProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [mp3Url, setMp3Url] = useState("");
@@ -373,6 +376,16 @@ export default function AssistantSettings({
             </Button>
             {mp3Url && <audio ref={audioRef} src={mp3Url} />}
           </div>
+
+          {/* Document Storage Assignment Section (INTEL-009) */}
+          <div className='my-6 border-t border-gray-200 dark:border-gray-700 pt-6'>
+            <AssignStorageSectionWhatsApp
+              assistantId={assistant.id}
+              accountId={assistant.account_id}
+              accountSlug={accountSlug}
+            />
+          </div>
+
           <div className='flex flex-col'>
             <p className='mb-4 text-lg font-semibold'>Opciones de Whatsapp</p>
           </div>

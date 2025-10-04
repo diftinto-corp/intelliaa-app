@@ -320,6 +320,7 @@ export default function TabAssistant({
         setVoiceAssistantSelected={setVoiceAssistantSelected}
         voiceAssistant={voiceAssistant}
         setVoiceAssistant={setVoiceAssistant}
+        accountSlug={accountSlug}
       />
       <ChatWsComponent
         assistant={assistant}
