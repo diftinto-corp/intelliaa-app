@@ -2193,7 +2193,7 @@ class DocumentDatabaseError extends Error {
  * @param accountId - Account UUID for validation
  * @returns Promise<DeleteDocumentStorageResponse>
  */
-export async function deleteDocumentStorageWithValidation(
+async function deleteDocumentStorageWithValidation(
   documentStorageId: string,
   accountId: string
 ): Promise<DeleteDocumentStorageResponse> {
