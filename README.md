@@ -76,43 +76,41 @@ An AI-powered voice and WhatsApp assistant platform built on [Basejump](https://
 
 3. **Configure environment variables**
 
-   Create a `.env.local` file with the following variables:
-
+   Copy the example environment file:
    ```bash
-   # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   cp .env.example .env.local
+   ```
+
+   Fill in the required values in `.env.local`. The `.env.example` file contains:
+   - Complete list of all variables with descriptions
+   - Links to get API keys for each service
+   - Environment-specific configuration notes
+   - Security best practices
+
+   **Core required variables:**
+   ```bash
+   # Supabase (Database & Auth)
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-   # Flowise (Document Processing)
-   NEXT_PUBLIC_FLOWISE=https://your-flowise-instance.com/api/v1/
-   NEXT_PUBLIC_FLOWISE_KEY=your_flowise_key
-   NEXT_PUBLIC_FLOWISE_CHATID_PREDICTION=your_chat_id
-   NEXT_PUBLIC_USERNAME_FLOWISE=your_username
-   NEXT_PUBLIC_PASSWORD_FLOWISE=your_password
+   # OpenAI (Embeddings for Vercel AI SDK)
+   OPENAI_API_KEY=sk-proj-your_openai_api_key
 
-   # Railway (Backend)
-   RAILWAY_URI=your_railway_graphql_uri
-   RAILWAY_TOKEN=your_railway_token
+   # Pinecone (Vector Storage)
+   PINECONE_API_KEY=pc-your_pinecone_api_key
+   PINECONE_INDEX=intelliaa-documents
 
-   # AWS S3 (File Storage)
-   NEXT_AWS_S3_ACCESS_KEY_ID=your_access_key
-   NEXT_AWS_S3_SECRET_ACCESS_KEY=your_secret_key
-   NEXT_AWS_S3_BUCKET_NAME=your_bucket_name
-   NEXT_AWS_S3_REGION=us-east-1
-   NEXT_AWS_S3_BUCKET_URL_FILE=https://your-bucket.s3.amazonaws.com/
-
-   # Vapi (Voice AI)
-   NEXT_PRIVATE_VAPI_KEY=your_vapi_key
-
-   # ElevenLabs (Voice Synthesis)
-   NEXT_PUBLIC_ELEVENLABS_TOKEN=your_elevenlabs_token
-
-   # Buildship (WhatsApp Deployment)
-   NEXT_PUBLIC_BUILDSHIP_URL_DEPLOY_RAILWAY=your_buildship_url
-
-   # Event Token
-   NEXT_PUBLIC_EVENT_TOKEN=your_event_token
+   # VAPI (Voice AI)
+   NEXT_PRIVATE_VAPI_KEY=your_vapi_private_key
    ```
+
+   **Validate your configuration:**
+   ```bash
+   npm run validate-env
+   ```
+   This checks all required variables and provides clear error messages with setup URLs if anything is missing.
+
+   > **Note**: The project has migrated from Flowise to Vercel AI SDK for document processing. Legacy Flowise variables are deprecated but kept for backward compatibility. See `.env.example` for migration details.
 
 4. **Run the development server**
    ```bash
@@ -182,8 +180,11 @@ intelliaa-app/
 ```bash
 # Development
 npm run dev          # Start dev server with Turbopack (localhost:3000)
-npm run build        # Build for production
+npm run build        # Build for production (with env validation)
 npm start            # Start production server
+
+# Environment Configuration
+npm run validate-env # Validate all environment variables
 
 # Installation (when adding new packages)
 npm install --legacy-peer-deps  # Required for React 19 compatibility
@@ -270,9 +271,13 @@ import { GetAllAssistants } from "@/lib/actions/intelliaa/assistants"
 ```
 
 ### Environment Variables
+The project uses a **type-safe environment validation system**:
+- Import from `@/lib/env`: `serverEnv` (server-only) or `clientEnv` (client-safe)
+- Validation runs at build time and runtime with clear error messages
 - `NEXT_PUBLIC_*` → Client-side accessible
-- Others → Server-side only
+- Others → Server-side only (never exposed to client bundle)
 - Never commit `.env.local`
+- Run `npm run validate-env` to check configuration
 
 ### Database Conventions
 - All custom tables use RLS policies

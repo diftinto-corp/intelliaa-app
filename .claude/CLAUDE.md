@@ -162,14 +162,68 @@ All API routes use Next.js Route Handlers (App Router pattern).
 
 ### Environment Variables
 
-Required variables (see `.env.local` for reference):
-- **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- **Flowise**: `NEXT_PUBLIC_FLOWISE`, `NEXT_PUBLIC_FLOWISE_KEY`, `NEXT_PUBLIC_FLOWISE_CHATID_PREDICTION`
-- **Railway**: `RAILWAY_URI`, `RAILWAY_TOKEN`
-- **AWS S3**: `NEXT_AWS_S3_ACCESS_KEY_ID`, `NEXT_AWS_S3_SECRET_ACCESS_KEY`, `NEXT_AWS_S3_BUCKET_NAME`
-- **Vapi**: `NEXT_PRIVATE_VAPI_KEY`
-- **ElevenLabs**: `NEXT_PUBLIC_ELEVENLABS_TOKEN`
-- **Twilio**: (credentials for telephony)
+The application uses a **type-safe environment validation system** ([src/lib/env.ts](src/lib/env.ts)) that validates all required variables at build time and runtime.
+
+#### Setup Instructions
+
+1. **Copy the example file**:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. **Fill in required variables** (see `.env.example` for complete list with setup URLs)
+
+3. **Validate configuration**:
+   ```bash
+   npm run validate-env
+   ```
+
+#### Core Required Variables
+
+**Server-side (never exposed to client):**
+- `OPENAI_API_KEY` - OpenAI API for embeddings ([get key](https://platform.openai.com/api-keys))
+- `PINECONE_API_KEY` - Pinecone vector storage ([get key](https://app.pinecone.io/))
+- `PINECONE_INDEX` - Pinecone index name (default: `intelliaa-documents`)
+- `NEXT_PRIVATE_VAPI_KEY` - VAPI voice AI ([get key](https://dashboard.vapi.ai/))
+
+**Client-side (safe to expose):**
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+
+**Optional with defaults:**
+- `PINECONE_ENVIRONMENT` - Pinecone region (default: `us-east-1-aws`)
+- `NEXT_PUBLIC_USE_VERCEL_EMBEDDINGS` - Feature flag (default: `false`)
+
+#### Type-Safe Usage
+
+Import validated environment variables instead of using `process.env` directly:
+
+```typescript
+// Server Components, Route Handlers, Server Actions
+import { serverEnv } from '@/lib/env';
+const apiKey = serverEnv.OPENAI_API_KEY; // ✅ Type-safe, validated
+
+// Client or Server Components
+import { clientEnv } from '@/lib/env';
+const supabaseUrl = clientEnv.NEXT_PUBLIC_SUPABASE_URL; // ✅ Type-safe, validated
+```
+
+#### Validation Behavior
+
+- **Build time**: `npm run build` validates all variables before building
+- **Runtime**: Validation occurs on server startup (development throws, production logs)
+- **Type safety**: TypeScript prevents accessing undefined variables
+- **Clear errors**: Missing variables show setup URLs and instructions
+
+#### Legacy Variables (Deprecated)
+
+⚠️ The following Flowise variables are deprecated and will be removed:
+- `NEXT_PUBLIC_FLOWISE*` - Use Vercel AI SDK instead
+- `NEXT_PUBLIC_OPENAI_API_KEY_FLOWISE` - Use `OPENAI_API_KEY`
+- `NEXT_PUBLIC_PINECONE_API_KEY_FLOWISE` - Use `PINECONE_API_KEY`
+- `NEXT_PUBLIC_POSTGRES_API_KEY_FLOWISE` - No longer needed
+
+See [.env.example](.env.example) for complete variable documentation and migration guide.
 
 ### Assistant Namespace Pattern
 

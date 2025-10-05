@@ -3,9 +3,26 @@ import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { clientEnv } from "@/lib/env";
 
-const defaultUrl =
-  (process.env.NEXT_PUBLIC_URL as string) || "http://localhost:3000";
+// Validate environment variables on server-side only
+if (typeof window === 'undefined') {
+  // Import server env to trigger validation
+  import('@/lib/env').then(({ assertEnv }) => {
+    try {
+      assertEnv();
+    } catch (error) {
+      // In development, throw to surface issues immediately
+      if (process.env.NODE_ENV === 'development') {
+        throw error;
+      }
+      // In production, log error but don't crash (fail gracefully)
+      console.error('Environment validation error:', error);
+    }
+  });
+}
+
+const defaultUrl = clientEnv.NEXT_PUBLIC_SUPABASE_URL || "http://localhost:3000";
 
 const fontSans = FontSans({
   subsets: ["latin"],
