@@ -1,0 +1,64 @@
+---
+title: Voice Fallback Plan
+subtitle: >-
+  Configure fallback voices that activate automatically if your primary voice
+  fails.
+slug: voice-fallback-plan
+---
+
+<Note>
+  Voice fallback plans can currently only be configured through the API. We are working on making this available through our dashboard.
+</Note>
+
+## Introduction
+
+Voice fallback plans give you the ability to continue your call in the event that your primary voice fails. Your assistant will sequentially fallback to only the voices you configure within your plan, in the exact order you specify. 
+
+<Note>
+  Without a fallback plan configured, your call will end with an error in the event that your chosen voice provider fails.
+</Note>
+
+## How It Works
+
+When a voice failure occurs, Vapi will:
+1. Detect the failure of the primary voice
+2. If a custom fallback plan exists:
+  - Switch to the first fallback voice in your plan
+  - Continue through your specified list if subsequent failures occur
+  - Terminate only if all voices in your plan have failed
+
+## Configuration
+
+Add the `fallbackPlan` property to your assistant's voice configuration, and specify the fallback voices within the `voices` property.
+- Please note that fallback voices must be valid JSON configurations, and not strings.
+- The order matters. Vapi will choose fallback voices starting from the beginning of the list.
+
+```json
+{
+  "voice": {
+    "provider": "openai",
+    "voiceId": "shimmer",
+    "fallbackPlan": {
+        "voices": [
+            {
+                "provider": "cartesia",
+                "voiceId": "248be419-c632-4f23-adf1-5324ed7dbf1d"
+            },
+            {
+                "provider": "11labs",
+                "voiceId": "cgSgspJ2msm6clMCkdW9"
+            }
+        ]
+    }
+  }
+}
+```
+
+## Best practices
+
+- Use <b>different providers</b> for your fallback voices to protect against provider-wide outages.
+- Select voices with **similar characteristics** (tone, accent, gender) to maintain consistency in the user experience.
+
+## How will pricing work?
+
+There is no change to the pricing of the voices. Your call will not incur any extra fees while using fallback voices, and you will be able to see the cost for each voice in your end-of-call report.

@@ -1,0 +1,469 @@
+---
+title: Server events
+subtitle: Learn about different events that can be sent to a Server URL.
+slug: server-url/events
+---
+
+All messages sent to your Server URL are `POST` requests with this body shape:
+
+```json
+{
+  "message": {
+    "type": "<server-message-type>",
+    "call": { /* Call Object */ },
+    /* other fields depending on type */
+  }
+}
+```
+
+Common metadata included on most events:
+- `phoneNumber`, `timestamp`
+- `artifact` (recording, transcript, messages, etc.)
+- `assistant`, `customer`, `call`, `chat`
+
+Most events are informational and do not require a response. Responses are only expected for these types sent to your Server URL:
+- "assistant-request"
+- "tool-calls"
+- "transfer-destination-request"
+- "knowledge-base-request"
+
+Note: Some specialized messages like "voice-request" and "call.endpointing.request" are sent to their dedicated servers if configured (e.g. `assistant.voice.server.url`, `assistant.startSpeakingPlan.smartEndpointingPlan.server.url`).
+
+### Function Calling (Tools)
+
+<Info>
+  Vapi supports OpenAI-style tool/function calling. Assistants can ping your server to perform actions.
+</Info>
+
+Example assistant configuration (excerpt):
+
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "functions": [
+      {
+        "name": "sendEmail",
+        "description": "Used to send an email to a client.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "emailAddress": { "type": "string" },
+            "message": { "type": "string" }
+          },
+          "required": ["emailAddress", "message"]
+        }
+      }
+    ]
+  }
+}
+```
+
+When tools are triggered, your Server URL receives a `tool-calls` message:
+
+```json
+{
+  "message": {
+    "type": "tool-calls",
+    "call": { /* Call Object */ },
+    "toolWithToolCallList": [
+      {
+        "name": "sendEmail",
+        "toolCall": { "id": "abc123", "parameters": { "emailAddress": "john@example.com", "message": "Hi!" } }
+      }
+    ],
+    "toolCallList": [
+      { "id": "abc123", "name": "sendEmail", "parameters": { "emailAddress": "john@example.com", "message": "Hi!" } }
+    ]
+  }
+}
+```
+
+Respond with results for each tool call:
+
+```json
+{
+  "results": [
+    {
+      "name": "sendEmail",
+      "toolCallId": "abc123",
+      "result": "{ \"status\": \"sent\" }"
+    }
+  ]
+}
+```
+
+Optionally include a message to speak to the user while or after running the tool.
+
+<Note>
+  If a tool does not need a response immediately, you can design it to be asynchronous.
+</Note>
+
+### Retrieving Assistants
+
+For inbound phone calls, you can specify the assistant dynamically. If a PhoneNumber doesn't have an `assistantId`, Vapi may request one from your server:
+
+```json
+{
+  "message": {
+    "type": "assistant-request",
+    "call": { /* Call Object */ }
+  }
+}
+```
+
+<Note>
+  You must respond to the `assistant-request` webhook within <strong>7.5 seconds end-to-end</strong>. This limit is fixed and not configurable: the telephony provider enforces a 15-second cap, and Vapi reserves ~7.5 seconds for call setup. The timeout value shown elsewhere in the dashboard does not apply to this webhook.
+
+  To avoid timeouts:
+  - Return quickly with an existing <code>assistantId</code> or a minimal assistant, then enrich context asynchronously after the call starts using <a href="/calls/call-features">Live Call Control</a>.
+  - Host your webhook close to <code>us-west-2</code> to reduce latency, and target &lt; ~6s to allow for network jitter.
+</Note>
+
+Respond with either an existing assistant ID, a transient assistant, or transfer destination:
+
+```json
+{ "assistantId": "your-saved-assistant-id" }
+```
+
+```json
+{
+  "assistant": {
+    "firstMessage": "Hey Ryan, how are you?",
+    "model": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "messages": [
+        { "role": "system", "content": "You're Ryan's assistant..." }
+      ]
+    }
+  }
+}
+```
+
+```json
+{ "destination": { "type": "number", "phoneNumber": "+11234567890" } }
+```
+
+#### Transfer only (skip AI)
+
+If you want to immediately transfer the call without using an assistant, return a `destination` in your `assistant-request` response. This bypasses AI handling.
+
+```json
+{
+  "destination": {
+    "type": "number",
+    "phoneNumber": "+14155552671",
+    "callerId": "{{phoneNumber.number}}",
+    "extension": "101",
+    "message": "Connecting you to support."
+  }
+}
+```
+
+```json
+{
+  "destination": {
+    "type": "sip",
+    "sipUri": "sip:support@example.com",
+    "sipHeaders": { "X-Account": "gold" },
+    "message": "Transferring you now."
+  }
+}
+```
+
+<Note>
+  When `destination` is present in the `assistant-request` response, the call forwards immediately and <code>assistantId</code>, <code>assistant</code>, <code>squadId</code>, and <code>squad</code> are ignored.
+  You must still respond within <strong>7.5 seconds</strong>.
+  To transfer silently, set <code>destination.message</code> to an empty string.
+  For caller ID behavior, see <a href="/calls/call-features">Call features</a>.
+ </Note>
+
+Or return an error message to be spoken to the caller:
+
+```json
+{ "error": "Sorry, not enough credits on your account, please refill." }
+```
+
+### Status Updates
+
+```json
+{
+  "message": {
+    "type": "status-update",
+    "call": { /* Call Object */ },
+    "status": "ended"
+  }
+}
+```
+
+<Card title="Status Events">
+  - `scheduled`: Call scheduled.
+  - `queued`: Call queued.
+  - `ringing`: The call is ringing.
+  - `in-progress`: The call has started.
+  - `forwarding`: The call is about to be forwarded.
+  - `ended`: The call has ended.
+</Card>
+
+### End of Call Report
+
+```json
+{
+  "message": {
+    "type": "end-of-call-report",
+    "endedReason": "hangup",
+    "call": { /* Call Object */ },
+    "artifact": {
+      "recording": { /* Recording object with URLs */ },
+      "transcript": "AI: How can I help? User: What's the weather? ...",
+      "messages": [
+        { "role": "assistant", "message": "How can I help?" },
+        { "role": "user", "message": "What's the weather?" }
+      ]
+    }
+  }
+}
+```
+
+### Hang Notifications
+
+```json
+{
+  "message": {
+    "type": "hang",
+    "call": { /* Call Object */ }
+  }
+}
+```
+
+Use this to surface delays or notify your team.
+
+### Conversation Updates
+
+Sent when an update is committed to the conversation history.
+
+```json
+{
+  "message": {
+    "type": "conversation-update",
+    "messages": [ /* current conversation messages */ ],
+    "messagesOpenAIFormatted": [ /* openai-formatted messages */ ]
+  }
+}
+```
+
+### Transcript
+
+Partial and final transcripts from the transcriber.
+
+```json
+{
+  "message": {
+    "type": "transcript",
+    "role": "user",
+    "transcriptType": "partial",
+    "transcript": "I'd like to book...",
+    "isFiltered": false,
+    "detectedThreats": [],
+    "originalTranscript": "I'd like to book..."
+  }
+}
+```
+
+For final-only events, you may receive `type: "transcript[transcriptType=\"final\"]"`.
+
+### Speech Update
+
+```json
+{
+  "message": {
+    "type": "speech-update",
+    "status": "started",
+    "role": "assistant",
+    "turn": 2
+  }
+}
+```
+
+### Model Output
+
+Tokens or tool-call outputs as the model generates.
+
+```json
+{
+  "message": {
+    "type": "model-output",
+    "output": { /* token or tool call */ }
+  }
+}
+```
+
+### Transfer Destination Request
+
+Requested when the model wants to transfer but the destination is not yet known.
+
+```json
+{
+  "message": {
+    "type": "transfer-destination-request",
+    "call": { /* Call Object */ }
+  }
+}
+```
+
+Respond with a destination and optionally a message:
+
+```json
+{
+  "destination": { "type": "number", "phoneNumber": "+11234567890" },
+  "message": { "type": "request-start", "message": "Transferring you now" }
+}
+```
+
+### Transfer Update
+
+Fires whenever a transfer occurs.
+
+```json
+{
+  "message": {
+    "type": "transfer-update",
+    "destination": { /* assistant | number | sip */ }
+  }
+}
+```
+
+### User Interrupted
+
+```json
+{
+  "message": {
+    "type": "user-interrupted"
+  }
+}
+```
+
+### Language Change Detected
+
+Sent when the transcriber switches based on detected language.
+
+```json
+{
+  "message": {
+    "type": "language-change-detected",
+    "language": "es"
+  }
+}
+```
+
+### Phone Call Control (Advanced)
+
+When requested in `assistant.serverMessages`, hangup and forwarding are delegated to your server.
+
+```json
+{
+  "message": {
+    "type": "phone-call-control",
+    "request": "forward",
+    "destination": { "type": "sip", "sipUri": "sip:agent@example.com" }
+  }
+}
+```
+
+```json
+{
+  "message": {
+    "type": "phone-call-control",
+    "request": "hang-up"
+  }
+}
+```
+
+### Knowledge Base Request (Custom)
+
+If using `assistant.knowledgeBase.provider = "custom-knowledge-base"`.
+
+```json
+{
+  "message": {
+    "type": "knowledge-base-request",
+    "messages": [ /* conversation so far */ ],
+    "messagesOpenAIFormatted": [ /* openai-formatted messages */ ]
+  }
+}
+```
+
+Respond with documents (and optionally a custom message to speak):
+
+```json
+{
+  "documents": [
+    { "content": "Return policy is 30 days...", "similarity": 0.92, "uuid": "doc-1" }
+  ]
+}
+```
+
+### Voice Input (Custom Voice Providers)
+
+```json
+{
+  "message": {
+    "type": "voice-input",
+    "input": "Hello, world!"
+  }
+}
+```
+
+### Voice Request (Custom Voice Server)
+
+Sent to `assistant.voice.server.url`. Respond with raw 1-channel 16-bit PCM audio at the requested sample rate (not JSON).
+
+```json
+{
+  "message": {
+    "type": "voice-request",
+    "text": "Hello, world!",
+    "sampleRate": 24000
+  }
+}
+```
+
+### Call Endpointing Request (Custom Endpointing Server)
+
+Sent to `assistant.startSpeakingPlan.smartEndpointingPlan.server.url`.
+
+```json
+{
+  "message": {
+    "type": "call.endpointing.request",
+    "messagesOpenAIFormatted": [ /* openai-formatted messages */ ]
+  }
+}
+```
+
+Respond with the timeout before considering the user's speech finished:
+
+```json
+{ "timeoutSeconds": 0.5 }
+```
+
+### Chat Events
+
+- `chat.created`: Sent when a new chat is created.
+- `chat.deleted`: Sent when a chat is deleted.
+
+```json
+{ "message": { "type": "chat.created", "chat": { /* Chat */ } } }
+```
+
+### Session Events
+
+- `session.created`: Sent when a session is created.
+- `session.updated`: Sent when a session is updated.
+- `session.deleted`: Sent when a session is deleted.
+
+```json
+{ "message": { "type": "session.created", "session": { /* Session */ } } }
+```

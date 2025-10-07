@@ -1,0 +1,47 @@
+---
+title: Background messages
+subtitle: Silently update chat history with background messages
+slug: assistants/background-messages
+---
+
+## Overview
+
+Background messages let you add information to the chat history without interrupting or notifying the user. This is useful for logging actions, tracking background events, or updating conversation context silently.
+
+For example, you might want to log when a user presses a button or when a background process updates the conversation. These messages help you keep a complete record of the conversation and system events, all without disrupting the user experience.
+
+<Steps>
+  <Step title="Add a Button to Trigger the Message">
+    Add a button to your interface with an `onClick` event handler that will call a function to send the system message:
+    ```html
+    <button id="log-action" onClick="logUserAction()">Log Action</button>
+    ```
+  </Step>
+
+  <Step title="Log the Action as a System Message">
+    When the button is clicked, the `logUserAction` function will silently insert a system message into the chat history:
+    ```js
+    function logUserAction() {
+      // Function to log the user action
+      vapi.send({
+        type: "add-message",
+        message: {
+          role: "system",
+          content: "The user has pressed the button, say peanuts",
+        },
+      });
+    }
+    ```
+    - `vapi.send`: The primary function to interact with your assistant, handling various requests or commands.
+    - `type: "add-message"`: Specifies the command to add a new message.
+    - `message`: This is the actual message that you want to add to the message history.
+      - `role`: "system" Designates the message origin as 'system', ensuring the addition is unobtrusive. Other possible values of role are 'user' | 'assistant' | 'tool' | 'function'
+      - `content`: The actual message text to be added.
+  </Step>
+</Steps>
+
+<Card title="Practical Use Cases">
+    - Silent logging of user activities.
+    - Contextual updates in conversations triggered by background processes.
+    - Non-intrusive user experience enhancements through additional information provision.
+</Card>

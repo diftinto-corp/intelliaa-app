@@ -1,0 +1,315 @@
+---
+title: Default Tools
+subtitle: >-
+  Adding Transfer Call, End Call, Dial Keypad, and API Request capabilities to
+  your assistants.
+slug: tools/default-tools
+---
+
+Vapi voice assistants are given additional functions: `transferCall`, `endCall`, `sms`, `dtmf` (to dial a keypad with [DTMF](https://en.wikipedia.org/wiki/DTMF)), and `apiRequest`. These functions can be used to transfer calls, hang up calls, send SMS messages, enter digits on the keypad, and integrate business logic with your existing APIs.
+
+<Info>
+To add Default Tools to your agent, you need to add them in the `tools` array of your assistant. You can do this in your api request, or by creating a new tool in the dashboard tools page, and assigning it to your assistant.
+</Info>
+
+#### Transfer Call
+
+This function is provided when `transferCall` is included in the assistant's list of available tools (see configuration options [here](/api-reference/assistants/create#request.body.model.openai.tools.transferCall)). This function can be used to transfer the call to any of the `destinations` defined in the tool configuration  (see details on destination options [here](/api-reference/assistants/create#request.body.model.openai.tools.transferCall.destinations)).
+
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an assistant at a law firm. When the user asks to be transferred, use the transferCall function."
+      }
+    ],
+    "tools": [
+      {
+          "type": "transferCall",
+          "destinations" : {
+            {
+              "type": "number",
+              "number": "+16054440129"
+            }
+          }
+      }
+    ]
+  }
+}
+```
+
+#### End Call
+
+This function is provided when `endCall` is included in the assistant's list of available tools (see configuration options [here](/api-reference/assistants/create#request.body.model.openai.tools.endCall)). The assistant can use this function to end the call.
+
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an assistant at a law firm. If the user is being mean, use the endCall function."
+      }
+    ],
+    "tools": [
+      {
+          "type": "endCall"
+      }
+    ]
+  }
+}
+```
+
+#### Send Text
+
+This function is provided when `sms` is included in the assistant's list of available tool (see configuration options [here](/api-reference/assistants/create#request.body.model.openai.tools.sms)). The assistant can use this function to send SMS messages using a configured Twilio account.
+
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an assistant. When the user asks you to send a text message, use the sms function."
+      }
+    ],
+    "tools": [
+      {
+        "type": "sms",
+        "metadata": {
+          "from": "+15551234567" 
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Dial Keypad (DTMF)
+
+This function is provided when `dtmf` is included in the assistant's list of available tools (see configuration options [here](/api-reference/assistants/create#request.body.model.openai.tools.dtmf)). The assistant will be able to enter digits on the keypad.
+Useful for IVR navigation or data entry.
+
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an assistant at a law firm. When you hit a menu, use the dtmf function to enter the digits."
+      }
+    ],
+    "tools": [
+      {
+          "type": "dtmf"
+      }
+    ]
+  }
+}
+```
+
+There are three methods for sending DTMF in a phone call:
+
+1. **In-band**: tones are transmitted as part of the regular audio stream. This is the simplest method, but it can suffer from quality issues if the audio stream is compressed or degraded.
+2. **Out-of-band via RFC 2833**: tones are transmitted separately from the audio stream, within RTP (Real-Time Protocol) packets. It's typically more reliable than in-band DTMF, particularly for VoIP applications where the audio stream might be compressed. RFC 2833 is the standard that initially defined this method. It is now replaced by RFC 4733 but this method is still referred by RFC 2833.
+3. **Out-of-band via SIP INFO messages**: tones are sent as separate SIP INFO messages. While this can be more reliable than in-band DTMF, it's not as widely supported as the RFC 2833 method.
+
+<Note>
+Vapi's DTMF tool integrates with telephony provider APIs to send DTMF tones using the out-of-band RFC 2833 method. This approach is widely supported and more reliable for transmitting the signals, especially in VoIP environments.
+Note, the tool's effectiveness depends on the IVR system's configuration and their capturing method. See our [IVR navigation guide](https://docs.vapi.ai/ivr-navigation) for best practices.
+</Note>
+
+#### API Request
+
+This tool allows your assistant to make HTTP requests to any external API endpoint during conversations. This tool fills the gap between Vapi and your existing business logic, bringing your own endpoints into the conversation flow.
+See configuration options [here](/api-reference/tools/create).
+
+##### Dynamic Variables with LiquidJS
+
+Use **LiquidJS syntax** to reference conversation variables and user data in your URLs, headers, and request bodies. This allows your API requests to adapt dynamically based on the conversation context.
+
+##### Basic Examples
+
+**GET Request Example**
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You help users check their order status. When they provide an order number, use the checkOrderStatus function."
+      }
+    ],
+    "tools": [
+      {
+        "type": "apiRequest",
+        "function": {
+          "name": "api_request_tool"
+        },
+        "name": "checkOrderStatus",
+        "url": "https://api.yourcompany.com/orders/{{orderNumber}}",
+        "method": "GET",
+        "body": {
+          "type": "object",
+          "properties": {
+            "orderNumber": {
+              "description": "The user's order number",
+              "type": "string"
+            }
+          },
+          "required": ["orderNumber"]
+        }
+      }
+    ]
+  }
+}
+```
+
+**POST Request Example**
+```json
+{
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You help users book appointments. When they want to schedule, use the bookAppointment function."
+      }
+    ],
+    "tools": [
+      {
+        "type": "apiRequest",
+        "function": {
+          "name": "api_request_tool"
+        },
+        "name": "bookAppointment",
+        "url": "https://api.yourcompany.com/appointments",
+        "method": "POST",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "x-api-key": {
+              "type": "string",
+              "value": "123456789"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "description": "The date of the appointment",
+              "type": "string"
+            },
+            "customerName": {
+              "description": "The name of the customer",
+              "type": "string"
+            },
+            "customerPhoneNumber": {
+              "description": "The phone number of the customer",
+              "type": "string"
+            }
+          },
+          "required": [
+            "date",
+            "customerName",
+            "customerPhoneNumber"
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+##### Advanced Configuration
+
+**With Retry Logic**
+```json
+{
+  "type": "apiRequest",
+  "function": {
+    "name": "api_request_tool"
+  },
+  "name": "checkOrderStatus",
+  "url": "https://api.yourcompany.com/orders/{{orderNumber}}",
+  "method": "GET",
+  "body": {
+    "type": "object",
+    "properties": {
+      "orderNumber": {
+        "description": "The user's order number",
+        "type": "string"
+      }
+    },
+    "required": [
+      "orderNumber"
+    ]
+  },
+  "backoffPlan": {
+    "type": "exponential",
+    "maxRetries": 3,
+    "baseDelaySeconds": 1
+  },
+  "timeoutSeconds": 45
+}
+```
+
+<Accordion title="Custom Functions: Deprecated">
+### Custom Functions
+
+<Warning>The **Custom Functions** feature is being deprecated in favor of [Tools](/tools-calling). Please refer to the **Tools** section instead. We're working on a solution to migrate your existing functions over to make this a seamless transtion.</Warning>
+
+In addition to the predefined functions, you can also define custom functions. These functions are similar to OpenAI functions and your chosen LLM will trigger them as needed based on your instructions.
+
+The functions array in the assistant definition allows you to define custom functions that the assistant can call during a conversation. Each function is an object with the following properties:
+
+- `name`: The name of the function. It must be a string containing a-z, A-Z, 0-9, underscores, or dashes, with a maximum length of 64.
+- `description`: A brief description of what the function does. This is used by the AI to decide when and how to call the function.
+- `parameters`: An object that describes the parameters the function accepts. The type property should be "object", and the properties property should be an object where each key is a parameter name and each value is an object describing the type and purpose of the parameter.
+
+Here's an example of a function definition:
+
+```json
+{
+  "functions": [
+    {
+      "name": "bookAppointment",
+      "description": "Used to book the appointment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "datetime": {
+            "type": "string",
+            "description": "The date and time of the appointment in ISO format."
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+In this example, the bookAppointment function accepts one parameter, `datetime`, which is a string representing the date and time of the appointment in ISO format.
+
+In addition to defining custom functions, you can specify a `serverUrl` where Vapi will send the function call information. This URL can be configured at the account level or at the assistant level.
+At the account level, the `serverUrl` is set in the Vapi Dashboard. All assistants under the account will use this URL by default for function calls.
+At the assistant level, the `serverUrl` can be specified in the assistant configuration when creating or updating an assistant. This allows different assistants to use different URLs for function calls. If a `serverUrl` is specified at the assistant level, it will override the account-level Server URL.
+
+If the `serverUrl` is not defined either at the account level or the assistant level, the function call will simply be added to the chat history. This can be particularly useful when you want a function call to trigger an action on the frontend.
+
+For instance, the frontend can listen for specific function calls in the chat history and respond by updating the user interface or performing other actions. This allows for a dynamic and interactive user experience, where the frontend can react to changes in the conversation in real time.
+</Accordion>

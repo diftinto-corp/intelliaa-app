@@ -1,0 +1,657 @@
+---
+title: Voicemail Detection
+slug: calls/voicemail-detection
+---
+
+When you're running outbound voice agents, voicemails are a reality — but wasting time or missing opportunities because of them shouldn't be.
+
+**Vapi's voicemail detection** gives you faster, smarter, and more flexible handling of voicemail events, so you can keep your calls efficient, responsive, and professional.
+
+## **Why Voicemail Detection Matters**
+
+- **Save time** by avoiding long waits on unanswered calls.
+- **Optimize costs** by cutting down on wasted minutes.
+- **Improve UX** by ensuring your agent behaves naturally when encountering voicemail greetings.
+- **Boost response rates** by leaving cleaner, more intentional voicemail messages.
+
+---
+
+## **Detection Options**
+
+You can choose between several detection methods — but not all are created equal:
+
+| Detection Method | Strengths | Weaknesses | Recommendation |
+| :--------------- | :-------- | :--------- | :------------- |
+| **Vapi (Recommended)** | Fast, accurate, gracefully handles interruptions | None significant | ✅ Strongly recommended |
+| **Google** | Very good accuracy, reliable | Slightly longer detection time than Vapi | ✅ Recommended |
+| **OpenAI** | High accuracy, flexible phrasing | Higher cost | ✅ Good option if budget allows |
+| **Twilio** (legacy) | Very fast machine beep detection | Prone to false positives | ⚠️ Use only in special cases |
+| **[Vapi Voicemail Tool](/tools/voicemail-tool)** (beta) | Assistant-driven voicemail decisions | Most cost effective, requires good prompting | ✅ Best for customization and cost efficiency |
+
+---
+
+## **Vapi Voicemail Detection**
+
+With **Vapi Voicemail Detection**, your assistant will:
+
+- **Detect voicemail faster** (often within the first few seconds of the call).
+- **Handle real-time pickups** gracefully — if a human picks up mid-voicemail, the agent will switch back naturally.
+- **Interrupt the bot's first message** appropriately if voicemail is detected mid-sentence.
+- **Minimize false positives** by combining audio analysis (beeps) and transcription intelligence.
+
+All three providers — **Vapi, Google, and OpenAI** — support **interruption handling** and **false positive protection**.
+
+---
+
+## **How to Configure It**
+
+On the **Assistants tab**, you'll find the Voicemail Detection section:
+
+![Vapi Voicemail Detection Configuration](file:831c7505-c38c-4ea6-a0fa-1766b7fbe7e4)
+
+You can choose your preferred detection provider:
+- **Vapi (default)**
+- **Google**
+- **OpenAI**
+- **Twilio**
+- **Tool-based (beta)**
+
+## **Advanced Configuration Options**
+
+For each detection method, you can fine-tune the following parameters:
+
+<Note>
+**Important:** `frequencySeconds` has a minimum allowed value of 2.5 seconds.
+</Note>
+
+| Parameter | Description |
+| :-------- | :---------- |
+| **<a href="/api-reference/assistants/create#request.body.voicemailDetection.type" target="_blank">type</a>** | Detection method: `audio` (default, best for Google/Vapi) or `transcript` (ASR-based, best for OpenAI). Only `transcript` is supported for Google and OpenAI providers. |
+| **<a href="/api-reference/assistants/create#request.body.voicemailDetection.vapi.backoffPlan.startAtSeconds" target="_blank">backoffPlan.startAtSeconds</a>** | How long to wait (in seconds) before starting voicemail detection. |
+| **<a href="/api-reference/assistants/create#request.body.voicemailDetection.vapi.backoffPlan.frequencySeconds" target="_blank">backoffPlan.frequencySeconds</a>** | How frequently to check for voicemail after the initial delay. |
+| **<a href="/api-reference/assistants/create#request.body.voicemailDetection.vapi.backoffPlan.maxRetries" target="_blank">backoffPlan.maxRetries</a>** | Maximum number of detection attempts before stopping. |
+| **<a href="/api-reference/assistants/create#request.body.voicemailDetection.vapi.beepMaxAwaitSeconds" target="_blank">beepMaxAwaitSeconds</a>** | Maximum duration from call start to wait for a voicemail beep before speaking the message. If set too low, the bot may start speaking before the actual beep and get cut off. Default: 30 seconds (0-60 range). |
+
+These settings allow you to balance:
+- **Speed** (how quickly voicemail is detected)
+- **Accuracy** (reducing false positives)
+- **Cost** (fewer detection attempts = lower API costs)
+
+### **Important: beepMaxAwaitSeconds Configuration**
+
+The `beepMaxAwaitSeconds` parameter is critical for voicemail message timing:
+
+- **What it does**: Sets the maximum time from call start to wait for a voicemail beep before the bot starts speaking its message
+- **If beep detected early**: Bot speaks immediately after the beep (optimal)
+- **If no beep by timeout**: Bot starts speaking the voicemail message anyway
+- **Risk of low values**: Bot may start speaking before the actual beep and get cut off by the voicemail system
+
+<Warning>
+**Setting too low a value** (under 15-20 seconds) may cause your voicemail message to be cut off. Most voicemail systems play 10-20 seconds of greeting before the beep.
+</Warning>
+
+**Recommended values:**
+- **Conservative**: 25-30 seconds (default: 30)
+- **Aggressive**: 15-20 seconds (requires testing with your specific voicemail patterns)
+- **Range**: 0-60 seconds
+
+---
+
+## **How Vapi Detection Works**
+
+Vapi's detection engine combines:
+- **Gemini model-based detection** (fast and highly accurate on common voicemail phrasing)
+- **Twilio beep detection** (optional, for faster reaction to voicemail system beeps)
+- **Real-time call monitoring** to react instantly if a human unexpectedly picks up
+- **Continuous voicemail polling** during early call stages (detecting voicemail faster without waiting for a full timeout)
+
+This hybrid approach means **less call delay, fewer mistakes, and a much more natural call experience.**
+
+---
+
+## **Complete Configuration Examples**
+
+Here are complete assistant configurations for different real-world scenarios:
+
+### **Sales Outreach Assistant**
+
+This configuration optimizes for fast detection and professional voicemail delivery in sales scenarios:
+
+<CodeBlocks>
+```json title="API Configuration"
+{
+  "name": "Sales Outreach Assistant",
+  "voice": {
+    "provider": "vapi",
+    "voiceId": "Paige"
+  },
+  "model": {
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a professional sales representative calling prospects about our software solutions. Be friendly, concise, and respect their time. If you reach voicemail, keep your message under 30 seconds."
+      }
+    ],
+    "provider": "openai",
+    "temperature": 0.3
+  },
+  "firstMessage": "Hi! This is Sarah from TechSolutions. I hope I'm catching you at a good time.",
+  "voicemailMessage": "Hi, this is Sarah from TechSolutions. I'm calling about the software demo you requested. I'd love to show you how we can help streamline your operations and save you time. Please call me back at 555-0123, or I'll try you again tomorrow. Thanks!",
+  "endCallMessage": "Thanks for your time. Have a great day!",
+  "transcriber": {
+    "model": "nova-2",
+    "language": "en",
+    "provider": "deepgram",
+    "smartFormat": true
+  },
+  "firstMessageMode": "assistant-waits-for-user",
+  "voicemailDetection": {
+    "provider": "vapi",
+    "backoffPlan": {
+      "maxRetries": 5,
+      "startAtSeconds": 2,
+      "frequencySeconds": 2.5
+    },
+    "beepMaxAwaitSeconds": 12
+  },
+  "messagePlan": {
+    "idleMessages": ["Hello? Are you still there?"],
+    "idleTimeoutSeconds": 8
+  },
+  "startSpeakingPlan": {
+    "waitSeconds": 0.7,
+    "smartEndpointingPlan": {
+      "provider": "livekit",
+      "waitFunction": "2000 / (1 + exp(-10 * (x - 0.5)))"
+    }
+  },
+  "stopSpeakingPlan": {
+    "numWords": 2,
+    "backoffSeconds": 0.8
+  },
+  "backgroundDenoisingEnabled": true
+}
+```
+```typescript title="TypeScript SDK"
+import { VapiClient } from "@vapi-ai/server-sdk";
+
+const vapi = new VapiClient({ token: process.env.VAPI_API_KEY });
+
+const salesAssistant = await vapi.assistants.create({
+  name: "Sales Outreach Assistant",
+  voice: {
+    speed: 0.9,
+    provider: "vapi",
+    voiceId: "Paige"
+  },
+  model: {
+    model: "gpt-4o",
+    messages: [{
+      role: "system",
+      content: "You are a professional sales representative calling prospects about our software solutions. Be friendly, concise, and respect their time. If you reach voicemail, keep your message under 30 seconds."
+    }],
+    provider: "openai",
+    temperature: 0.3
+  },
+  firstMessage: "Hi! This is Sarah from TechSolutions. I hope I'm catching you at a good time.",
+  voicemailMessage: "Hi, this is Sarah from TechSolutions. I'm calling about the software demo you requested. I'd love to show you how we can help streamline your operations and save you time. Please call me back at 555-0123, or I'll try you again tomorrow. Thanks!",
+  voicemailDetection: {
+    provider: "vapi",
+    backoffPlan: {
+      maxRetries: 5,
+      startAtSeconds: 2,
+      frequencySeconds: 2.5
+    },
+    beepMaxAwaitSeconds: 12
+  },
+  transcriber: {
+    model: "nova-2",
+    language: "en",
+    provider: "deepgram",
+    endpointing: 8,
+    smartFormat: true
+  },
+  backgroundDenoisingEnabled: true
+});
+```
+```python title="Python SDK"
+from vapi import Vapi
+
+client = Vapi(token=os.getenv("VAPI_API_KEY"))
+
+sales_assistant = client.assistants.create(
+    name="Sales Outreach Assistant",
+    voice={
+        "provider": "vapi",
+        "voiceId": "Paige"
+    },
+    model={
+        "model": "gpt-4o",
+        "messages": [{
+            "role": "system",
+            "content": "You are a professional sales representative calling prospects about our software solutions. Be friendly, concise, and respect their time. If you reach voicemail, keep your message under 30 seconds."
+        }],
+        "provider": "openai",
+        "temperature": 0.3
+    },
+    first_message="Hi! This is Sarah from TechSolutions. I hope I'm catching you at a good time.",
+    voicemail_message="Hi, this is Sarah from TechSolutions. I'm calling about the software demo you requested. I'd love to show you how we can help streamline your operations and save you time. Please call me back at 555-0123, or I'll try you again tomorrow. Thanks!",
+    voicemail_detection={
+        "provider": "vapi",
+        "backoff_plan": {
+            "max_retries": 5,
+            "start_at_seconds": 2,
+            "frequency_seconds": 2
+        },
+        "beep_max_await_seconds": 12
+    },
+    transcriber={
+        "model": "nova-2",
+        "language": "en",
+        "provider": "deepgram",
+        "smart_format": True
+    },
+    background_denoising_enabled=True
+)
+```
+</CodeBlocks>
+
+### **Customer Support Callback Assistant**
+
+Optimized for high-accuracy detection and detailed voicemail messages:
+
+<CodeBlocks>
+```json title="API Configuration"
+{
+  "name": "Customer Support Assistant",
+  "voice": {
+    "provider": "vapi",
+    "voiceId": "Elliot"
+  },
+  "model": {
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a customer support representative calling customers back about their support tickets. Be empathetic, helpful, and provide clear next steps. Always reference their ticket number."
+      }
+    ],
+    "provider": "openai",
+    "temperature": 0.2
+  },
+  "firstMessage": "Hello! This is Maya from Customer Support. I'm calling back about your recent support request.",
+  "voicemailMessage": "Hi, this is Maya from Customer Support calling about ticket #{{ticketNumber}}. I have some updates on your issue and want to help resolve this quickly. Please call me back at 1-800-SUPPORT, or reply to your support email and I'll get back to you within 2 hours. Thanks!",
+  "voicemailDetection": {
+    "provider": "google",
+    "backoffPlan": {
+      "maxRetries": 8,
+      "startAtSeconds": 3,
+      "frequencySeconds": 3
+    },
+    "beepMaxAwaitSeconds": 20
+  },
+  "transcriber": {
+    "model": "nova-2",
+    "language": "en",
+    "provider": "deepgram",
+    "endpointing": 12,
+    "smartFormat": true
+  },
+  "backgroundDenoisingEnabled": true
+}
+```
+```typescript title="TypeScript SDK"
+const supportAssistant = await vapi.assistants.create({
+  name: "Customer Support Assistant",
+  voice: {
+    provider: "vapi",
+    voiceId: "Elliot"
+  },
+  model: {
+    model: "gpt-4o",
+    messages: [{
+      role: "system",
+      content: "You are a customer support representative calling customers back about their support tickets. Be empathetic, helpful, and provide clear next steps. Always reference their ticket number."
+    }],
+    provider: "openai",
+    temperature: 0.2
+  },
+  voicemailDetection: {
+    provider: "google", // Using Google for maximum accuracy with audio detection
+    backoffPlan: {
+      maxRetries: 8,
+      startAtSeconds: 3,
+      frequencySeconds: 3
+    },
+    beepMaxAwaitSeconds: 20
+  },
+  firstMessage: "Hello! This is Maya from Customer Support. I'm calling back about your recent support request.",
+  voicemailMessage: "Hi, this is Maya from Customer Support calling about ticket #{{ticketNumber}}. I have some updates on your issue and want to help resolve this quickly. Please call me back at 1-800-SUPPORT, or reply to your support email and I'll get back to you within 2 hours. Thanks!"
+});
+```
+</CodeBlocks>
+
+### **Appointment Reminder Assistant**
+
+Balanced configuration for appointment confirmations with fallback voicemail:
+
+<CodeBlocks>
+```json title="API Configuration"
+{
+  "name": "Appointment Reminder Assistant",
+  "voice": {
+    "provider": "vapi",
+    "voiceId": "Rohan"
+  },
+  "model": {
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are calling to remind patients about their upcoming appointments. Be warm, professional, and provide all necessary details including date, time, and preparation instructions."
+      }
+    ],
+    "provider": "openai",
+    "temperature": 0.1
+  },
+  "firstMessage": "Hi! This is Ryan calling from Dr. Smith's office about your upcoming appointment.",
+  "voicemailMessage": "Hi, this is Ryan from Dr. Smith's office calling to remind you about your appointment on {{appointmentDate}} at {{appointmentTime}}. Please arrive 15 minutes early and bring your insurance card. If you need to reschedule, please call us at 555-CLINIC. Thanks!",
+  "voicemailDetection": {
+    "provider": "vapi",
+    "backoffPlan": {
+      "maxRetries": 6,
+      "startAtSeconds": 2.5,
+      "frequencySeconds": 2.5
+    },
+    "beepMaxAwaitSeconds": 15
+  },
+  "transcriber": {
+    "model": "nova-2",
+    "language": "en",
+    "provider": "deepgram",
+    "endpointing": 10,
+    "smartFormat": true
+  }
+}
+```
+</CodeBlocks>
+
+---
+
+## **Provider-Specific Configurations**
+
+### **Vapi Provider (Recommended)**
+Best balance of speed and accuracy:
+
+```json
+{
+  "voicemailDetection": {
+    "provider": "vapi",
+    "backoffPlan": {
+      "maxRetries": 5,
+      "startAtSeconds": 2,
+      "frequencySeconds": 2.5
+    },
+    "beepMaxAwaitSeconds": 12
+  }
+}
+```
+
+### **Google Provider**
+Maximum accuracy for critical calls (best with audio detection):
+
+```json
+{
+  "voicemailDetection": {
+    "provider": "google",
+    "backoffPlan": {
+      "maxRetries": 8,
+      "startAtSeconds": 3,
+      "frequencySeconds": 3
+    },
+    "beepMaxAwaitSeconds": 20
+  }
+}
+```
+
+### **OpenAI Provider**
+High accuracy with cost consideration (best with transcript detection):
+
+```json
+{
+  "voicemailDetection": {
+    "provider": "openai",
+    "type": "transcript",
+    "backoffPlan": {
+      "maxRetries": 6,
+      "startAtSeconds": 2.5,
+      "frequencySeconds": 3
+    },
+    "beepMaxAwaitSeconds": 15
+  }
+}
+```
+
+---
+
+## **Detection Types**
+
+Choose between two detection methods based on provider performance:
+
+| Detection Type | Performance | Providers | Recommended For |
+|---------------|-------------|-----------|-----------------|
+| **`audio`** (default) | Best for Google, Vapi | All providers | Google: Maximum accuracy<br/>Vapi: General use cases |
+| **`transcript`** | Best for OpenAI | Google, OpenAI only | OpenAI: Optimal performance<br/>High-volume campaigns with OpenAI |
+
+<Tip>
+**Provider-specific recommendations:**
+- **Google**: Use default `audio` detection for best accuracy
+- **OpenAI**: Use `type: "transcript"` for optimal performance
+- **Vapi**: Use default `audio` detection
+</Tip>
+
+---
+
+## **Pre-recorded Audio Messages**
+
+Instead of text-to-speech, you can use pre-recorded audio files for your voicemail messages. Simply provide the URL to your audio file in the `voicemailMessage` property:
+
+<CodeBlocks>
+```json title="API Configuration"
+{
+  "name": "Sales Assistant with Audio Message",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o"
+  },
+  "voicemailDetection": {
+    "provider": "vapi"
+  },
+  "voicemailMessage": "https://example.com/sales-voicemail.mp3"
+}
+```
+```typescript title="TypeScript SDK"
+const assistant = await vapi.assistants.create({
+  name: "Sales Assistant with Audio Message",
+  model: {
+    provider: "openai",
+    model: "gpt-4o"
+  },
+  voicemailDetection: {
+    provider: "vapi"
+  },
+  voicemailMessage: "https://example.com/sales-voicemail.wav"
+});
+```
+```python title="Python SDK"
+assistant = client.assistants.create(
+    name="Sales Assistant with Audio Message",
+    model={
+        "provider": "openai",
+        "model": "gpt-4o"
+    },
+    voicemail_detection={
+        "provider": "vapi"
+    },
+    voicemail_message="https://example.com/sales-voicemail.mp3"
+)
+```
+</CodeBlocks>
+
+**Supported formats**: `.wav` and `.mp3` files
+
+<Tip>
+Pre-recorded audio messages provide consistent quality and pronunciation, especially useful for brand-specific messaging or complex information like phone numbers and website URLs.
+</Tip>
+
+---
+
+## **Disabling Voicemail Detection**
+
+To completely disable voicemail detection for your assistant, set the `voicemailDetection` property to `"off"`:
+
+<CodeBlocks>
+```json title="API Configuration"
+{
+  "name": "Assistant Without Voicemail Detection",
+  "voicemailDetection": "off",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o"
+  }
+}
+```
+```typescript title="TypeScript SDK"
+const assistant = await vapi.assistants.create({
+  name: "Assistant Without Voicemail Detection",
+  voicemailDetection: "off",
+  model: {
+    provider: "openai",
+    model: "gpt-4o"
+  }
+});
+```
+```python title="Python SDK"
+assistant = client.assistants.create(
+    name="Assistant Without Voicemail Detection",
+    voicemail_detection="off",
+    model={
+        "provider": "openai",
+        "model": "gpt-4o"
+    }
+)
+```
+</CodeBlocks>
+
+<Note>
+When voicemail detection is disabled, your assistant will continue the conversation normally regardless of whether it reaches a voicemail system.
+</Note>
+
+---
+
+## **Configuration Best Practices**
+
+### **Tuning for Different Scenarios**
+
+| Use Case | Recommended Provider | startAtSeconds | frequencySeconds | maxRetries | beepMaxAwaitSeconds |
+|----------|---------------------|----------------|------------------|------------|-------------------|
+| **Sales Outreach** | Vapi | 2 | 2.5 | 5 | 25 |
+| **Customer Support** | Google | 3 | 3 | 8 | 20 |
+| **Appointment Reminders** | Vapi | 2.5 | 2.5 | 6 | 15 |
+| **Lead Qualification** | Vapi | 1.5 | 2.5 | 4 | 20 |
+| **Follow-up Calls** | Google | 2.5 | 3 | 7 | 18 |
+
+### **Cost Optimization Tips**
+
+1. **Lower maxRetries** for high-volume campaigns
+2. **Increase startAtSeconds** to reduce false positives
+3. **Use Vapi provider** for best cost-to-accuracy ratio
+4. **Tune beepMaxAwaitSeconds** carefully - too low causes cut-off messages, too high delays voicemail delivery
+
+### **Accuracy Optimization Tips**
+
+1. **Use Google provider** for maximum accuracy
+2. **Increase maxRetries** for important calls
+3. **Lower startAtSeconds** for faster detection
+4. **Tune frequencySeconds** based on your voicemail patterns (minimum 2.5 seconds)
+
+---
+
+## **Troubleshooting Common Issues**
+
+### **False Positives (Detecting voicemail when human answers)**
+
+**Symptoms:** Assistant leaves voicemail message when human picks up
+
+**Solutions:**
+- Increase `startAtSeconds` to 3-4 seconds
+- Switch to Google or OpenAI provider
+- Increase `frequencySeconds` to 3-4 seconds
+
+```json
+{
+  "voicemailDetection": {
+    "provider": "google",
+    "backoffPlan": {
+      "startAtSeconds": 3.5,
+      "frequencySeconds": 3.5,
+      "maxRetries": 6
+    }
+  }
+}
+```
+
+### **Missed Voicemails (Not detecting actual voicemail)**
+
+**Symptoms:** Assistant continues talking to voicemail recording
+
+**Solutions:**
+- Decrease `startAtSeconds` to 1-2 seconds
+- Increase `maxRetries` to 8-10
+- Keep `frequencySeconds` at minimum value (2.5 seconds)
+
+```json
+{
+  "voicemailDetection": {
+    "provider": "vapi",
+    "backoffPlan": {
+      "startAtSeconds": 1.5,
+      "frequencySeconds": 2.5,
+      "maxRetries": 8
+    }
+  }
+}
+```
+
+### **Slow Detection**
+
+**Symptoms:** Takes too long to detect voicemail
+
+**Solutions:**
+- Use Vapi provider for fastest detection
+- Decrease `startAtSeconds` (frequencySeconds minimum is 2.5)
+- Ensure good audio quality
+
+```json
+{
+  "voicemailDetection": {
+    "provider": "vapi",
+    "backoffPlan": {
+      "startAtSeconds": 1,
+      "frequencySeconds": 2.5,
+      "maxRetries": 6
+    }
+  }
+}
+```
+
+---
+
+By using Vapi's detection system, you'll avoid the common pitfalls of voicemail detection, while creating a **faster, smarter, and more professional experience** for your users.
+
+
+
+## **Related Documentation**
+
+- **[Voicemail Tool](/tools/voicemail-tool)** - Alternative assistant-controlled voicemail approach for maximum flexibility

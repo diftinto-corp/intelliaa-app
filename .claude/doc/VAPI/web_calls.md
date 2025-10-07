@@ -1,0 +1,1286 @@
+---
+title: Web calls
+subtitle: >-
+  Build voice interfaces and backend integrations using Vapi's Web and Server
+  SDKs
+slug: quickstart/web
+---
+
+## Overview
+
+Build powerful voice applications that work across web browsers, mobile apps, and backend systems. This guide covers both client-side voice interfaces and server-side call management using Vapi's comprehensive SDK ecosystem.
+
+**In this quickstart, you'll learn to:**
+- Create real-time voice interfaces for web and mobile
+- Build automated outbound and inbound call systems
+- Handle events and webhooks for call management
+- Implement voice widgets and backend integrations
+
+<Tip>
+**Developing locally?** The Vapi CLI makes it easy to initialize projects and test webhooks:
+
+```bash
+# Initialize Vapi in your project
+vapi init
+
+# Forward webhooks to local server
+vapi listen --forward-to localhost:3000/webhook
+```
+
+[Learn more about the Vapi CLI →](/cli)
+</Tip>
+
+## Choose your integration approach
+
+<CardGroup cols={2}>
+  <Card title="Client-Side Voice Interfaces" icon="globe">
+    **Best for:** User-facing applications, voice widgets, mobile apps
+    - Browser-based voice assistants and widgets
+    - Real-time voice conversations
+    - Mobile voice applications (iOS, Android, React Native, Flutter)
+    - Direct user interaction with assistants
+  </Card>
+  <Card title="Server-Side Call Management" icon="server">
+    **Best for:** Backend automation, bulk operations, system integrations
+    - Automated outbound call campaigns
+    - Inbound call routing and management
+    - CRM integrations and bulk operations
+    - Webhook processing and real-time events
+  </Card>
+</CardGroup>
+
+## Web voice interfaces
+
+Build browser-based voice assistants and widgets for real-time user interaction.
+
+### Installation and setup
+
+<Tabs>
+  <Tab title="Web SDK">
+    Build browser-based voice interfaces:
+
+    <CodeBlocks>
+    ```bash title="npm"
+    npm install @vapi-ai/web
+    ```
+
+    ```bash title="yarn"
+    yarn add @vapi-ai/web
+    ```
+
+    ```bash title="pnpm"
+    pnpm add @vapi-ai/web
+    ```
+
+    ```bash title="bun"
+    bun add @vapi-ai/web
+    ```
+    </CodeBlocks>
+
+    ```typescript
+    import Vapi from '@vapi-ai/web';
+
+    const vapi = new Vapi('YOUR_PUBLIC_API_KEY');
+
+    // Start voice conversation
+    vapi.start('YOUR_ASSISTANT_ID');
+
+    // Listen for events
+    vapi.on('call-start', () => console.log('Call started'));
+    vapi.on('call-end', () => console.log('Call ended'));
+    vapi.on('message', (message) => {
+      if (message.type === 'transcript') {
+        console.log(`${message.role}: ${message.transcript}`);
+      }
+    });
+    ```
+  </Tab>
+
+  <Tab title="React Native">
+    Build voice-enabled mobile apps:
+
+    ```bash
+    npm install @vapi-ai/react-native
+    ```
+
+    ```jsx
+    import { VapiProvider, useVapi } from '@vapi-ai/react-native';
+
+    const VoiceApp = () => {
+      const { start, stop, isConnected } = useVapi();
+
+      return (
+        <View>
+          <Button
+            title={isConnected ? "End Call" : "Start Call"}
+            onPress={() => isConnected ? stop() : start('ASSISTANT_ID')}
+          />
+        </View>
+      );
+    };
+
+    export default () => (
+      <VapiProvider apiKey="YOUR_PUBLIC_API_KEY">
+        <VoiceApp />
+      </VapiProvider>
+    );
+    ```
+  </Tab>
+
+  <Tab title="Flutter">
+    Create voice apps with Flutter:
+
+    ```yaml
+    dependencies:
+      vapi_flutter: ^1.0.0
+    ```
+
+    ```dart
+    import 'package:vapi_flutter/vapi_flutter.dart';
+
+    class VoiceWidget extends StatefulWidget {
+      @override
+      _VoiceWidgetState createState() => _VoiceWidgetState();
+    }
+
+    class _VoiceWidgetState extends State<VoiceWidget> {
+      final VapiClient _vapi = VapiClient('YOUR_PUBLIC_API_KEY');
+      bool _isConnected = false;
+
+      @override
+      Widget build(BuildContext context) {
+        return ElevatedButton(
+          onPressed: () {
+            if (_isConnected) {
+              _vapi.stop();
+            } else {
+              _vapi.start('YOUR_ASSISTANT_ID');
+            }
+          },
+          child: Text(_isConnected ? 'End Call' : 'Start Call'),
+        );
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="iOS">
+    Build native iOS voice apps:
+
+    ```swift
+    import VapiSDK
+
+    class VoiceViewController: UIViewController {
+        private let vapi = VapiClient(apiKey: "YOUR_PUBLIC_API_KEY")
+        
+        @IBAction func startCallTapped(_ sender: UIButton) {
+            vapi.start(assistantId: "YOUR_ASSISTANT_ID")
+        }
+        
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            vapi.delegate = self
+        }
+    }
+
+    extension VoiceViewController: VapiClientDelegate {
+        func vapiCallDidStart() {
+            print("Call started")
+        }
+        
+        func vapiCallDidEnd() {
+            print("Call ended")
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Voice widget implementation
+
+Create a voice widget for your website:
+
+<Tabs>
+  <Tab title="HTML Script Tag">
+    The fastest way to get started. Copy this snippet into your website:
+
+    ```html
+    <script>
+      var vapiInstance = null;
+      const assistant = "assistant_id"; // Substitute with your assistant ID
+      const apiKey = "your_public_api_key"; // Substitute with your Public key from Vapi Dashboard.
+      const buttonConfig = {}; // Modify this as required
+
+      (function (d, t) {
+        var g = document.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+        g.src =
+          "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        g.defer = true;
+        g.async = true;
+        s.parentNode.insertBefore(g, s);
+
+        g.onload = function () {
+          vapiInstance = window.vapiSDK.run({
+            apiKey: apiKey, // mandatory
+            assistant: assistant, // mandatory
+            config: buttonConfig, // optional
+          });
+        };
+      })(document, "script");
+    </script>
+    ```
+  </Tab>
+
+  <Tab title="React/TypeScript">
+    Build a complete React voice widget:
+
+    ```tsx
+    import React, { useState, useEffect } from 'react';
+    import Vapi from '@vapi-ai/web';
+
+    interface VapiWidgetProps {
+      apiKey: string;
+      assistantId: string;
+      config?: Record<string, unknown>;
+    }
+
+    const VapiWidget: React.FC<VapiWidgetProps> = ({ 
+      apiKey, 
+      assistantId, 
+      config = {} 
+    }) => {
+      const [vapi, setVapi] = useState<Vapi | null>(null);
+      const [isConnected, setIsConnected] = useState(false);
+      const [isSpeaking, setIsSpeaking] = useState(false);
+      const [transcript, setTranscript] = useState<Array<{role: string, text: string}>>([]);
+
+      useEffect(() => {
+        const vapiInstance = new Vapi(apiKey);
+        setVapi(vapiInstance);
+
+        // Event listeners
+        vapiInstance.on('call-start', () => {
+          console.log('Call started');
+          setIsConnected(true);
+        });
+
+        vapiInstance.on('call-end', () => {
+          console.log('Call ended');
+          setIsConnected(false);
+          setIsSpeaking(false);
+        });
+
+        vapiInstance.on('speech-start', () => {
+          console.log('Assistant started speaking');
+          setIsSpeaking(true);
+        });
+
+        vapiInstance.on('speech-end', () => {
+          console.log('Assistant stopped speaking');
+          setIsSpeaking(false);
+        });
+
+        vapiInstance.on('message', (message) => {
+          if (message.type === 'transcript') {
+            setTranscript(prev => [...prev, {
+              role: message.role,
+              text: message.transcript
+            }]);
+          }
+        });
+
+        vapiInstance.on('error', (error) => {
+          console.error('Vapi error:', error);
+        });
+
+        return () => {
+          vapiInstance?.stop();
+        };
+      }, [apiKey]);
+
+      const startCall = () => {
+        if (vapi) {
+          vapi.start(assistantId);
+        }
+      };
+
+      const endCall = () => {
+        if (vapi) {
+          vapi.stop();
+        }
+      };
+
+      return (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 1000,
+          fontFamily: 'Arial, sans-serif'
+        }}>
+          {!isConnected ? (
+            <button
+              onClick={startCall}
+              style={{
+                background: '#12A594',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50px',
+                padding: '16px 24px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(18, 165, 148, 0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(18, 165, 148, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(18, 165, 148, 0.3)';
+              }}
+            >
+              🎤 Talk to Assistant
+            </button>
+          ) : (
+            <div style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '20px',
+              width: '320px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              border: '1px solid #e1e5e9'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '16px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: isSpeaking ? '#ff4444' : '#12A594',
+                    animation: isSpeaking ? 'pulse 1s infinite' : 'none'
+                  }}></div>
+                  <span style={{ fontWeight: 'bold', color: '#333' }}>
+                    {isSpeaking ? 'Assistant Speaking...' : 'Listening...'}
+                  </span>
+                </div>
+                <button
+                  onClick={endCall}
+                  style={{
+                    background: '#ff4444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  End Call
+                </button>
+              </div>
+              
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                marginBottom: '12px',
+                padding: '8px',
+                background: '#f8f9fa',
+                borderRadius: '8px'
+              }}>
+                {transcript.length === 0 ? (
+                  <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
+                    Conversation will appear here...
+                  </p>
+                ) : (
+                  transcript.map((msg, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        marginBottom: '8px',
+                        textAlign: msg.role === 'user' ? 'right' : 'left'
+                      }}
+                    >
+                      <span style={{
+                        background: msg.role === 'user' ? '#12A594' : '#333',
+                        color: '#fff',
+                        padding: '8px 12px',
+                        borderRadius: '12px',
+                        display: 'inline-block',
+                        fontSize: '14px',
+                        maxWidth: '80%'
+                      }}>
+                        {msg.text}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+          
+          <style>{`
+            @keyframes pulse {
+              0% { opacity: 1; }
+              50% { opacity: 0.5; }
+              100% { opacity: 1; }
+            }
+          `}</style>
+        </div>
+      );
+    };
+
+    export default VapiWidget;
+
+    // Usage in your app:
+    // <VapiWidget 
+    //   apiKey="your_public_api_key" 
+    //   assistantId="your_assistant_id" 
+    // />
+    ```
+  </Tab>
+</Tabs>
+
+## Server-side call management
+
+Automate outbound calls and handle inbound call processing with server-side SDKs.
+
+### Installation and setup
+
+<Tabs>
+  <Tab title="TypeScript">
+    Install the TypeScript Server SDK:
+
+    <CodeBlocks>
+    ```bash title="npm"
+    npm install @vapi-ai/server-sdk
+    ```
+
+    ```bash title="yarn"
+    yarn add @vapi-ai/server-sdk
+    ```
+
+    ```bash title="pnpm"
+    pnpm add @vapi-ai/server-sdk
+    ```
+
+    ```bash title="bun"
+    bun add @vapi-ai/server-sdk
+    ```
+    </CodeBlocks>
+
+    ```typescript
+    import { VapiClient } from "@vapi-ai/server-sdk";
+
+    const vapi = new VapiClient({
+      token: process.env.VAPI_API_KEY!
+    });
+
+    // Create an outbound call
+    const call = await vapi.calls.create({
+      phoneNumberId: "YOUR_PHONE_NUMBER_ID",
+      customer: { number: "+1234567890" },
+      assistantId: "YOUR_ASSISTANT_ID"
+    });
+
+    console.log(`Call created: ${call.id}`);
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    Install the Python Server SDK:
+
+    ```bash
+    pip install vapi_server_sdk
+    ```
+
+    ```python
+    from vapi import Vapi
+
+    vapi = Vapi(token=os.getenv("VAPI_API_KEY"))
+
+    # Create an outbound call
+    call = vapi.calls.create(
+        phone_number_id="YOUR_PHONE_NUMBER_ID",
+        customer={"number": "+1234567890"},
+        assistant_id="YOUR_ASSISTANT_ID"
+    )
+
+    print(f"Call created: {call.id}")
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    Add the Java SDK to your project:
+
+    ```xml
+    <dependency>
+        <groupId>ai.vapi</groupId>
+        <artifactId>server-sdk</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+    ```
+
+    ```java
+    import ai.vapi.VapiClient;
+    import ai.vapi.models.Call;
+
+    VapiClient vapi = VapiClient.builder()
+        .apiKey(System.getenv("VAPI_API_KEY"))
+        .build();
+
+    // Create an outbound call
+    Call call = vapi.calls().create(CreateCallRequest.builder()
+        .phoneNumberId("YOUR_PHONE_NUMBER_ID")
+        .customer(Customer.builder().number("+1234567890").build())
+        .assistantId("YOUR_ASSISTANT_ID")
+        .build());
+
+    System.out.println("Call created: " + call.getId());
+    ```
+  </Tab>
+
+  <Tab title="Ruby">
+    Install the Ruby Server SDK:
+
+    ```bash
+    gem install vapi-server-sdk
+    ```
+
+    ```ruby
+    require 'vapi'
+
+    vapi = Vapi::Client.new(api_key: ENV['VAPI_API_KEY'])
+
+    # Create an outbound call
+    call = vapi.calls.create(
+      phone_number_id: "YOUR_PHONE_NUMBER_ID",
+      customer: { number: "+1234567890" },
+      assistant_id: "YOUR_ASSISTANT_ID"
+    )
+
+    puts "Call created: #{call.id}"
+    ```
+  </Tab>
+
+  <Tab title="C#">
+    Install the C# Server SDK:
+
+    ```bash
+    dotnet add package Vapi.ServerSDK
+    ```
+
+    ```csharp
+    using Vapi;
+
+    var vapi = new VapiClient(Environment.GetEnvironmentVariable("VAPI_API_KEY"));
+
+    // Create an outbound call
+    var call = await vapi.Calls.CreateAsync(new CreateCallRequest
+    {
+        PhoneNumberId = "YOUR_PHONE_NUMBER_ID",
+        Customer = new Customer { Number = "+1234567890" },
+        AssistantId = "YOUR_ASSISTANT_ID"
+    });
+
+    Console.WriteLine($"Call created: {call.Id}");
+    ```
+  </Tab>
+
+  <Tab title="Go">
+    Install the Go Server SDK:
+
+    ```bash
+    go get github.com/VapiAI/server-sdk-go
+    ```
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "os"
+        "github.com/VapiAI/server-sdk-go"
+    )
+
+    func main() {
+        client := vapi.NewClient(os.Getenv("VAPI_API_KEY"))
+
+        // Create an outbound call
+        call, err := client.Calls.Create(&vapi.CreateCallRequest{
+            PhoneNumberID: "YOUR_PHONE_NUMBER_ID",
+            Customer: &vapi.Customer{
+                Number: "+1234567890",
+            },
+            AssistantID: "YOUR_ASSISTANT_ID",
+        })
+
+        if err != nil {
+            panic(err)
+        }
+
+        fmt.Printf("Call created: %s\n", call.ID)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Creating assistants
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    const assistant = await vapi.assistants.create({
+      name: "Sales Assistant",
+      firstMessage: "Hi! I'm calling about your interest in our software solutions.",
+      model: {
+        provider: "openai",
+        model: "gpt-4o",
+        temperature: 0.7,
+        messages: [{
+          role: "system",
+          content: "You are a friendly sales representative. Keep responses under 30 words."
+        }]
+      },
+      voice: {
+        provider: "11labs",
+        voiceId: "21m00Tcm4TlvDq8ikWAM"
+      }
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python
+    assistant = vapi.assistants.create(
+        name="Sales Assistant",
+        first_message="Hi! I'm calling about your interest in our software solutions.",
+        model={
+            "provider": "openai",
+            "model": "gpt-4o",
+            "temperature": 0.7,
+            "messages": [{
+                "role": "system",
+                "content": "You are a friendly sales representative. Keep responses under 30 words."
+            }]
+        },
+        voice={
+            "provider": "11labs",
+            "voiceId": "21m00Tcm4TlvDq8ikWAM"
+        }
+    )
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    ```java
+    Assistant assistant = vapi.assistants().create(CreateAssistantRequest.builder()
+        .name("Sales Assistant")
+        .firstMessage("Hi! I'm calling about your interest in our software solutions.")
+        .model(Model.builder()
+            .provider("openai")
+            .model("gpt-4o")
+            .temperature(0.7)
+            .messages(List.of(Message.builder()
+                .role("system")
+                .content("You are a friendly sales representative. Keep responses under 30 words.")
+                .build()))
+            .build())
+        .voice(Voice.builder()
+            .provider("11labs")
+            .voiceId("21m00Tcm4TlvDq8ikWAM")
+            .build())
+        .build());
+    ```
+  </Tab>
+
+  <Tab title="Ruby">
+    ```ruby
+    assistant = vapi.assistants.create(
+      name: "Sales Assistant",
+      first_message: "Hi! I'm calling about your interest in our software solutions.",
+      model: {
+        provider: "openai",
+        model: "gpt-4o",
+        temperature: 0.7,
+        messages: [{
+          role: "system",
+          content: "You are a friendly sales representative. Keep responses under 30 words."
+        }]
+      },
+      voice: {
+        provider: "11labs",
+        voiceId: "21m00Tcm4TlvDq8ikWAM"
+      }
+    )
+    ```
+  </Tab>
+
+  <Tab title="C#">
+    ```csharp
+    var assistant = await vapi.Assistants.CreateAsync(new CreateAssistantRequest
+    {
+        Name = "Sales Assistant",
+        FirstMessage = "Hi! I'm calling about your interest in our software solutions.",
+        Model = new Model
+        {
+            Provider = "openai",
+            ModelName = "gpt-4o",
+            Temperature = 0.7,
+            Messages = new List<Message>
+            {
+                new Message
+                {
+                    Role = "system",
+                    Content = "You are a friendly sales representative. Keep responses under 30 words."
+                }
+            }
+        },
+        Voice = new Voice
+        {
+            Provider = "11labs",
+            VoiceId = "21m00Tcm4TlvDq8ikWAM"
+        }
+    });
+    ```
+  </Tab>
+
+  <Tab title="Go">
+    ```go
+    assistant, err := client.Assistants.Create(&vapi.CreateAssistantRequest{
+        Name:         "Sales Assistant",
+        FirstMessage: "Hi! I'm calling about your interest in our software solutions.",
+        Model: &vapi.Model{
+            Provider:    "openai",
+            Model:       "gpt-4o",
+            Temperature: 0.7,
+            Messages: []vapi.Message{
+                {
+                    Role:    "system",
+                    Content: "You are a friendly sales representative. Keep responses under 30 words.",
+                },
+            },
+        },
+        Voice: &vapi.Voice{
+            Provider: "11labs",
+            VoiceID:  "21m00Tcm4TlvDq8ikWAM",
+        },
+    })
+    ```
+  </Tab>
+</Tabs>
+
+### Bulk operations
+
+Run automated call campaigns for sales, surveys, or notifications:
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    async function runBulkCallCampaign(assistantId: string, phoneNumberId: string) {
+      const prospects = [
+        { number: "+1234567890", name: "John Smith" },
+        { number: "+1234567891", name: "Jane Doe" },
+        // ... more prospects
+      ];
+
+      const calls = [];
+      for (const prospect of prospects) {
+        const call = await vapi.calls.create({
+          assistantId,
+          phoneNumberId,
+          customer: prospect,
+          metadata: { campaign: "Q1_Sales" }
+        });
+        calls.push(call);
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      return calls;
+    }
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python
+    import time
+
+    def run_bulk_call_campaign(assistant_id: str, phone_number_id: str):
+        prospects = [
+            {"number": "+1234567890", "name": "John Smith"},
+            {"number": "+1234567891", "name": "Jane Doe"},
+            # ... more prospects
+        ]
+
+        calls = []
+        for prospect in prospects:
+            call = vapi.calls.create(
+                assistant_id=assistant_id,
+                phone_number_id=phone_number_id,
+                customer=prospect,
+                metadata={"campaign": "Q1_Sales"}
+            )
+            calls.append(call)
+
+            # Rate limiting
+            time.sleep(2)
+
+        return calls
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    ```java
+    public List<Call> runBulkCallCampaign(String assistantId, String phoneNumberId) {
+        List<Customer> prospects = Arrays.asList(
+            Customer.builder().number("+1234567890").name("John Smith").build(),
+            Customer.builder().number("+1234567891").name("Jane Doe").build()
+            // ... more prospects
+        );
+
+        List<Call> calls = new ArrayList<>();
+        for (Customer prospect : prospects) {
+            Call call = vapi.calls().create(CreateCallRequest.builder()
+                .assistantId(assistantId)
+                .phoneNumberId(phoneNumberId)
+                .customer(prospect)
+                .metadata(Map.of("campaign", "Q1_Sales"))
+                .build());
+            calls.add(call);
+
+            // Rate limiting
+            Thread.sleep(2000);
+        }
+
+        return calls;
+    }
+    ```
+  </Tab>
+
+  <Tab title="Ruby">
+    ```ruby
+    def run_bulk_call_campaign(assistant_id, phone_number_id)
+      prospects = [
+        { number: "+1234567890", name: "John Smith" },
+        { number: "+1234567891", name: "Jane Doe" },
+        # ... more prospects
+      ]
+
+      calls = []
+      prospects.each do |prospect|
+        call = vapi.calls.create(
+          assistant_id: assistant_id,
+          phone_number_id: phone_number_id,
+          customer: prospect,
+          metadata: { campaign: "Q1_Sales" }
+        )
+        calls << call
+
+        # Rate limiting
+        sleep(2)
+      end
+
+      calls
+    end
+    ```
+  </Tab>
+
+  <Tab title="C#">
+    ```csharp
+    public async Task<List<Call>> RunBulkCallCampaign(string assistantId, string phoneNumberId)
+    {
+        var prospects = new List<Customer>
+        {
+            new Customer { Number = "+1234567890", Name = "John Smith" },
+            new Customer { Number = "+1234567891", Name = "Jane Doe" },
+            // ... more prospects
+        };
+
+        var calls = new List<Call>();
+        foreach (var prospect in prospects)
+        {
+            var call = await vapi.Calls.CreateAsync(new CreateCallRequest
+            {
+                AssistantId = assistantId,
+                PhoneNumberId = phoneNumberId,
+                Customer = prospect,
+                Metadata = new Dictionary<string, object> { ["campaign"] = "Q1_Sales" }
+            });
+            calls.Add(call);
+
+            // Rate limiting
+            await Task.Delay(2000);
+        }
+
+        return calls;
+    }
+    ```
+  </Tab>
+
+  <Tab title="Go">
+    ```go
+    func runBulkCallCampaign(client *vapi.Client, assistantID, phoneNumberID string) ([]*vapi.Call, error) {
+        prospects := []*vapi.Customer{
+            {Number: "+1234567890", Name: "John Smith"},
+            {Number: "+1234567891", Name: "Jane Doe"},
+            // ... more prospects
+        }
+
+        var calls []*vapi.Call
+        for _, prospect := range prospects {
+            call, err := client.Calls.Create(&vapi.CreateCallRequest{
+                AssistantID:   assistantID,
+                PhoneNumberID: phoneNumberID,
+                Customer:      prospect,
+                Metadata:      map[string]interface{}{"campaign": "Q1_Sales"},
+            })
+            if err != nil {
+                return nil, err
+            }
+            calls = append(calls, call)
+
+            // Rate limiting
+            time.Sleep(2 * time.Second)
+        }
+
+        return calls, nil
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Webhook integration
+
+Handle real-time events for both client and server applications:
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    import express from 'express';
+
+    const app = express();
+    app.use(express.json());
+
+    app.post('/webhook/vapi', async (req, res) => {
+      const { message } = req.body;
+
+      switch (message.type) {
+        case 'status-update':
+          console.log(`Call ${message.call.id}: ${message.call.status}`);
+          break;
+        case 'transcript':
+          console.log(`${message.role}: ${message.transcript}`);
+          break;
+        case 'function-call':
+          return handleFunctionCall(message, res);
+      }
+
+      res.status(200).json({ received: true });
+    });
+
+    function handleFunctionCall(message: any, res: express.Response) {
+      const { functionCall } = message;
+      
+      switch (functionCall.name) {
+        case 'lookup_order':
+          const orderData = { orderId: functionCall.parameters.orderId, status: 'shipped' };
+          return res.json({ result: orderData });
+        default:
+          return res.status(400).json({ error: 'Unknown function' });
+      }
+    }
+
+    app.listen(3000, () => console.log('Webhook server running on port 3000'));
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python
+    from flask import Flask, request, jsonify
+
+    app = Flask(__name__)
+
+    @app.route('/webhook/vapi', methods=['POST'])
+    def handle_vapi_webhook():
+        payload = request.get_json()
+        message = payload.get('message', {})
+        
+        if message.get('type') == 'status-update':
+            call = message.get('call', {})
+            print(f"Call {call.get('id')}: {call.get('status')}")
+            
+        elif message.get('type') == 'transcript':
+            print(f"{message.get('role')}: {message.get('transcript')}")
+            
+        elif message.get('type') == 'function-call':
+            return handle_function_call(message)
+        
+        return jsonify({"received": True}), 200
+
+    def handle_function_call(message):
+        function_call = message.get('functionCall', {})
+        function_name = function_call.get('name')
+        
+        if function_name == 'lookup_order':
+            order_data = {
+                "orderId": function_call.get('parameters', {}).get('orderId'),
+                "status": "shipped"
+            }
+            return jsonify({"result": order_data})
+        
+        return jsonify({"error": "Unknown function"}), 400
+
+    if __name__ == '__main__':
+        app.run(port=5000)
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    ```java
+    @RestController
+    @RequestMapping("/webhook")
+    public class VapiWebhookController {
+
+        @PostMapping("/vapi")
+        public ResponseEntity<?> handleVapiWebhook(@RequestBody Map<String, Object> payload) {
+            Map<String, Object> message = (Map<String, Object>) payload.get("message");
+            String type = (String) message.get("type");
+
+            switch (type) {
+                case "status-update":
+                    Map<String, Object> call = (Map<String, Object>) message.get("call");
+                    System.out.println("Call " + call.get("id") + ": " + call.get("status"));
+                    break;
+                case "transcript":
+                    System.out.println(message.get("role") + ": " + message.get("transcript"));
+                    break;
+                case "function-call":
+                    return handleFunctionCall(message);
+            }
+
+            return ResponseEntity.ok(Map.of("received", true));
+        }
+
+        private ResponseEntity<?> handleFunctionCall(Map<String, Object> message) {
+            Map<String, Object> functionCall = (Map<String, Object>) message.get("functionCall");
+            String functionName = (String) functionCall.get("name");
+
+            if ("lookup_order".equals(functionName)) {
+                Map<String, Object> parameters = (Map<String, Object>) functionCall.get("parameters");
+                Map<String, Object> orderData = Map.of(
+                    "orderId", parameters.get("orderId"),
+                    "status", "shipped"
+                );
+                return ResponseEntity.ok(Map.of("result", orderData));
+            }
+
+            return ResponseEntity.badRequest().body(Map.of("error", "Unknown function"));
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Ruby">
+    ```ruby
+    require 'sinatra'
+    require 'json'
+
+    post '/webhook/vapi' do
+      payload = JSON.parse(request.body.read)
+      message = payload['message']
+
+      case message['type']
+      when 'status-update'
+        call = message['call']
+        puts "Call #{call['id']}: #{call['status']}"
+      when 'transcript'
+        puts "#{message['role']}: #{message['transcript']}"
+      when 'function-call'
+        return handle_function_call(message)
+      end
+
+      content_type :json
+      { received: true }.to_json
+    end
+
+    def handle_function_call(message)
+      function_call = message['functionCall']
+      function_name = function_call['name']
+
+      case function_name
+      when 'lookup_order'
+        order_data = {
+          orderId: function_call['parameters']['orderId'],
+          status: 'shipped'
+        }
+        content_type :json
+        { result: order_data }.to_json
+      else
+        status 400
+        content_type :json
+        { error: 'Unknown function' }.to_json
+      end
+    end
+    ```
+  </Tab>
+
+  <Tab title="C#">
+    ```csharp
+    [ApiController]
+    [Route("webhook")]
+    public class VapiWebhookController : ControllerBase
+    {
+        [HttpPost("vapi")]
+        public IActionResult HandleVapiWebhook([FromBody] WebhookPayload payload)
+        {
+            var message = payload.Message;
+
+            switch (message.Type)
+            {
+                case "status-update":
+                    Console.WriteLine($"Call {message.Call.Id}: {message.Call.Status}");
+                    break;
+                case "transcript":
+                    Console.WriteLine($"{message.Role}: {message.Transcript}");
+                    break;
+                case "function-call":
+                    return HandleFunctionCall(message);
+            }
+
+            return Ok(new { received = true });
+        }
+
+        private IActionResult HandleFunctionCall(WebhookMessage message)
+        {
+            var functionCall = message.FunctionCall;
+
+            switch (functionCall.Name)
+            {
+                case "lookup_order":
+                    var orderData = new
+                    {
+                        orderId = functionCall.Parameters["orderId"],
+                        status = "shipped"
+                    };
+                    return Ok(new { result = orderData });
+                default:
+                    return BadRequest(new { error = "Unknown function" });
+            }
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Go">
+    ```go
+    package main
+
+    import (
+        "encoding/json"
+        "fmt"
+        "net/http"
+    )
+
+    type WebhookPayload struct {
+        Message WebhookMessage `json:"message"`
+    }
+
+    type WebhookMessage struct {
+        Type         string                 `json:"type"`
+        Call         *Call                  `json:"call,omitempty"`
+        Role         string                 `json:"role,omitempty"`
+        Transcript   string                 `json:"transcript,omitempty"`
+        FunctionCall *FunctionCall          `json:"functionCall,omitempty"`
+    }
+
+    func handleVapiWebhook(w http.ResponseWriter, r *http.Request) {
+        var payload WebhookPayload
+        if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+            return
+        }
+
+        message := payload.Message
+
+        switch message.Type {
+        case "status-update":
+            fmt.Printf("Call %s: %s\n", message.Call.ID, message.Call.Status)
+        case "transcript":
+            fmt.Printf("%s: %s\n", message.Role, message.Transcript)
+        case "function-call":
+            handleFunctionCall(w, message)
+            return
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]bool{"received": true})
+    }
+
+    func handleFunctionCall(w http.ResponseWriter, message WebhookMessage) {
+        functionCall := message.FunctionCall
+
+        switch functionCall.Name {
+        case "lookup_order":
+            orderData := map[string]interface{}{
+                "orderId": functionCall.Parameters["orderId"],
+                "status":  "shipped",
+            }
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(map[string]interface{}{"result": orderData})
+        default:
+            http.Error(w, `{"error": "Unknown function"}`, http.StatusBadRequest)
+        }
+    }
+
+    func main() {
+        http.HandleFunc("/webhook/vapi", handleVapiWebhook)
+        fmt.Println("Webhook server running on port 8080")
+        http.ListenAndServe(":8080", nil)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Next steps
+
+Now that you understand both client and server SDK capabilities:
+
+- **Explore use cases:** Check out our [examples section](/assistants/examples/inbound-support) for complete implementations
+- **Add tools:** Connect your voice agents to external APIs and databases with [custom tools](/tools/custom-tools)
+- **Configure models:** Try different [speech and language models](/assistants/speech-configuration) for better performance
+- **Scale with squads:** Use [Squads](/squads) for multi-assistant setups and complex processes
+
+## Resources
+
+**Client SDKs:**
+- [Web SDK GitHub](https://github.com/VapiAI/web)
+- [React Native SDK GitHub](https://github.com/VapiAI/react-native)
+- [Flutter SDK GitHub](https://github.com/VapiAI/flutter)
+- [iOS SDK GitHub](https://github.com/VapiAI/ios)
+- [Python Client GitHub](https://github.com/VapiAI/python)
+
+**Server SDKs:**
+- [TypeScript SDK GitHub](https://github.com/VapiAI/server-sdk-typescript)
+- [Python SDK GitHub](https://github.com/VapiAI/server-sdk-python)
+- [Java SDK GitHub](https://github.com/VapiAI/server-sdk-java)
+- [Ruby SDK GitHub](https://github.com/VapiAI/server-sdk-ruby)
+- [C# SDK GitHub](https://github.com/VapiAI/server-sdk-csharp)
+- [Go SDK GitHub](https://github.com/VapiAI/server-sdk-go)
+
+**Documentation:**
+- [API Reference](/api-reference)
+- [Discord Community](https://discord.gg/pUFNcf2WmH) 

@@ -1,0 +1,379 @@
+---
+title: Idle messages
+subtitle: Keep users engaged during conversation pauses
+slug: assistants/idle-messages
+---
+
+## Overview
+
+Idle messages automatically prompt users during periods of inactivity to maintain engagement and reduce call abandonment. They are set up using [Assistant Hooks](/assistants/assistant-hooks) to trigger on customer silence timeout, and can be configured to say exact messages or use a model-generated message based on the conversation history.
+
+**Idle messages help you:**
+
+- Re-engage users who become distracted or experience audio delays
+- Reduce call abandonment rates during silent periods
+- Provide proactive assistance when users hesitate or need guidance
+
+<Tip>
+  Idle messages are automatically disabled during tool calls and warm transfers
+  to avoid interrupting system processes.
+</Tip>
+
+## How idle messages work
+
+When a user stops speaking, Vapi starts a timer. Based on the configured timeout periods in `customer.speech.timeout` hooks, the assistant will trigger the action, which can be configured to say messages to the user.
+
+<CardGroup cols={3}>
+  <Card title="Detection" icon="timer" iconType="solid">
+    Timer starts when user stops speaking
+  </Card>
+  <Card title="Activation" icon="message" iconType="solid">
+    Fetches a message to say to the user
+  </Card>
+  <Card title="Reset" icon="refresh" iconType="solid">
+    Counter resets when user responds (optional)
+  </Card>
+</CardGroup>
+
+## Configuration
+
+Configure idle messages using [Assistant Hooks](/assistants/assistant-hooks). Use the `customer.speech.timeout` hook to send a message when the user is silent for a specified period:
+
+<CodeBlocks>
+```typescript title="TypeScript (Server SDK)"
+import { VapiClient } from "@vapi-ai/server-sdk";
+
+const client = new VapiClient({ token: process.env.VAPI_API_KEY });
+
+await client.assistants.create({
+  name: "Support Assistant",
+  hooks: [
+    {
+      on: "customer.speech.timeout",
+      options: {
+        timeoutSeconds: 10,
+        triggerMaxCount: 3,
+        triggerResetMode: "onUserSpeech"
+      },
+      do: [
+        {
+          type: "say",
+          exact: [
+            "Are you still there?",
+            "Can I help you with anything else?",
+            "I'm here whenever you're ready to continue."
+          ]
+        }
+      ],
+      name: "idle_message_check"
+    }
+  ]
+});
+```
+
+```python title="Python (Server SDK)"
+from vapi import Vapi
+import os
+
+client = Vapi(token=os.getenv("VAPI_API_KEY"))
+
+assistant = client.assistants.create(
+    name="Support Assistant",
+    hooks=[
+        {
+            "on": "customer.speech.timeout",
+            "options": {
+                "timeoutSeconds": 10,
+                "triggerMaxCount": 3,
+                "triggerResetMode": "onUserSpeech"
+            },
+            "do": [
+                {
+                    "type": "say",
+                    "exact": [
+                        "Are you still there?",
+                        "Can I help you with anything else?",
+                        "I'm here whenever you're ready to continue."
+                    ]
+                }
+            ],
+            "name": "idle_message_check"
+        }
+    ]
+)
+```
+
+```bash title="cURL"
+curl -X POST "https://api.vapi.ai/assistant" \
+  -H "Authorization: Bearer $VAPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Support Assistant",
+    "hooks": [{
+      "on": "customer.speech.timeout",
+      "options": {
+        "timeoutSeconds": 10,
+        "triggerMaxCount": 3,
+        "triggerResetMode": "onUserSpeech"
+      },
+      "do": [{
+        "type": "say",
+        "exact": [
+          "Are you still there?",
+          "Can I help you with anything else?",
+          "I am here whenever you are ready to continue."
+        ]
+      }],
+      "name": "idle_message_check"
+    }]
+  }'
+```
+
+</CodeBlocks>
+
+<Note>
+  Learn more about hook options and actions in **[Assistant hooks](/assistants/assistant-hooks)**.
+</Note>
+
+## Configuration options
+
+### Timeout and triggering
+
+| Option                | Type     | Range           | Default   | Description |
+| --------------------- | -------- | --------------- | --------- | ----------- |
+| `timeoutSeconds`      | number   | 1-1000 seconds  | 7.5       | How long to wait for customer speech before triggering |
+| `triggerMaxCount`     | number   | 1-10            | 3         | Maximum times the timeout hook triggers per call |
+| `triggerResetMode`    | string   | `never`\|`onUserSpeech` | `never`   | Whether to reset the trigger count when the user speaks |
+
+### Message action
+
+| Field        | Type              | Description |
+| ------------ | ----------------- | ----------- |
+| `say.exact`  | string or string[]| Speak one of the provided messages verbatim |
+| `say.prompt` | string            | Use a model-generated response based on the given prompt and context (e.g., `{{transcript}}`) |
+
+### Advanced configuration
+
+<Tabs>
+  <Tab title="Basic setup (single timeout)">
+    ```json
+    {
+      "hooks": [
+        {
+          "on": "customer.speech.timeout",
+          "options": { "timeoutSeconds": 10 },
+          "do": [{ "type": "say", "exact": "Are you still there?" }]
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab title="With reset counter">
+    ```json
+    {
+      "hooks": [
+        {
+          "on": "customer.speech.timeout",
+          "options": {
+            "timeoutSeconds": 15,
+            "triggerMaxCount": 5,
+            "triggerResetMode": "onUserSpeech"
+          },
+          "do": [{ "type": "say", "exact": "Hello, are you there?" }]
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab title="End call after 30s of silence">
+    ```json
+    {
+      "hooks": [
+        {
+          "on": "customer.speech.timeout",
+          "options": {
+            "timeoutSeconds": 10,
+            "triggerMaxCount": 3,
+            "triggerResetMode": "onUserSpeech"
+          },
+          "do": [{ "type": "say", "exact": "Are you still there? Please let me know how I can help you." }]
+        },
+        {
+          "on": "customer.speech.timeout",
+          "options": {
+            "timeoutSeconds": 20,
+            "triggerMaxCount": 3,
+            "triggerResetMode": "onUserSpeech"
+          },
+          "do": [{ "type": "say", "prompt": "The user has not responded in 20s. Based on the above conversation in {{transcript}} ask the user if they need help or if not you will be ending the call" }]
+        },
+        {
+          "on": "customer.speech.timeout",
+          "options": {
+            "timeoutSeconds": 30,
+            "triggerMaxCount": 3,
+            "triggerResetMode": "onUserSpeech"
+          },
+          "do": [
+            { "type": "say", "exact": "I'll be ending the call now, please feel free to call back at any time." },
+            { "type": "tool", "tool": { "type": "endCall" } }
+          ]
+        }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Multilingual support
+
+Handle multiple languages by creating language-specific assistants or dynamically configuring hook messages:
+
+<Tabs>
+  <Tab title="Language-specific assistants">
+    ```typescript
+    // English assistant
+    await client.assistants.create({
+      name: "EN Support",
+      hooks: [{
+        on: "customer.speech.timeout",
+        options: { timeoutSeconds: 10 },
+        do: [{ type: "say", exact: [
+          "Are you still there?",
+          "Can I help you with anything else?"
+        ] }]
+      }]
+    });
+
+    // Spanish assistant
+    await client.assistants.create({
+      name: "ES Support",
+      hooks: [{
+        on: "customer.speech.timeout",
+        options: { timeoutSeconds: 10 },
+        do: [{ type: "say", exact: [
+          "¿Sigues ahí?",
+          "¿Puedo ayudarte con algo más?"
+        ] }]
+      }]
+    });
+    ```
+
+  </Tab>
+  <Tab title="Dynamic updates">
+    ```typescript
+    await client.assistants.create({
+      name: "Multi Support",
+      hooks: [{
+        on: "customer.speech.timeout",
+        options: { timeoutSeconds: 10 },
+        do: [{ type: "say", prompt: "Based on the above conversation in {{transcript}} ask the user in the language of the conversation if they need help or if not you will be ending the call. If no conversation is provided, default to English." }]
+      }]
+    });
+    ```
+
+  </Tab>
+</Tabs>
+
+## Best practices
+
+### Message content guidelines
+
+- **Keep messages concise** - Users may be distracted, so shorter is better
+- **Use encouraging tone** - Avoid demanding or impatient language
+- **Offer specific help** - Guide users toward productive next steps
+
+<Check>
+  **Good examples:** - "Are you still there?" - "Is there anything specific you
+  need help with?" - "I'm here whenever you're ready to continue."
+</Check>
+
+<Error>
+  **Avoid:** - "Why aren't you responding?" - "Hello? Hello? Are you there?" -
+  Long explanations or complex questions
+</Error>
+
+### Timing recommendations
+
+Choose timeout duration based on your use case:
+
+<CardGroup cols={3}>
+  <Card title="Urgent calls" icon="clock">
+    **5-10 seconds** For transactional or time-sensitive interactions
+  </Card>
+  <Card title="Support calls" icon="headset">
+    **10-20 seconds** For general customer service and assistance
+  </Card>
+  <Card title="Complex topics" icon="brain">
+    **20-30 seconds** For problem-solving or decision-making conversations
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Messages not triggering
+
+<Steps>
+  <Step title="Verify configuration">
+    Check that idle messages are properly configured in hooks:
+    ```typescript
+    const assistant = await client.assistants.get(assistantId);
+    console.log('Hook config:', assistant.hooks);
+    ```
+  </Step>
+  <Step title="Check message generation time">
+    Account for message generation time (1-2 seconds) if using `say.prompt`:
+  </Step>
+  <Step title="Verify message limits">
+    Ensure the maximum count hasn't been reached. If the maximum count is reached, you will see a log in the call logs that mentions hook not triggered because of max count.
+    ```json
+    {
+      "options": {
+        "triggerMaxCount": 5,
+        "triggerResetMode": "onUserSpeech"
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+### Common issues and solutions
+
+<AccordionGroup>
+  <Accordion title="Messages trigger too frequently">
+    **Solution:** Increase the timeout duration
+    ```json
+    { "idleTimeoutSeconds": 25 }
+    ```
+  </Accordion>
+  
+  <Accordion title="Max count reached too quickly">
+    **Solution:** Enable reset on user speech and increase max count
+    ```json
+    {
+      "idleMessageMaxSpokenCount": 5,
+      "idleMessageResetCountOnUserSpeechEnabled": true  
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Messages interrupt processing">
+    **Solution:** This shouldn't happen - all hooks are automatically disabled during tool calls and transfers. If it persists, contact support.
+  </Accordion>
+</AccordionGroup>
+
+## Limitations
+
+- **Generative variability**: Using `say.prompt` produces model-generated text that may vary; use `say.exact` for strict control
+- **Trigger limits**: `triggerMaxCount` caps how many times the timeout hook fires per call (1-10)
+- **Timeout range**: `timeoutSeconds` supports 1-1000 seconds (default ~7.5s); account for processing delays
+- **Processing delays**: Allow 2-3 seconds of audio processing time when choosing timeout values
+
+## Next steps
+
+Now that you have idle messages configured:
+
+- **[Background messages](/assistants/background-messages):** Add contextual information silently
+- **[Assistant hooks](/assistants/assistant-hooks):** Handle call events and state changes
+- **[Voice formatting plan](/assistants/voice-formatting-plan):** Control speech patterns and delivery
+ 

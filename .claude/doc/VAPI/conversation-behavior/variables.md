@@ -1,0 +1,134 @@
+---
+title: Variables
+subtitle: Personalize assistant messages with dynamic and default variables
+slug: assistants/dynamic-variables
+---
+
+## Overview
+
+Use dynamic variables in the system prompt or any message in the dashboard with double curly braces (e.g., `{{name}}`).
+
+To set values, make a phone call request through the API and set `assistantOverrides`. You cannot set variable values directly in the dashboard.
+
+For example, set the assistant's first message to "Hello, `{{name}}`!" and assign `name` to `John` by passing `assistantOverrides` with `variableValues`:
+
+```json
+{
+  "variableValues": {
+    "name": "John"
+  }
+}
+```
+
+
+## Using dynamic variables in a phone call
+
+<Steps>
+
+  <Step title="Prepare Your Request">
+
+  Create a JSON payload with these key-value pairs:
+
+  - **`assistantId`**: Replace `"your-assistant-id"` with your assistant's actual ID.
+  - **`assistantOverride`**: Customize your assistant's behavior.
+    - **`variableValues`**: Include dynamic variables in the format `{ "variableName": "variableValue" }`. Example: `{ "name": "John" }`.
+  - **`customer`**: Represent the call recipient.
+    - **`number`**: Replace `"+1xxxxxxxxxx"` with the recipient's phone number (E.164 format).
+  - **`phoneNumberId`**: Replace `"your-phone-id"` with your registered phone number's ID. Find it on the [Phone number](https://dashboard.vapi.ai/phone-numbers) page.
+
+  </Step>
+
+  <Step title="Send the Request">
+
+  Send the JSON payload to the `/call/phone` endpoint using your preferred method (e.g., HTTP POST request).
+
+  ```json
+  {
+    "assistantId": "your-assistant-id",
+    "assistantOverrides": {
+      "variableValues": {
+        "name": "John"
+      }
+    },
+    "customer": {
+      "number": "+1xxxxxxxxxx"
+    },
+    "phoneNumberId": "your-phone-id"
+  }
+  ```
+
+  </Step>
+
+</Steps>
+
+<Note>
+  Ensure `{{variableName}}` is included in all prompts where needed.
+</Note>
+
+## Default Variables
+
+These variables are automatically filled based on the current (UTC) time, so you don't need to set them manually in `variableValues`:
+
+| Variable                | Description                       | Example                   |
+| ----------------------- | --------------------------------- | ------------------------- |
+| `{{now}}`               | Current date and time (UTC)       | Jan 1, 2024 12:00 PM      |
+| `{{date}}`              | Current date (UTC)                | Jan 1, 2024               |
+| `{{time}}`              | Current time (UTC)                | 12:00 PM                  |
+| `{{month}}`             | Current month (UTC)               | January                   |
+| `{{day}}`               | Current day of month (UTC)        | 1                         |
+| `{{year}}`              | Current year (UTC)                | 2024                      |
+| `{{customer.number}}`   | Customer's phone number           | +1xxxxxxxxxx              |
+| `{{customer.X}}`        | Any other customer property       |                           |
+
+## Advanced date and time usage
+
+You can use advanced date and time formatting in any prompt or message that supports dynamic variables in the dashboard or API. We use [LiquidJS](https://liquidjs.com/) for formatting - see their docs for details.
+
+Format a date or time using the LiquidJS `date` filter:
+
+```liquid
+{{"now" | date: "%A, %B %d, %Y, %I:%M %p", "America/Los_Angeles"}}
+```
+Outputs: `Monday, January 01, 2024, 03:45 PM`
+
+**Examples:**
+- 24-hour time:
+  ```liquid
+  {{"now" | date: "%H:%M", "Europe/London"}}
+  ```
+  → `17:30`
+- Day of week:
+  ```liquid
+  {{"now" | date: "%A"}}
+  ```
+  → `Tuesday`
+- With customer number:
+  ```liquid
+  Hello, your number is {{customer.number}} and the time is {{"now" | date: "%I:%M %p", "America/New_York"}}
+  ```
+
+**Common formats:**
+
+| Format String   | Output         | Description         |
+|----------------|---------------|---------------------|
+| `%Y-%m-%d`     | 2024-01-01    | Year-Month-Day      |
+| `%I:%M %p`     | 03:45 PM      | Hour:Minute AM/PM   |
+| `%H:%M`        | 15:45         | 24-hour time        |
+| `%A`           | Monday        | Day of week         |
+| `%b %d, %Y`    | Jan 01, 2024  | Abbrev. Month Day   |
+```
+
+## Using dynamic variables in the dashboard
+
+To use dynamic variables in the dashboard, include them in your prompts or messages using double curly braces. For example:
+
+```
+Hello, {{name}}!
+```
+
+When you start a call, you must provide a value for each variable (like `name`) in the call configuration or via the API/SDK.
+
+<Note>
+Always use double curly braces (`{{variableName}}`) to reference dynamic variables in your prompts and messages.
+</Note>
+</rewritten_file>
