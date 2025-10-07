@@ -11,7 +11,6 @@ export interface Assistant {
   prompt: string;
   temperature: number;
   token: number;
-  activated_whatsapp: boolean;
   docs_keys: [];
   activated_whatsApp: boolean;
   keyword_transfer_ws: string;

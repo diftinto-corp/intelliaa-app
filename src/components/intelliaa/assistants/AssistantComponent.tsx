@@ -15,6 +15,13 @@ import { getAllQa } from "@/lib/actions/intelliaa/qa";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 
+// Filter components
+import { AssistantsFilterBar } from "./filters/AssistantsFilterBar";
+import { FilterChips } from "./filters/FilterChips";
+import { ResultCount } from "./filters/ResultCount";
+import { EmptyFilterState } from "./filters/EmptyFilterState";
+import { useAssistantFilters } from "./filters/useAssistantFilters";
+
 export default function AssistantComponent() {
   const pathname = usePathname();
   const path = pathname.split("/")[1];
@@ -27,6 +34,17 @@ export default function AssistantComponent() {
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
+
+  // Filter hook
+  const {
+    filters,
+    setFilters,
+    clearFilters,
+    clearFilter,
+    hasActiveFilters,
+    filteredAssistants,
+    filteredCount,
+  } = useAssistantFilters(assistantsList);
 
   useEffect(() => {
     const fetchAssistants = async () => {
@@ -144,15 +162,39 @@ export default function AssistantComponent() {
   return (
     <>
       {assistantsList.length > 0 ? (
-        // Render assistants if there are any
-        <ConfigAssistant
-          templates={templates.data}
-          assistantsListPage={assistantsList}
-          assistantSelected={assistantSelected}
-          setAssistantSelected={setAssistantSelected}
-          qaList={qaList}
-          setQaList={setQaList}
-        />
+        <div className="flex flex-col h-[92vh] p-6">
+          {/* Filter Bar */}
+          <AssistantsFilterBar
+            onFiltersChange={setFilters}
+            currentFilters={filters}
+            totalCount={assistantsList.length}
+            filteredCount={filteredCount}
+          />
+
+          {/* Filter Chips */}
+          <FilterChips filters={filters} onRemoveFilter={clearFilter} />
+
+          {/* Result Count */}
+          <ResultCount
+            filteredCount={filteredCount}
+            totalCount={assistantsList.length}
+            isFiltered={hasActiveFilters}
+          />
+
+          {/* Conditional rendering based on filtered results */}
+          {filteredAssistants.length > 0 ? (
+            <ConfigAssistant
+              templates={templates.data}
+              assistantsListPage={filteredAssistants}
+              assistantSelected={assistantSelected}
+              setAssistantSelected={setAssistantSelected}
+              qaList={qaList}
+              setQaList={setQaList}
+            />
+          ) : (
+            <EmptyFilterState onClearFilters={clearFilters} />
+          )}
+        </div>
       ) : (
         <div className='flex flex-col justify-center min-h-[95vh] items-center p-6'>
           <div className='flex w-[40%] flex-col justify-center items-center text-muted-foreground'>
