@@ -22,6 +22,10 @@ import { ResultCount } from "./filters/ResultCount";
 import { EmptyFilterState } from "./filters/EmptyFilterState";
 import { useAssistantFilters } from "./filters/useAssistantFilters";
 
+// Status components (INT-32)
+import { StatusSummary } from "./status";
+import { AssistantStatus } from "@/types/assistants";
+
 export default function AssistantComponent() {
   const pathname = usePathname();
   const path = pathname.split("/")[1];
@@ -45,6 +49,13 @@ export default function AssistantComponent() {
     filteredAssistants,
     filteredCount,
   } = useAssistantFilters(assistantsList);
+
+  // Status filter handler (INT-32)
+  const handleStatusClick = (status: AssistantStatus) => {
+    // Toggle status filter: if same status clicked, clear it; otherwise set it
+    const newStatusFilter = filters.status === status ? "all" : status;
+    setFilters({ ...filters, status: newStatusFilter });
+  };
 
   useEffect(() => {
     const fetchAssistants = async () => {
@@ -170,6 +181,21 @@ export default function AssistantComponent() {
             totalCount={assistantsList.length}
             filteredCount={filteredCount}
           />
+
+          {/* Status Summary (INT-32) - Click-to-filter statistics */}
+          {assistantsList.length > 0 && (
+            <div className="mb-4">
+              <StatusSummary
+                assistants={assistantsList}
+                onStatusClick={handleStatusClick}
+                currentFilter={
+                  filters.status !== "all"
+                    ? (filters.status as AssistantStatus)
+                    : undefined
+                }
+              />
+            </div>
+          )}
 
           {/* Filter Chips */}
           <FilterChips filters={filters} onRemoveFilter={clearFilter} />

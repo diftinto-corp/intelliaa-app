@@ -314,42 +314,58 @@ const activateWs = async (
   }
 };
 
+/**
+ * Updates WhatsApp assistant status when deployment succeeds (INT-32)
+ * Called by Railway webhook when deployment is complete
+ *
+ * @param namespace - Assistant namespace
+ * @returns Update result
+ */
 const wsStatusActiveUtil = async (namespace: string) => {
   const supabase = createClient();
 
   namespace = namespace.replace(/^"(.*)"$/, "$1");
 
-  console.log("Namespace:", namespace);
+  console.log("[wsStatusActiveUtil] Namespace:", namespace);
 
   // Verificar si el namespace existe antes de intentar actualizar
   const { data: existingRecords, error: fetchError } = await supabase
     .from("assistants")
-    .select("*")
+    .select("id, account_id, status")
     .eq("namespace", namespace);
 
   if (fetchError) {
-    console.error("Error fetching record:", fetchError);
-    return;
+    console.error("[wsStatusActiveUtil] Error fetching record:", fetchError);
+    return { error: fetchError.message };
   }
 
   if (existingRecords.length === 0) {
-    return;
+    console.warn("[wsStatusActiveUtil] No assistant found with namespace:", namespace);
+    return { error: "Assistant not found" };
   }
 
-  // Intentar actualizar el registro
+  // Update both legacy fields and new status (INT-32)
   const { data, error } = await supabase
     .from("assistants")
     .update({
+      // Legacy fields (backward compatibility)
       activated_whatsApp: true,
       is_deploying_ws: false,
+      // New status field (INT-32)
+      status: 'active',
+      error_message: null,
+      last_status_change: new Date().toISOString(),
     })
-    .eq("namespace", namespace);
+    .eq("namespace", namespace)
+    .select();
 
   if (error) {
-    console.error("Error updating record:", error);
-  } else {
-    return data;
+    console.error("[wsStatusActiveUtil] Error updating record:", error);
+    return { error: error.message };
   }
+
+  console.log("[wsStatusActiveUtil] Successfully activated WhatsApp for namespace:", namespace);
+  return { success: true, data };
 };
 
 const deleteDocumentsByNamespace = async (table: string, namespace: string) => {

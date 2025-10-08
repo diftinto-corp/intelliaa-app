@@ -4,10 +4,12 @@ import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageSquare, Loader2 } from "lucide-react";
+import { Bot, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { AssistantListItem as AssistantListItemType } from "@/lib/actions/intelliaa/assistants-server";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/intelliaa/assistants/status";
+import { getAssistantStatus } from "@/lib/utils/assistantStatus";
 
 interface AssistantListItemProps {
   assistant: AssistantListItemType;
@@ -29,12 +31,13 @@ export const AssistantListItem = memo(function AssistantListItem({
     activated_whatsapp,
     is_deploying_ws,
     updated_at,
+    status,
+    error_message,
   } = assistant;
 
-  // Determine assistant type and status
+  // Determine assistant type and derive status
   const isWhatsApp = activated_whatsapp || is_deploying_ws;
-  const isActive = activated_whatsapp;
-  const isDeploying = is_deploying_ws && !activated_whatsapp;
+  const assistantStatus = getAssistantStatus(assistant);
 
   // Format timestamp
   const lastUpdated = formatDistanceToNow(new Date(updated_at), {
@@ -85,30 +88,19 @@ export const AssistantListItem = memo(function AssistantListItem({
           </div>
 
           {/* Status and timestamp */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {/* Status indicator */}
-            {isDeploying ? (
-              <div className="flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin text-amber-600" />
-                <span className="text-xs text-amber-600">Deploying</span>
-              </div>
-            ) : isActive ? (
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-xs text-green-700 dark:text-green-400">Active</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-gray-400" />
-                <span className="text-xs">Inactive</span>
-              </div>
-            )}
+          <div className="flex items-center gap-2 text-sm">
+            {/* Status badge (INT-32) */}
+            <StatusBadge
+              status={assistantStatus}
+              errorMessage={error_message}
+              size="sm"
+            />
 
             {/* Separator */}
             <span className="text-muted-foreground/50">•</span>
 
             {/* Last updated */}
-            <span className="text-xs truncate" title={`Last updated ${lastUpdated}`}>
+            <span className="text-xs truncate text-muted-foreground" title={`Last updated ${lastUpdated}`}>
               {lastUpdated}
             </span>
           </div>

@@ -68,3 +68,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* INT-32: Status Badge Animations */
+@layer utilities {
+  /* Pulse animation for status changes (1 second, once) */
+  @keyframes pulse-once {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  /* Slow spin for configuring status (2 seconds) */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Utility classes */
+  .animate-pulse-once {
+    animation: pulse-once 1s ease-in-out;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
+  }
+
+  /* Respects user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse-once,
+    .animate-spin-slow {
+      animation: none;
+    }
+  }
+}
