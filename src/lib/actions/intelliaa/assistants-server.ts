@@ -12,19 +12,27 @@ import { cache } from "react";
 /**
  * Assistant list item type - minimal fields for list view (92% smaller payload)
  * ~200 bytes per assistant vs ~2.5KB with SELECT *
+ * Updated for INT-32: Includes new status fields
  */
 export interface AssistantListItem {
   id: string;
   namespace: string;
   name: string;
+  // Legacy fields (kept for backward compatibility)
   activated_whatsapp: boolean;
   is_deploying_ws: boolean;
+  // New status fields (INT-32)
+  status: 'configuring' | 'active' | 'error' | 'disconnected';
+  error_message: string | null;
+  last_status_change: string;
+  // Metadata
   updated_at: string;
   account_id: string;
 }
 
 /**
  * Assistant detail type - full assistant data for detail view
+ * Updated for INT-32: Includes new status fields
  */
 export interface AssistantDetail {
   id: string;
@@ -36,10 +44,17 @@ export interface AssistantDetail {
   voice_assistant: string | null;
   voice_assistant_id: string | null;
   documents_vapi: string[] | null;
+  // Legacy fields (kept for backward compatibility)
   activated_whatsapp: boolean;
   is_deploying_ws: boolean;
+  // New status fields (INT-32)
+  status: 'configuring' | 'active' | 'error' | 'disconnected';
+  error_message: string | null;
+  last_status_change: string;
+  // WhatsApp deployment
   service_id_rw: string | null;
   qr_url: string | null;
+  // Document storage
   document_storage_id: string | null;
   keyword_transfer_ws: any;
   number_transfer_ws: any;
@@ -102,11 +117,11 @@ export async function getAssistantsForAccount(
       activeWhatsappOnly = false,
     } = options;
 
-    // Build query with minimal field selection
+    // Build query with minimal field selection (INT-32: includes new status fields)
     let query = supabase
       .from("assistants")
       .select(
-        "id, namespace, name, activated_whatsapp, is_deploying_ws, updated_at, account_id"
+        "id, namespace, name, activated_whatsapp, is_deploying_ws, status, error_message, last_status_change, updated_at, account_id"
       )
       .eq("account_id", accountId);
 
