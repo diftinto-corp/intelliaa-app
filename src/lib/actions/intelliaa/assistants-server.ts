@@ -282,9 +282,6 @@ export async function assistantExists(
 
 /**
  * Type guard to check if result is an error
+ * Note: Moved to utils to avoid Next.js 15 "use server" restriction
+ * Use: import { isError } from "@/lib/utils/serverActions"
  */
-export function isError<T>(
-  result: T | { error: string }
-): result is { error: string } {
-  return typeof result === "object" && result !== null && "error" in result;
-}
