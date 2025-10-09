@@ -96,7 +96,7 @@ const createAssistantVoiceVapi = async (
       },
       voice: {
         provider: "11labs",
-        voiceId: "StgW6mMosfwXGzfaJ130",
+        voiceId: "26MYCwqeqFSxt1nT7VgZ",
         model: "eleven_flash_v2_5",
       },
       firstMessage: firstMessage,
@@ -120,6 +120,8 @@ const createAssistantVoiceVapi = async (
       Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
     };
 
+    console.log('[createAssistantVoiceVapi] Creating assistant with payload:', JSON.stringify(body, null, 2));
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -128,7 +130,12 @@ const createAssistantVoiceVapi = async (
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Parse error response for better debugging
+        const errorData = await response.json().catch(() => null);
+        console.error('[createAssistantVoiceVapi] VAPI error response:', errorData);
+        throw new Error(
+          `VAPI API error (${response.status}): ${errorData?.message || JSON.stringify(errorData) || response.statusText}`
+        );
       }
 
       const vapiData = await response.json();
@@ -146,7 +153,7 @@ const createAssistantVoiceVapi = async (
             token: tokens,
             namespace: namespace,
             voice_assistant_id: vapiData.id,
-            voice_assistant: "StgW6mMosfwXGzfaJ130",
+            voice_assistant: "26MYCwqeqFSxt1nT7VgZ",
             detect_emotion: true,
             background_office: true,
             end_call_phrases: [

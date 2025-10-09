@@ -3,8 +3,10 @@ import {
   getAssistantsForAccount,
   getAssistantById,
 } from "@/lib/actions/intelliaa/assistants-server";
+import { getAssistantTemplates } from "@/lib/actions/intelliaa/templates-server";
 import { isError } from "@/lib/utils/serverActions";
 import { AssistantsMasterDetailLayout } from "@/components/intelliaa/assistants/AssistantsMasterDetailLayout";
+import { AssistantsOnboarding } from "@/components/intelliaa/assistants/onboarding/AssistantsOnboarding";
 
 /**
  * Assistants Page - Master-Detail Layout
@@ -60,8 +62,34 @@ export default async function AssistantsPage({ params }: AssistantsPageProps) {
 
   const assistants = assistantsResult;
 
-  // If no assistants exist, the layout will show empty state
-  // No need to handle this here
+  // ========================================
+  // Fetch templates for both onboarding and master-detail
+  // Templates are needed for:
+  // 1. Onboarding experience (when assistants.length === 0)
+  // 2. Create assistant button in master panel (when assistants exist)
+  // ========================================
+  const templatesResult = await getAssistantTemplates();
+
+  if (isError(templatesResult)) {
+    console.error("[AssistantsPage] Error fetching templates:", templatesResult.error);
+    // Continue with empty array - features will be degraded but functional
+  }
+
+  const templates = isError(templatesResult) ? [] : templatesResult;
+
+  // ========================================
+  // NEW (INT-33): Onboarding Experience
+  // Show onboarding when user has zero assistants
+  // ========================================
+  if (assistants.length === 0) {
+    return (
+      <AssistantsOnboarding
+        accountSlug={accountSlug}
+        accountId={accountId}
+        templates={templates}
+      />
+    );
+  }
 
   // Fetch selected assistant details if an ID is provided
   let selectedAssistant = null;
@@ -85,8 +113,8 @@ export default async function AssistantsPage({ params }: AssistantsPageProps) {
     <AssistantsMasterDetailLayout
       assistants={assistants}
       selectedAssistant={selectedAssistant}
-      accountSlug={accountSlug}
       accountId={accountId}
+      templates={templates}
     />
   );
 }

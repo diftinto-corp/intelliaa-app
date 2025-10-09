@@ -6,17 +6,17 @@ import { useIsMobile, useIsMounted } from "@/hooks/use-media-query";
 import { useAssistantsList } from "@/hooks/use-assistants-realtime";
 import { AssistantsMasterPanel } from "./AssistantsMasterPanel";
 import { AssistantsDetailPanel } from "./AssistantsDetailPanel";
-import { AssistantsEmptyState } from "./AssistantsEmptyState";
 import type {
   AssistantListItem,
   AssistantDetail,
 } from "@/lib/actions/intelliaa/assistants-server";
+import type { AssistantTemplate } from "@/interfaces/intelliaa";
 
 interface AssistantsMasterDetailLayoutProps {
   assistants: AssistantListItem[];
   selectedAssistant: AssistantDetail | null;
-  accountSlug: string;
   accountId: string;
+  templates: AssistantTemplate[];
 }
 
 /**
@@ -36,8 +36,8 @@ interface AssistantsMasterDetailLayoutProps {
 export function AssistantsMasterDetailLayout({
   assistants: initialAssistants,
   selectedAssistant,
-  accountSlug,
   accountId,
+  templates,
 }: AssistantsMasterDetailLayoutProps) {
   const isMobile = useIsMobile();
   const mounted = useIsMounted();
@@ -102,10 +102,9 @@ export function AssistantsMasterDetailLayout({
   //   }
   // }, [isMobile, selectedId, assistants, mounted, router, accountSlug, hasAutoSelected]);
 
-  // Show empty state if no assistants
-  if (assistants.length === 0) {
-    return <AssistantsEmptyState accountSlug={accountSlug} />;
-  }
+  // NOTE (INT-33): Empty state now handled in page.tsx with AssistantsOnboarding component
+  // This component only receives assistants when assistants.length > 0
+  // No need for empty state check here
 
   // Prevent hydration mismatch during SSR
   if (!mounted) {
@@ -124,6 +123,7 @@ export function AssistantsMasterDetailLayout({
         assistants={assistants}
         selectedId={selectedId}
         onSelectAssistant={handleSelectAssistant}
+        templates={templates}
       />
 
       {/* Detail Panel - Desktop: Side-by-side, Mobile: Sheet overlay */}

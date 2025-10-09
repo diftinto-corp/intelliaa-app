@@ -3,12 +3,15 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AssistantListItem } from "./AssistantListItem";
 import { AssistantListSkeleton } from "./AssistantListSkeleton";
+import { CreateAssistantButton } from "./CreateAssistantButton";
 import type { AssistantListItem as AssistantListItemType } from "@/lib/actions/intelliaa/assistants-server";
+import type { AssistantTemplate } from "@/interfaces/intelliaa";
 
 interface AssistantsMasterPanelProps {
   assistants: AssistantListItemType[];
   selectedId: string | null;
   onSelectAssistant: (assistantId: string) => void;
+  templates: AssistantTemplate[];
   isLoading?: boolean;
 }
 
@@ -20,6 +23,7 @@ export function AssistantsMasterPanel({
   assistants,
   selectedId,
   onSelectAssistant,
+  templates,
   isLoading = false,
 }: AssistantsMasterPanelProps) {
   if (isLoading) {
@@ -34,12 +38,19 @@ export function AssistantsMasterPanel({
 
   return (
     <div className="w-full md:w-[45%] lg:w-[400px] border-r flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="font-semibold text-lg">Assistants</h2>
-        <p className="text-sm text-muted-foreground">
-          {assistants.length} {assistants.length === 1 ? "assistant" : "assistants"}
-        </p>
+      {/* Header with Create Button */}
+      <div className="p-4 border-b space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-lg">Asistentes</h2>
+            <p className="text-sm text-muted-foreground">
+              {assistants.length} {assistants.length === 1 ? "asistente" : "asistentes"}
+            </p>
+          </div>
+        </div>
+
+        {/* Create Assistant Button */}
+        <CreateAssistantButton templates={templates} className="w-full" />
       </div>
 
       {/* List */}
