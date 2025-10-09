@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile, useIsMounted } from "@/hooks/use-media-query";
 import { useAssistantsList } from "@/hooks/use-assistants-realtime";
@@ -40,7 +39,6 @@ export function AssistantsMasterDetailLayout({
   accountSlug,
   accountId,
 }: AssistantsMasterDetailLayoutProps) {
-  const router = useRouter();
   const isMobile = useIsMobile();
   const mounted = useIsMounted();
 
@@ -50,13 +48,34 @@ export function AssistantsMasterDetailLayout({
   // Mobile sheet state for detail panel
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
-  // Get selected ID from current assistant
-  const selectedId = selectedAssistant?.id || null;
+  // Client-side selected assistant state (fully client-side, no URL navigation)
+  const [selectedId, setSelectedId] = useState<string | null>(selectedAssistant?.id || null);
+  const [selectedAssistantDetail, setSelectedAssistantDetail] = useState<AssistantDetail | null>(
+    selectedAssistant
+  );
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
-  // Handle assistant selection
-  const handleSelectAssistant = (assistantId: string) => {
-    // Update URL (triggers navigation and server refetch)
-    router.push(`/${accountSlug}/assistants/${assistantId}`);
+  // Handle assistant selection (fully client-side)
+  const handleSelectAssistant = async (assistantId: string) => {
+    // Update selection immediately for instant feedback
+    setSelectedId(assistantId);
+    setIsLoadingDetail(true);
+
+    // Fetch assistant details client-side
+    try {
+      const { getAssistantById } = await import("@/lib/actions/intelliaa/assistants-server");
+      const result = await getAssistantById(assistantId, accountId);
+
+      if (!("error" in result)) {
+        setSelectedAssistantDetail(result);
+      } else {
+        console.error("[AssistantsMasterDetailLayout] Error:", result.error);
+      }
+    } catch (error) {
+      console.error("[AssistantsMasterDetailLayout] Error fetching assistant:", error);
+    } finally {
+      setIsLoadingDetail(false);
+    }
 
     // On mobile, open sheet
     if (isMobile) {
@@ -67,19 +86,21 @@ export function AssistantsMasterDetailLayout({
   // Close mobile detail sheet
   const handleCloseMobileDetail = () => {
     setMobileDetailOpen(false);
-    // Navigate back to list view
-    router.push(`/${accountSlug}/assistants`);
+    setSelectedId(null);
+    setSelectedAssistantDetail(null);
   };
 
-  // Auto-select first assistant on desktop if none selected
-  useEffect(() => {
-    if (!mounted) return;
+  // Auto-select first assistant on desktop if none selected (DISABLED - causing infinite loop)
+  // TODO: Implement auto-select without router.push to avoid infinite re-renders
+  // useEffect(() => {
+  //   if (!mounted || hasAutoSelected) return;
 
-    if (!isMobile && !selectedId && assistants.length > 0) {
-      // Auto-select first assistant on desktop
-      handleSelectAssistant(assistants[0].id);
-    }
-  }, [isMobile, selectedId, assistants, mounted]);
+  //   if (!isMobile && !selectedId && assistants.length > 0) {
+  //     // Auto-select first assistant on desktop
+  //     router.push(`/${accountSlug}/assistants/${assistants[0].id}`);
+  //     setHasAutoSelected(true);
+  //   }
+  // }, [isMobile, selectedId, assistants, mounted, router, accountSlug, hasAutoSelected]);
 
   // Show empty state if no assistants
   if (assistants.length === 0) {
@@ -108,16 +129,18 @@ export function AssistantsMasterDetailLayout({
       {/* Detail Panel - Desktop: Side-by-side, Mobile: Sheet overlay */}
       {isMobile ? (
         <Sheet open={mobileDetailOpen} onOpenChange={setMobileDetailOpen}>
-          <SheetContent
-            side="right"
-            className="w-full sm:max-w-xl p-0"
-            onClose={handleCloseMobileDetail}
-          >
-            <AssistantsDetailPanel assistant={selectedAssistant} />
+          <SheetContent side="right" className="w-full sm:max-w-xl p-0">
+            <AssistantsDetailPanel
+              assistant={selectedAssistantDetail}
+              isLoading={isLoadingDetail}
+            />
           </SheetContent>
         </Sheet>
       ) : (
-        <AssistantsDetailPanel assistant={selectedAssistant} />
+        <AssistantsDetailPanel
+          assistant={selectedAssistantDetail}
+          isLoading={isLoadingDetail}
+        />
       )}
     </div>
   );

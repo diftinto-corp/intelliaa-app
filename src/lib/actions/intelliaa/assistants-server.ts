@@ -19,7 +19,7 @@ export interface AssistantListItem {
   namespace: string;
   name: string;
   // Legacy fields (kept for backward compatibility)
-  activated_whatsapp: boolean;
+  activated_whatsApp: boolean; // Note: Database column has capital W
   is_deploying_ws: boolean;
   // New status fields (INT-32)
   status: 'configuring' | 'active' | 'error' | 'disconnected';
@@ -45,7 +45,7 @@ export interface AssistantDetail {
   voice_assistant_id: string | null;
   documents_vapi: string[] | null;
   // Legacy fields (kept for backward compatibility)
-  activated_whatsapp: boolean;
+  activated_whatsApp: boolean; // Note: Database column has capital W
   is_deploying_ws: boolean;
   // New status fields (INT-32)
   status: 'configuring' | 'active' | 'error' | 'disconnected';
@@ -121,13 +121,13 @@ export async function getAssistantsForAccount(
     let query = supabase
       .from("assistants")
       .select(
-        "id, namespace, name, activated_whatsapp, is_deploying_ws, status, error_message, last_status_change, updated_at, account_id"
+        "id, namespace, name, activated_whatsApp, is_deploying_ws, status, error_message, last_status_change, updated_at, account_id"
       )
       .eq("account_id", accountId);
 
     // Apply filters
     if (activeWhatsappOnly) {
-      query = query.eq("activated_whatsapp", true);
+      query = query.eq("activated_whatsApp", true);
     }
 
     if (search && search.trim().length > 0) {
@@ -230,7 +230,7 @@ export async function getAssistantsCount(
       .eq("account_id", accountId);
 
     if (activeWhatsappOnly) {
-      query = query.eq("activated_whatsapp", true);
+      query = query.eq("activated_whatsApp", true);
     }
 
     const { count, error } = await query;

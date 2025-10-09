@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { AssistantListItem } from "@/lib/actions/intelliaa/assistants-server";
@@ -55,97 +55,104 @@ export function useAssistantsRealtime(
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">(
     "connecting"
   );
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
-  // Memoized event handler
+  // Store callbacks in ref to avoid dependency issues
+  const callbacksRef = useRef(callbacks);
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  }, [callbacks]);
+
+  // Memoized event handler - uses ref to avoid recreating
   const handleRealtimeEvent = useCallback(
     (payload: RealtimePayload<AssistantListItem>) => {
       try {
+        const cbs = callbacksRef.current;
         switch (payload.eventType) {
           case "INSERT":
-            if (callbacks.onInsert && payload.new) {
-              callbacks.onInsert(payload.new);
+            if (cbs.onInsert && payload.new) {
+              cbs.onInsert(payload.new);
             }
             break;
 
           case "UPDATE":
-            if (callbacks.onUpdate && payload.new) {
-              callbacks.onUpdate(payload.new);
+            if (cbs.onUpdate && payload.new) {
+              cbs.onUpdate(payload.new);
             }
             break;
 
           case "DELETE":
-            if (callbacks.onDelete && payload.old) {
-              callbacks.onDelete(payload.old);
+            if (cbs.onDelete && payload.old) {
+              cbs.onDelete(payload.old);
             }
             break;
         }
       } catch (error) {
         console.error("[useAssistantsRealtime] Event handler error:", error);
-        if (callbacks.onError && error instanceof Error) {
-          callbacks.onError(error);
+        if (callbacksRef.current.onError && error instanceof Error) {
+          callbacksRef.current.onError(error);
         }
       }
     },
-    [callbacks]
+    [] // No dependencies - uses ref
   );
 
   useEffect(() => {
     const supabase = createClient();
 
     // Create channel with account-specific filter
-    // Using account_id filter ensures we only receive updates for this account
     const realtimeChannel = supabase
       .channel(`assistants:account_id=eq.${accountId}`)
       .on(
         "postgres_changes",
         {
-          event: "*", // Listen to INSERT, UPDATE, DELETE
+          event: "*",
           schema: "public",
           table: "assistants",
-          filter: `account_id=eq.${accountId}`, // Only updates for this account
+          filter: `account_id=eq.${accountId}`,
         },
         handleRealtimeEvent
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
+      .subscribe((subscriptionStatus) => {
+        if (subscriptionStatus === "SUBSCRIBED") {
           setStatus("connected");
-          console.log("[useAssistantsRealtime] Connected to realtime channel");
-        } else if (status === "CLOSED") {
+          console.log("[useAssistantsRealtime] Connected");
+        } else if (subscriptionStatus === "CLOSED") {
           setStatus("disconnected");
-          console.log("[useAssistantsRealtime] Disconnected from realtime channel");
-        } else if (status === "CHANNEL_ERROR") {
+          console.log("[useAssistantsRealtime] Disconnected");
+        } else if (subscriptionStatus === "CHANNEL_ERROR") {
           setStatus("disconnected");
           console.error("[useAssistantsRealtime] Channel error");
-          if (callbacks.onError) {
-            callbacks.onError(new Error("Realtime channel error"));
-          }
+          callbacksRef.current.onError?.(new Error("Realtime channel error"));
         }
       });
 
-    setChannel(realtimeChannel);
+    channelRef.current = realtimeChannel;
 
-    // Cleanup: Remove channel on unmount
-    // CRITICAL: Prevents memory leaks
+    // Cleanup on unmount
     return () => {
-      console.log("[useAssistantsRealtime] Cleaning up realtime channel");
-      supabase.removeChannel(realtimeChannel);
+      console.log("[useAssistantsRealtime] Cleaning up");
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [accountId, handleRealtimeEvent, callbacks.onError]);
+  }, [accountId, handleRealtimeEvent]); // Only accountId and stable handleRealtimeEvent
 
   return {
     status,
-    channel,
+    channel: channelRef.current,
     /**
      * Manually disconnect from realtime
      */
     disconnect: useCallback(() => {
-      if (channel) {
+      if (channelRef.current) {
         const supabase = createClient();
-        supabase.removeChannel(channel);
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
         setStatus("disconnected");
       }
-    }, [channel]),
+    }, []),
   };
 }
 
@@ -163,22 +170,16 @@ export function useAssistantsList(
   initialAssistants: AssistantListItem[],
   accountId: string
 ) {
+  // Just use initial assistants - page re-mounts on navigation
   const [assistants, setAssistants] = useState<AssistantListItem[]>(initialAssistants);
 
-  // Update assistants when initial data changes (e.g., after navigation)
-  useEffect(() => {
-    setAssistants(initialAssistants);
-  }, [initialAssistants]);
-
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates (fixed to avoid infinite loop)
   useAssistantsRealtime(accountId, {
     onInsert: useCallback((newAssistant: AssistantListItem) => {
       setAssistants((prev) => {
-        // Check if already exists (shouldn't happen, but defensive)
         if (prev.some((a) => a.id === newAssistant.id)) {
           return prev;
         }
-        // Add to top of list (most recent)
         return [newAssistant, ...prev];
       });
     }, []),
@@ -195,7 +196,6 @@ export function useAssistantsList(
 
     onError: useCallback((error: Error) => {
       console.error("[useAssistantsList] Realtime error:", error);
-      // Could show toast notification here
     }, []),
   });
 

@@ -28,7 +28,7 @@ export const AssistantListItem = memo(function AssistantListItem({
 }: AssistantListItemProps) {
   const {
     name,
-    activated_whatsapp,
+    activated_whatsApp,
     is_deploying_ws,
     updated_at,
     status,
@@ -36,7 +36,7 @@ export const AssistantListItem = memo(function AssistantListItem({
   } = assistant;
 
   // Determine assistant type and derive status
-  const isWhatsApp = activated_whatsapp || is_deploying_ws;
+  const isWhatsApp = activated_whatsApp || is_deploying_ws;
   const assistantStatus = getAssistantStatus(assistant);
 
   // Format timestamp

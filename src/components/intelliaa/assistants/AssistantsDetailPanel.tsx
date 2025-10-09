@@ -48,16 +48,16 @@ export function AssistantsDetailPanel({
     prompt,
     temperature,
     token,
-    activated_whatsapp,
+    activated_whatsApp,
     is_deploying_ws,
     created_at,
     updated_at,
     assistants_template,
   } = assistant;
 
-  const isWhatsApp = activated_whatsapp || is_deploying_ws;
-  const isActive = activated_whatsapp;
-  const isDeploying = is_deploying_ws && !activated_whatsapp;
+  const isWhatsApp = activated_whatsApp || is_deploying_ws;
+  const isActive = activated_whatsApp;
+  const isDeploying = is_deploying_ws && !activated_whatsApp;
 
   return (
     <div className="hidden md:block md:w-[55%] lg:flex-1 p-6 overflow-y-auto">
