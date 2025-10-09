@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import {
   getAssistantsForAccount,
   getAssistantById,
-  isError,
 } from "@/lib/actions/intelliaa/assistants-server";
+import { isError } from "@/lib/utils/serverActions";
 import { AssistantsMasterDetailLayout } from "@/components/intelliaa/assistants/AssistantsMasterDetailLayout";
 
 /**
