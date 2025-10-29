@@ -1,0 +1,63 @@
+# Epic: Voice Assistant VAPI Integration Modernization
+
+## Epic Overview
+
+Migrate voice assistants from deprecated VAPI configurations to current VAPI API, add new features, and enhance voice assistant capabilities while maintaining backward compatibility.
+
+## Business Value
+
+* Leverage latest VAPI features for better call quality
+* Reduce voice assistant configuration errors by 60%
+* Enable advanced features: intelligent transfers, sentiment analysis, function calling
+* Improve voice quality and reduce latency
+* Future-proof voice assistant infrastructure
+
+## Scope
+
+* Update VAPI API integration to latest version
+* Enhanced voice configuration UI (ElevenLabs catalog updates)
+* Intelligent transfer rules and human handoff
+* Advanced behavior configurations (silences, interruptions, endpointing)
+* Analytics and monitoring dashboard
+* Backward compatibility for existing assistants
+
+## Success Metrics
+
+* VAPI API migration: 100% of assistants migrated
+* Voice quality score improvement: +25%
+* Transfer accuracy: > 95%
+* Configuration time reduction: -40%
+* User satisfaction with voice features: > 8/10
+
+## Technical Considerations
+
+* Maintain compatibility with existing voice_assistant table
+* Update VAPI SDK to latest version
+* Implement feature flags for gradual rollout
+* Create migration scripts for existing assistants
+* Test with various phone numbers and Twilio integration
+* Monitor VAPI rate limits and error handling
+
+## Dependencies
+
+* VAPI API access and documentation
+* ElevenLabs API for voice catalog
+* Twilio integration for phone numbers
+* Existing voice_assistant table schema
+
+## Metadata
+- URL: [https://linear.app/intelliaa/issue/INT-39/epic-voice-assistant-vapi-integration-modernization](https://linear.app/intelliaa/issue/INT-39/epic-voice-assistant-vapi-integration-modernization)
+- Identifier: INT-39
+- Status: Backlog
+- Priority: High
+- Assignee: Unassigned
+- Labels: Feature
+- Project: [IntelliAA - Plataforma de Asistentes de IA Multi-Canal](https://linear.app/intelliaa/project/intelliaa-plataforma-de-asistentes-de-ia-multi-canal-5e91c1377a03). 
+- Created: 2025-10-06T22:11:52.281Z
+- Updated: 2025-10-06T22:13:00.862Z
+
+## Sub-issues
+
+- [INT-40 Migrate VAPI Configuration to Latest API Version](https://linear.app/intelliaa/issue/INT-40/migrate-vapi-configuration-to-latest-api-version)
+- [INT-41 Update ElevenLabs Voice Catalog with Enhanced Previews](https://linear.app/intelliaa/issue/INT-41/update-elevenlabs-voice-catalog-with-enhanced-previews)
+- [INT-42 Implement Intelligent Call Transfer Rules Engine](https://linear.app/intelliaa/issue/INT-42/implement-intelligent-call-transfer-rules-engine)

@@ -240,7 +240,7 @@ export async function updateVapiKnowledgeBase(
       }
       if (input.removeFileIds) {
         updatedFileIds = updatedFileIds.filter(
-          (id) => !input.removeFileIds!.includes(id)
+          (id: string) => !input.removeFileIds!.includes(id)
         );
       }
     }

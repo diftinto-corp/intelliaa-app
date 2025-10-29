@@ -104,7 +104,7 @@ export function useAssistantsRealtime(
     const realtimeChannel = supabase
       .channel(`assistants:account_id=eq.${accountId}`)
       .on(
-        "postgres_changes",
+        "postgres_changes" as any,
         {
           event: "*",
           schema: "public",

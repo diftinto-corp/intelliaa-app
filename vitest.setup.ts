@@ -23,8 +23,8 @@ afterEach(() => {
 
 // Global test setup
 beforeAll(() => {
-  // Set test environment variables
-  process.env.NODE_ENV = 'test';
+  // Set test environment variables (using type assertion for read-only property)
+  (process.env as any).NODE_ENV = 'test';
 
   // Mock console methods to reduce noise in tests
   // You can remove this if you want to see console output

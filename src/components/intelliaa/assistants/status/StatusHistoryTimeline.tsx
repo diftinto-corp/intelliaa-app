@@ -108,7 +108,7 @@ function TimelineItem({
       <div className="flex-1 min-w-0 pt-0.5">
         {/* Status and timestamp */}
         <div className="flex items-baseline gap-2 mb-1">
-          <span className={cn("font-medium text-sm", config.textClass)}>
+          <span className="font-medium text-sm">
             {config.label}
           </span>
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
@@ -205,7 +205,21 @@ export function StatusHistoryTimeline({
           setError(result.error?.message || "Failed to load history");
           setHistory([]);
         } else {
-          setHistory(result.data || []);
+          // Transform API data to match component interface
+          const transformedData: StatusHistoryItem[] = (result.data || []).map((item) => ({
+            id: item.id,
+            status: item.status,
+            error_message: item.error_message,
+            created_at: item.created_at,
+            metadata: item.metadata ? {
+              source: (item.metadata.source === 'manual' || item.metadata.source === 'automatic' || item.metadata.source === 'webhook')
+                ? (item.metadata.source as "manual" | "automatic" | "webhook")
+                : undefined,
+              changedBy: item.metadata.changed_by,
+              details: item.metadata.details,
+            } : null,
+          }));
+          setHistory(transformedData);
         }
       } catch (err: any) {
         console.error("[StatusHistoryTimeline] Error:", err);

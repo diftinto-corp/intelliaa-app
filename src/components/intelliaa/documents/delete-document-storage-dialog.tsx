@@ -26,10 +26,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import type { DeleteDocumentStorageResponse } from '@/lib/actions/intelliaa/documents';
 
 /**
@@ -263,7 +264,7 @@ export function DeleteDocumentStorageDialog({
       return (
         <AlertDialogAction
           onClick={handleDelete}
-          variant="destructive"
+          className={buttonVariants({ variant: "destructive" })}
         >
           Reintentar
         </AlertDialogAction>
@@ -286,8 +287,7 @@ export function DeleteDocumentStorageDialog({
     return (
       <AlertDialogAction
         onClick={handleDelete}
-        variant="destructive"
-        disabled={state === 'deleting'}
+        className={buttonVariants({ variant: "destructive" })}
       >
         Eliminar
       </AlertDialogAction>
@@ -314,7 +314,7 @@ export function DeleteDocumentStorageDialog({
     }
 
     return (
-      <AlertDialogCancel disabled={state === 'deleting'}>
+      <AlertDialogCancel>
         Cancelar
       </AlertDialogCancel>
     );

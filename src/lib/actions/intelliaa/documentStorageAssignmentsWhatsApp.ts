@@ -146,7 +146,7 @@ async function getNamespacesForAssistant(
     .filter((ns: string | undefined): ns is string => !!ns);
 
   // Remove duplicates and sort
-  return [...new Set(namespaces)].sort();
+  return Array.from(new Set<string>(namespaces)).sort();
 }
 
 // ============================================================================

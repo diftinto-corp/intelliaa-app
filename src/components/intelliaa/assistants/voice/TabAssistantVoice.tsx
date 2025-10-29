@@ -67,9 +67,6 @@ export default function TabAssistant({
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
-  // Browser navigation guard (prevents accidental close/reload)
-  useBrowserNavigationGuard(isChangeOptions);
-
   const [temperatureState, setTemperatureState] = useState(
     assistant?.temperature || 0
   );
@@ -140,6 +137,9 @@ export default function TabAssistant({
   const [account_id, setAccountId] = useState("");
 
   const supabase = createClient();
+
+  // Browser navigation guard (prevents accidental close/reload)
+  useBrowserNavigationGuard(isChangeOptions);
 
   useEffect(() => {
     const getAccountId = async () => {

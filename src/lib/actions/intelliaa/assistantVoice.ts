@@ -3,6 +3,11 @@ import {
   listVapiKnowledgeBases,
   getQueryToolForKB,
 } from "./vapiKnowledgeBase";
+import {
+  callVapiWithRetry,
+  parseVapiError,
+  VapiError,
+} from "@/lib/vapi/error-handling";
 
 /**
  * Check if VAPI Knowledge Base feature is enabled
@@ -184,6 +189,36 @@ const createAssistantVoiceVapi = async (
   }
 };
 
+/**
+ * Updates a voice assistant in both VAPI and Supabase
+ *
+ * CRITICAL FIX (INT-34 Day 3):
+ * - Updates VAPI FIRST (source of truth)
+ * - Updates Supabase SECOND (local database)
+ * - Includes rollback mechanism if Supabase update fails
+ * - Uses retry logic for transient VAPI failures
+ *
+ * Previous implementation updated Supabase first, causing data inconsistency
+ * if VAPI update failed. This version ensures VAPI is always authoritative.
+ *
+ * @param id_assistant - Supabase assistant ID
+ * @param prompt - System prompt for the AI
+ * @param welcomeMessage - First message spoken by assistant
+ * @param temperature - Model temperature (0.0-2.0)
+ * @param maxTokens - Maximum tokens per response (50-4000)
+ * @param voiceId - ElevenLabs voice ID
+ * @param recordCall - Whether to record calls
+ * @param backgroundOffice - Whether to use office background sound
+ * @param detectEmotion - Whether to enable emotion recognition
+ * @param id_assistant_vapi - VAPI assistant ID
+ * @param fileIds - Array of VAPI file IDs for knowledge base
+ * @param endCallPhrases - Phrases that trigger call end
+ * @param endCallMessage - Message spoken when call ends
+ * @param voicemailMessage - Message left on voicemail
+ * @param documentStorageId - ID of linked document storage
+ * @returns VAPI assistant data
+ * @throws VapiError with user-friendly message on failure
+ */
 const updateAssistantVoiceVapi = async (
   id_assistant: string,
   prompt: string,
@@ -201,29 +236,46 @@ const updateAssistantVoiceVapi = async (
   voicemailMessage: string,
   documentStorageId: string
 ) => {
-  let backgroundSound = "off";
-
-  if (backgroundOffice) {
-    backgroundSound = "office";
-  }
-
-  // INTEL-002: Get VAPI KB tools if feature is enabled
   const supabase = await createClient();
-  const { data: assistantData } = await supabase
+
+  // Step 1: Get current assistant data for context and potential rollback
+  const { data: assistantData, error: fetchError } = await supabase
     .from("assistants")
-    .select("account_id")
+    .select("account_id, prompt, temperature, token, welcome_assistant, voice_assistant, record_call, detect_emotion, background_office")
     .eq("id", id_assistant)
     .single();
 
-  const vapiKBTools = assistantData
-    ? await getVapiKBToolsForAssistant(assistantData.account_id)
-    : [];
+  if (fetchError || !assistantData) {
+    throw new Error('Asistente no encontrado o acceso denegado');
+  }
 
+  // Store previous state for potential rollback
+  const previousState = {
+    prompt: assistantData.prompt,
+    temperature: assistantData.temperature,
+    maxTokens: assistantData.token,
+    welcomeMessage: assistantData.welcome_assistant,
+    voiceId: assistantData.voice_assistant,
+    recordCall: assistantData.record_call,
+    detectEmotion: assistantData.detect_emotion,
+    backgroundOffice: assistantData.background_office,
+  };
+
+  console.log('[updateAssistantVoiceVapi] Previous state stored for rollback');
+
+  // Step 2: Get VAPI KB tools if feature is enabled (INTEL-002)
+  const vapiKBTools = await getVapiKBToolsForAssistant(
+    assistantData.account_id,
+    documentStorageId
+  );
   const useVapiKB = shouldUseVapiKB() && vapiKBTools.length > 0;
 
   console.log(`[INTEL-002] VAPI KB feature enabled: ${useVapiKB}, tools count: ${vapiKBTools.length}`);
 
+  // Step 3: Prepare VAPI request body
+  const backgroundSound = backgroundOffice ? "office" : "off";
   const url = `https://api.vapi.ai/assistant/${id_assistant_vapi}`;
+
   const body: any = {
     model: {
       messages: [
@@ -251,7 +303,6 @@ const updateAssistantVoiceVapi = async (
     },
     endCallPhrases: endCallPhrases,
     endCallMessage: endCallMessage,
-    // voicemailMessage: voicemailMessage,
   };
 
   // INTEL-002: Use VAPI KB tools if available, otherwise use legacy knowledgeBase
@@ -266,13 +317,63 @@ const updateAssistantVoiceVapi = async (
       fileIds: fileIds,
     };
   }
+
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${process.env.NEXT_PRIVATE_VAPI_KEY}`,
   };
 
+  // Step 4: UPDATE VAPI FIRST (source of truth) with retry logic
+  let vapiResult;
   try {
-    const { error: errorAssistant } = await supabase
+    vapiResult = await callVapiWithRetry(
+      async () => {
+        const response = await fetch(url, {
+          method: "PATCH",
+          body: JSON.stringify(body),
+          headers,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw parseVapiError(response, errorData);
+        }
+
+        return await response.json();
+      },
+      {
+        maxRetries: 3,
+        baseDelay: 1000,
+        onRetry: (attempt, error, delay) => {
+          console.warn(
+            `[updateAssistantVoiceVapi] VAPI update attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`,
+            error instanceof VapiError ? error.type : error
+          );
+        },
+      }
+    );
+
+    console.log('[updateAssistantVoiceVapi] VAPI update successful:', vapiResult.id);
+
+  } catch (error) {
+    console.error('[updateAssistantVoiceVapi] VAPI update failed after retries:', error);
+
+    // Throw user-friendly error
+    if (error instanceof VapiError) {
+      throw error;
+    }
+
+    throw new VapiError(
+      'NETWORK_ERROR' as any,
+      0,
+      error,
+      'No se pudo conectar al servicio de voz. Por favor, verifique su conexión.'
+    );
+  }
+
+  // Step 5: UPDATE SUPABASE (local database)
+  try {
+    const { error: updateError } = await supabase
       .from("assistants")
       .update({
         prompt,
@@ -287,37 +388,68 @@ const updateAssistantVoiceVapi = async (
         end_call_phrases: endCallPhrases,
         end_call_message: endCallMessage,
         voicemail_message: voicemailMessage,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", id_assistant);
 
-    if (errorAssistant) {
-      console.log(
-        `Error updating assistant in Supabase: ${errorAssistant.message}`
+    if (updateError) {
+      console.error(
+        '[updateAssistantVoiceVapi] Supabase update failed, attempting VAPI rollback:',
+        updateError
       );
-      throw new Error(
-        `Error creating assistant in Supabase: ${errorAssistant.message}`
-      );
+
+      // Step 6: ROLLBACK VAPI if Supabase update fails
+      try {
+        const rollbackBody = {
+          model: {
+            messages: [{ content: previousState.prompt, role: "system" }],
+            temperature: previousState.temperature,
+            maxTokens: previousState.maxTokens,
+            emotionRecognitionEnabled: previousState.detectEmotion,
+          },
+          voice: {
+            provider: "11labs",
+            voiceId: previousState.voiceId,
+            model: "eleven_multilingual_v2",
+          },
+          recordingEnabled: previousState.recordCall,
+          firstMessage: previousState.welcomeMessage,
+          backgroundSound: previousState.backgroundOffice ? "office" : "off",
+        };
+
+        await fetch(url, {
+          method: "PATCH",
+          body: JSON.stringify(rollbackBody),
+          headers,
+        });
+
+        console.log('[updateAssistantVoiceVapi] VAPI rollback successful');
+
+      } catch (rollbackError) {
+        // CRITICAL ERROR: Log for manual intervention
+        console.error(
+          '[updateAssistantVoiceVapi] CRITICAL: VAPI rollback failed',
+          {
+            assistantId: id_assistant,
+            vapiId: id_assistant_vapi,
+            error: rollbackError,
+            previousState,
+          }
+        );
+
+        // TODO: Send alert to monitoring system
+        // await sendCriticalAlert('VAPI_ROLLBACK_FAILED', { assistantId, vapiId });
+      }
+
+      throw new Error(`Error al actualizar la base de datos: ${updateError.message}`);
     }
 
-    const response = await fetch(url, {
-      method: "PATCH",
-      body: JSON.stringify(body),
-      headers,
-    });
+    console.log('[updateAssistantVoiceVapi] Full update successful');
+    return vapiResult;
 
-    console.log(response);
-    if (!response.ok) {
-      console.log(`Error updating assistant in VAPI: ${response.status}`);
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const vapiData = await response.json();
-
-    console.log(vapiData);
-
-    return vapiData;
-  } catch (apiError) {
-    throw apiError; // Re-lanzamos el error después de loguearlo para que el llamador lo maneje si es necesario
+  } catch (error) {
+    console.error('[updateAssistantVoiceVapi] Unexpected error:', error);
+    throw error;
   }
 };
 

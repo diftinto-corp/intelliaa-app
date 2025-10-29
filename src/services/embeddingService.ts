@@ -16,7 +16,6 @@
 
 import { openai } from '@ai-sdk/openai';
 import { embedMany } from 'ai';
-import { pdf as parsePDF } from 'pdf-parse';
 import type {
   EmbeddingServiceConfig,
   EmbeddingResult,
@@ -231,10 +230,12 @@ async function chunkDocument(
     });
   }
 
-  // Parse PDF
+  // Parse PDF using dynamic import to fix Next.js 15 ESM compatibility
   let pdfData: { text: string; pages?: any[]; info?: any };
   try {
-    pdfData = await parsePDF(fileBuffer);
+    // @ts-ignore - pdf-parse types don't match dynamic import
+    const pdfParse = (await import('pdf-parse')).default;
+    pdfData = await pdfParse(fileBuffer);
   } catch (error) {
     throw new EmbeddingParseError(
       'Failed to parse PDF file',
