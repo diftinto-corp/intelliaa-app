@@ -25,6 +25,12 @@ import { set } from "date-fns";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { AssignStorageSection } from "@/components/assistants/AssignStorageSection";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  UnsavedChangesDialog,
+  useBrowserNavigationGuard
+} from "../common/UnsavedChangesDialog";
+import { VoiceAssistantFormSkeleton } from "../common/FormSkeletons";
 
 interface QAItem {
   id: string;
@@ -55,6 +61,14 @@ export default function TabAssistant({
 
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
+  const { toast } = useToast();
+
+  // Unsaved changes dialog state
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
+  // Browser navigation guard (prevents accidental close/reload)
+  useBrowserNavigationGuard(isChangeOptions);
 
   const [temperatureState, setTemperatureState] = useState(
     assistant?.temperature || 0
@@ -243,125 +257,151 @@ export default function TabAssistant({
       });
 
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        const errorData = await res.json().catch(() => null);
+        const errorMessage = errorData?.message || errorData?.error || "Error al guardar cambios";
+
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();
-      console.log("Assistant created in VAPI:", data);
+      console.log("Assistant updated successfully:", data);
 
-      await getDsAssistant(assistant.id);
+      // Update document storage assignment
+      const dsData = await getDsAssistant(assistant.id);
 
       // Si no hay documentStorage seleccionado y existe un registro, lo eliminamos
-      if (documentStorageId === "" && data.length > 0) {
-        await deleteDsAssistant(assistant.id, data[0]?.document_storage);
-        return;
+      if (documentStorageId === "" && dsData.length > 0) {
+        await deleteDsAssistant(assistant.id, dsData[0]?.document_storage);
       }
-
       // Si hay datos existentes, actualizamos
-      if (data.length > 0) {
-        if (data[0].document_storage !== documentStorageId) {
+      else if (dsData.length > 0) {
+        if (dsData[0].document_storage !== documentStorageId) {
           await updateDsAssistant(assistant.id, documentStorageId);
         }
-      } else {
-        // Si no hay datos existentes y hay un documentStorage seleccionado, lo agregamos
-        if (documentStorageId) {
-          await addDsAssistant(assistant.id, documentStorageId);
-        }
       }
+      // Si no hay datos existentes y hay un documentStorage seleccionado, lo agregamos
+      else if (documentStorageId) {
+        await addDsAssistant(assistant.id, documentStorageId);
+      }
+
+      // Success toast
+      toast({
+        title: "Cambios guardados",
+        description: "La configuración del asistente se actualizó correctamente.",
+        duration: 3000,
+      });
     } catch (error) {
-      console.error("Error creating assistant voice:", error);
+      console.error("Error saving assistant voice:", error);
+
+      // Error toast with details
+      toast({
+        variant: "destructive",
+        title: "Error al guardar",
+        description: error instanceof Error
+          ? error.message
+          : "No se pudieron guardar los cambios. Por favor, inténtalo de nuevo.",
+        duration: 5000,
+      });
     } finally {
       setLoadingAssistant(false);
       setIsChangeOptions(false);
     }
-
-    // const newAssistantVoice = await updateAssistantVoiceVapi(
-    //   assistant?.id,
-    //   promptState,
-    //   welcomeMessage,
-    //   temperatureState,
-    //   maxTokens,
-    //   voiceAssistant[0].id,
-    //   recordCall,
-    //   backgroundOffice,
-    //   detectEmotion
-    // );
   };
 
   return (
-    <Tabs defaultValue='settings' className='w-full '>
-      <TabsList className='grid w-full grid-cols-3'>
-        <TabsTrigger
-          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
-          value='settings'>
-          Configuración
-        </TabsTrigger>
-        <TabsTrigger
-          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
-          value='storages'>
-          Almacenamientos
-        </TabsTrigger>
-        <TabsTrigger
-          className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
-          value='advanced'>
-          Incrustar asistente en tu web
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value='settings'>
-        <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[74vh] 2xl:max-h-[73vh] '>
-          <AssistantSettings
-            assistant={assistant}
-            temperatureState={temperatureState}
-            setTemperatureState={setTemperatureState}
-            maxTokens={maxTokens}
-            setMaxTokens={setMaxTokens}
-            promptState={promptState}
-            setPromptState={setPromptState}
-            welcomeMessage={welcomeMessage}
-            setWelcomeMessage={setWelcomeMessage}
-            setDetectEmotion={setDetectEmotion}
-            backgroundOffice={backgroundOffice}
-            setBackgroundOffice={setBackgroundOffice}
-            welcomeMessageAssistant={welcomeMessageAssistant}
-            setWelcomeMessageAssistant={setWelcomeMessageAssistant}
-            setRecordCall={setRecordCall}
-            recordCall={recordCall}
-            detectEmotion={detectEmotion}
-            voiceAssistant={voiceAssistant}
-            setVoiceAssistant={setVoiceAssistant}
-            handleTestAssistantVoice={handleTestAssistantVoice}
-            isChangeOptions={isChangeOptions}
-            setIsChangeOptions={setIsChangeOptions}
-            documents={documents}
-            selectedDocuments={selectedDocuments}
-            setSelectedDocuments={setSelectedDocuments}
-            bdDocs={bdDocs}
-            loadingAssistant={loadingAssistant}
-            loadingActiveWs={loadingActiveWs}
-            handleSaveAssistant={handleSaveAssistant}
-            voiceAssistantSelected={voiceAssistantSelected}
-            setVoiceAssistantSelected={setVoiceAssistantSelected}
-            endCallMessage={endCallMessage}
-            setEndCallMessage={setEndCallMessage}
-            voicemailMessage={voicemailMessage}
-            setVoicemailMessage={setVoicemailMessage}
-            endCallPhrases={endCallPhrases}
-            setEndCallPhrases={setEndCallPhrases}
-            documentStorageId={documentStorageId}
-            setDocumentStorageId={setDocumentStorageId}
-          />
-        </div>
-      </TabsContent>
-      <TabsContent value='storages'>
-        <div className='p-6'>
-          <AssignStorageSection
-            assistantId={assistant.id}
-            accountId={account_id}
-            accountSlug={accountSlug}
-          />
-        </div>
-      </TabsContent>
-      <AdvancedComponent assistant={assistant} />
-    </Tabs>
+    <>
+      <Tabs defaultValue='settings' className='w-full '>
+        <TabsList className='grid w-full grid-cols-3'>
+          <TabsTrigger
+            className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+            value='settings'>
+            Configuración
+          </TabsTrigger>
+          <TabsTrigger
+            className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+            value='storages'>
+            Almacenamientos
+          </TabsTrigger>
+          <TabsTrigger
+            className='data-[state=active]:bg-green-100 data-[state=active]:text-primary dark:data-[state=active]:bg-[#182426] dark:data-[state=active]:text-primary'
+            value='advanced'>
+            Incrustar asistente en tu web
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value='settings'>
+          <div className='flex w-full gap-2 min-h-[68vh] max-h-[68vh] 2xl:min-h-[74vh] 2xl:max-h-[73vh] '>
+            {loading ? (
+              <VoiceAssistantFormSkeleton />
+            ) : (
+              <AssistantSettings
+                assistant={assistant}
+                temperatureState={temperatureState}
+                setTemperatureState={setTemperatureState}
+                maxTokens={maxTokens}
+                setMaxTokens={setMaxTokens}
+                promptState={promptState}
+                setPromptState={setPromptState}
+                welcomeMessage={welcomeMessage}
+                setWelcomeMessage={setWelcomeMessage}
+                setDetectEmotion={setDetectEmotion}
+                backgroundOffice={backgroundOffice}
+                setBackgroundOffice={setBackgroundOffice}
+                welcomeMessageAssistant={welcomeMessageAssistant}
+                setWelcomeMessageAssistant={setWelcomeMessageAssistant}
+                setRecordCall={setRecordCall}
+                recordCall={recordCall}
+                detectEmotion={detectEmotion}
+                voiceAssistant={voiceAssistant}
+                setVoiceAssistant={setVoiceAssistant}
+                handleTestAssistantVoice={handleTestAssistantVoice}
+                isChangeOptions={isChangeOptions}
+                setIsChangeOptions={setIsChangeOptions}
+                documents={documents}
+                selectedDocuments={selectedDocuments}
+                setSelectedDocuments={setSelectedDocuments}
+                bdDocs={bdDocs}
+                loadingAssistant={loadingAssistant}
+                loadingActiveWs={loadingActiveWs}
+                handleSaveAssistant={handleSaveAssistant}
+                voiceAssistantSelected={voiceAssistantSelected}
+                setVoiceAssistantSelected={setVoiceAssistantSelected}
+                endCallMessage={endCallMessage}
+                setEndCallMessage={setEndCallMessage}
+                voicemailMessage={voicemailMessage}
+                setVoicemailMessage={setVoicemailMessage}
+                endCallPhrases={endCallPhrases}
+                setEndCallPhrases={setEndCallPhrases}
+                documentStorageId={documentStorageId}
+                setDocumentStorageId={setDocumentStorageId}
+              />
+            )}
+          </div>
+        </TabsContent>
+        <TabsContent value='storages'>
+          <div className='p-6'>
+            <AssignStorageSection
+              assistantId={assistant.id}
+              accountId={account_id}
+              accountSlug={accountSlug}
+            />
+          </div>
+        </TabsContent>
+        <AdvancedComponent assistant={assistant} />
+      </Tabs>
+
+      {/* Unsaved changes dialog */}
+      <UnsavedChangesDialog
+        hasUnsavedChanges={isChangeOptions}
+        isOpen={showUnsavedDialog}
+        onClose={() => setShowUnsavedDialog(false)}
+        onDiscard={() => {
+          setShowUnsavedDialog(false);
+          if (pendingNavigation) {
+            pendingNavigation();
+            setPendingNavigation(null);
+          }
+        }}
+      />
+    </>
   );
 }

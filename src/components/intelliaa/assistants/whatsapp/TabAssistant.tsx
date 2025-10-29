@@ -20,6 +20,12 @@ import AssistantSettings from "./AssistantSettings";
 import { usePathname } from "next/navigation";
 import { getAccountBySlug } from "@/lib/actions/accounts";
 import { getDocumentssByDocumentStorageId } from "@/lib/actions/intelliaa/documents";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  UnsavedChangesDialog,
+  useBrowserNavigationGuard
+} from "../common/UnsavedChangesDialog";
+import { WhatsAppAssistantFormSkeleton } from "../common/FormSkeletons";
 
 interface QAItem {
   id: string;
@@ -57,8 +63,16 @@ export default function TabAssistant({
 }: TabAssistantProps) {
   const pathname = usePathname();
   const accountSlug = pathname.split("/")[1];
+  const { toast } = useToast();
 
   if (!assistant) return null;
+
+  // Unsaved changes dialog state
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
+  // Browser navigation guard (prevents accidental close/reload)
+  useBrowserNavigationGuard(isChangeOptions);
 
   const [temperatureState, setTemperatureState] = useState(
     assistant?.temperature || 0
@@ -242,90 +256,129 @@ export default function TabAssistant({
   const handleSaveAssistant = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingAssistant(true);
-    const team_account = await getAccountBySlug(null, accountSlug);
 
-    const data = {
-      temperature: temperatureState,
-      token: maxTokens,
-      prompt: promptState,
-      keyword_transfer_ws: KeywordTransfer,
-      number_transfer_ws: NumberTransfer,
-      namespace: assistant.namespace,
-      voice_assistant: voiceAssistantSelected,
-    };
+    try {
+      const team_account = await getAccountBySlug(null, accountSlug);
 
-    const newBdDocs = await updateAssistant(
-      team_account.account_id,
-      assistant.id,
-      data
-    );
+      const data = {
+        temperature: temperatureState,
+        token: maxTokens,
+        prompt: promptState,
+        keyword_transfer_ws: KeywordTransfer,
+        number_transfer_ws: NumberTransfer,
+        namespace: assistant.namespace,
+        voice_assistant: voiceAssistantSelected,
+      };
 
-    const setDsAssistant = async () => {
-      const data = await getDsAssistant(assistant.id);
+      // Update assistant configuration
+      const newBdDocs = await updateAssistant(
+        team_account.account_id,
+        assistant.id,
+        data
+      );
+
+      // Update document storage assignment
+      const dsData = await getDsAssistant(assistant.id);
 
       // Si no hay documentStorage seleccionado y existe un registro, lo eliminamos
-      if (selectedDocumentStorage === "" && data.length > 0) {
-        await deleteDsAssistant(assistant.id, data[0]?.document_storage);
-        return;
+      if (selectedDocumentStorage === "" && dsData.length > 0) {
+        await deleteDsAssistant(assistant.id, dsData[0]?.document_storage);
       }
-
       // Si hay datos existentes, actualizamos
-      if (data.length > 0) {
-        if (data[0].document_storage !== selectedDocumentStorage) {
+      else if (dsData.length > 0) {
+        if (dsData[0].document_storage !== selectedDocumentStorage) {
           await updateDsAssistant(assistant.id, selectedDocumentStorage);
         }
-      } else {
-        // Si no hay datos existentes y hay un documentStorage seleccionado, lo agregamos
-        if (selectedDocumentStorage) {
-          await addDsAssistant(assistant.id, selectedDocumentStorage);
-        }
       }
-    };
+      // Si no hay datos existentes y hay un documentStorage seleccionado, lo agregamos
+      else if (selectedDocumentStorage) {
+        await addDsAssistant(assistant.id, selectedDocumentStorage);
+      }
 
-    setBdDocs(newBdDocs as any);
-    setDsAssistant();
-    setLoadingAssistant(false);
-    setIsChangeOptions(false);
+      setBdDocs(newBdDocs as any);
+
+      // Success toast
+      toast({
+        title: "Cambios guardados",
+        description: "La configuración del asistente se actualizó correctamente.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error saving WhatsApp assistant:", error);
+
+      // Error toast
+      toast({
+        variant: "destructive",
+        title: "Error al guardar",
+        description: error instanceof Error
+          ? error.message
+          : "No se pudieron guardar los cambios. Por favor, inténtalo de nuevo.",
+        duration: 5000,
+      });
+    } finally {
+      setLoadingAssistant(false);
+      setIsChangeOptions(false);
+    }
   };
 
   return (
-    <div className='flex w-full gap-2 min-h-[75vh] max-h-[68vh] 2xl:min-h-[80vh] 2xl:max-h-[73vh] '>
-      <AssistantSettings
-        assistant={assistant}
-        temperatureState={temperatureState}
-        setTemperatureState={setTemperatureState}
-        maxTokens={maxTokens}
-        setMaxTokens={setMaxTokens}
-        promptState={promptState}
-        setPromptState={setPromptState}
-        isWhatsappActivated={isWhatsappActivated}
-        setIsWhatsappActivated={setIsWhatsappActivated}
-        KeywordTransfer={KeywordTransfer}
-        setKeywordTransfer={setKeywordTransfer}
-        NumberTransfer={NumberTransfer}
-        setNumberTransfer={setNumberTransfer}
-        isChangeOptions={isChangeOptions}
-        setIsChangeOptions={setIsChangeOptions}
-        documents={documents}
-        selectedDocumentStorage={selectedDocumentStorage}
-        setSelectedDocumentStorage={setSelectedDocumentStorage}
-        bdDocs={bdDocs}
-        loadingAssistant={loadingAssistant}
-        loadingActiveWs={loadingActiveWs}
-        errorMessageNumberTransfer={errorMessageNumberTransfer}
-        setErrorMessageNumberTransfer={setErrorMessageNumberTransfer}
-        handleActivateWhatsapp={handleActivateWhatsapp}
-        handleSaveAssistant={handleSaveAssistant}
-        voiceAssistantSelected={voiceAssistantSelected}
-        setVoiceAssistantSelected={setVoiceAssistantSelected}
-        voiceAssistant={voiceAssistant}
-        setVoiceAssistant={setVoiceAssistant}
-        accountSlug={accountSlug}
+    <>
+      <div className='flex w-full gap-2 min-h-[75vh] max-h-[68vh] 2xl:min-h-[80vh] 2xl:max-h-[73vh] '>
+        {loading ? (
+          <WhatsAppAssistantFormSkeleton />
+        ) : (
+          <AssistantSettings
+            assistant={assistant}
+            temperatureState={temperatureState}
+            setTemperatureState={setTemperatureState}
+            maxTokens={maxTokens}
+            setMaxTokens={setMaxTokens}
+            promptState={promptState}
+            setPromptState={setPromptState}
+            isWhatsappActivated={isWhatsappActivated}
+            setIsWhatsappActivated={setIsWhatsappActivated}
+            KeywordTransfer={KeywordTransfer}
+            setKeywordTransfer={setKeywordTransfer}
+            NumberTransfer={NumberTransfer}
+            setNumberTransfer={setNumberTransfer}
+            isChangeOptions={isChangeOptions}
+            setIsChangeOptions={setIsChangeOptions}
+            documents={documents}
+            selectedDocumentStorage={selectedDocumentStorage}
+            setSelectedDocumentStorage={setSelectedDocumentStorage}
+            bdDocs={bdDocs}
+            loadingAssistant={loadingAssistant}
+            loadingActiveWs={loadingActiveWs}
+            errorMessageNumberTransfer={errorMessageNumberTransfer}
+            setErrorMessageNumberTransfer={setErrorMessageNumberTransfer}
+            handleActivateWhatsapp={handleActivateWhatsapp}
+            handleSaveAssistant={handleSaveAssistant}
+            voiceAssistantSelected={voiceAssistantSelected}
+            setVoiceAssistantSelected={setVoiceAssistantSelected}
+            voiceAssistant={voiceAssistant}
+            setVoiceAssistant={setVoiceAssistant}
+            accountSlug={accountSlug}
+          />
+        )}
+        <ChatWsComponent
+          assistant={assistant}
+          selectedDocumentStorage={selectedDocumentStorage}
+        />
+      </div>
+
+      {/* Unsaved changes dialog */}
+      <UnsavedChangesDialog
+        hasUnsavedChanges={isChangeOptions}
+        isOpen={showUnsavedDialog}
+        onClose={() => setShowUnsavedDialog(false)}
+        onDiscard={() => {
+          setShowUnsavedDialog(false);
+          if (pendingNavigation) {
+            pendingNavigation();
+            setPendingNavigation(null);
+          }
+        }}
       />
-      <ChatWsComponent
-        assistant={assistant}
-        selectedDocumentStorage={selectedDocumentStorage}
-      />
-    </div>
+    </>
   );
 }
